@@ -245,6 +245,16 @@
             useEffect(() => {
                 let gapiTimeout, gisTimeout;
                 
+                // Charger les calendriers sélectionnés depuis localStorage
+                const savedCalendars = localStorage.getItem('selectedCalendars');
+                if (savedCalendars) {
+                    try {
+                        setSelectedCalendars(JSON.parse(savedCalendars));
+                    } catch (e) {
+                        console.error('Error loading saved calendars:', e);
+                    }
+                }
+                
                 const checkAndLoad = () => {
                     if (typeof gapi !== 'undefined') {
                         gapiLoaded();
@@ -324,9 +334,18 @@
             const maybeEnableButtons = () => {
                 if (gapiInited.current && gisInited.current) {
                     setIsLoading(false);
-                    if (gapi.client.getToken()) {
+                    const token = gapi.client.getToken();
+                    if (token !== null) {
+                        console.log('Already signed in, loading calendars...');
                         setIsSignedIn(true);
-                        loadCalendars();
+                        loadCalendars().then(() => {
+                            // Auto-sync si des calendriers sont sélectionnés
+                            const savedCalendars = localStorage.getItem('selectedCalendars');
+                            if (savedCalendars) {
+                                console.log('Auto-syncing...');
+                                setTimeout(() => handleSync(), 1000);
+                            }
+                        });
                     }
                 }
             };
@@ -370,6 +389,23 @@
                     const cals = response.result.items || [];
                     setCalendars(cals);
                     
+                    // Restaurer les calendriers sélectionnés depuis localStorage
+                    const savedCalendars = localStorage.getItem('selectedCalendars');
+                    if (savedCalendars) {
+                        try {
+                            const saved = JSON.parse(savedCalendars);
+                            // Vérifier que les calendriers sauvegardés existent toujours
+                            const validSaved = saved.filter(id => cals.some(cal => cal.id === id));
+                            if (validSaved.length > 0) {
+                                setSelectedCalendars(validSaved);
+                                return; // Ne pas sélectionner le principal par défaut
+                            }
+                        } catch (e) {
+                            console.error('Error parsing saved calendars:', e);
+                        }
+                    }
+                    
+                    // Si pas de calendriers sauvegardés, sélectionner le principal
                     const primary = cals.find(cal => cal.primary);
                     if (primary) {
                         setSelectedCalendars([primary.id]);

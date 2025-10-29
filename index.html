@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body {
@@ -244,36 +245,87 @@
             const tokenClient = useRef(null);
 
             useEffect(() => {
-                gapiLoaded();
-                gisLoaded();
+                let gapiTimeout, gisTimeout;
+                
+                // Attendre que les scripts soient disponibles avec timeout
+                const checkAndLoad = () => {
+                    console.log('Checking for gapi...', typeof gapi);
+                    if (typeof gapi !== 'undefined') {
+                        console.log('gapi found, loading...');
+                        gapiLoaded();
+                        clearTimeout(gapiTimeout);
+                    } else {
+                        gapiTimeout = setTimeout(checkAndLoad, 200);
+                    }
+                };
+                
+                const checkAndLoadGis = () => {
+                    console.log('Checking for google.accounts...', typeof google !== 'undefined' ? (google.accounts ? 'yes' : 'no google.accounts') : 'no google');
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        console.log('google.accounts found, loading...');
+                        gisLoaded();
+                        clearTimeout(gisTimeout);
+                    } else {
+                        gisTimeout = setTimeout(checkAndLoadGis, 200);
+                    }
+                };
+                
+                // Commencer à vérifier après un court délai
+                setTimeout(() => {
+                    checkAndLoad();
+                    checkAndLoadGis();
+                }, 500);
+                
+                // Timeout après 10 secondes
+                setTimeout(() => {
+                    if (!gapiInited.current || !gisInited.current) {
+                        console.error('Timeout: Scripts Google non chargés');
+                        setIsLoading(false);
+                        onError?.('Impossible de charger Google Calendar. Veuillez recharger la page.');
+                    }
+                }, 10000);
+                
+                return () => {
+                    clearTimeout(gapiTimeout);
+                    clearTimeout(gisTimeout);
+                };
             }, []);
 
             const gapiLoaded = () => {
+                console.log('gapiLoaded called');
                 if (typeof gapi !== 'undefined') {
+                    console.log('Loading gapi client...');
                     gapi.load('client', initializeGapiClient);
                 }
             };
 
             const initializeGapiClient = async () => {
+                console.log('initializeGapiClient called');
                 try {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
                         discoveryDocs: [DISCOVERY_DOC],
                     });
+                    console.log('gapi client initialized successfully');
                     gapiInited.current = true;
                     maybeEnableButtons();
                 } catch (err) {
                     console.error('Error initializing GAPI:', err);
+                    onError?.('Erreur d\'initialisation Google API');
                 }
             };
 
             const gisLoaded = () => {
+                console.log('gisLoaded called');
                 if (typeof google !== 'undefined') {
+                    console.log('Initializing token client...');
                     tokenClient.current = google.accounts.oauth2.initTokenClient({
                         client_id: GOOGLE_CLIENT_ID,
                         scope: SCOPES,
                         callback: async (response) => {
+                            console.log('Token callback received:', response);
                             if (response.error) {
+                                console.error('Auth error:', response.error);
                                 onError?.('Erreur d\'authentification Google');
                                 return;
                             }
@@ -281,16 +333,20 @@
                             await loadCalendars();
                         },
                     });
+                    console.log('Token client initialized');
                     gisInited.current = true;
                     maybeEnableButtons();
                 }
             };
 
             const maybeEnableButtons = () => {
+                console.log('maybeEnableButtons called. gapiInited:', gapiInited.current, 'gisInited:', gisInited.current);
                 if (gapiInited.current && gisInited.current) {
+                    console.log('Both APIs ready, enabling buttons');
                     setIsLoading(false);
                     // Vérifier si déjà connecté
                     if (gapi.client.getToken()) {
+                        console.log('Already has token, signing in...');
                         setIsSignedIn(true);
                         loadCalendars();
                     }

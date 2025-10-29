@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#ec4899">
-    <title>Lunarium - Planning Cyclique 🌸</title>
+    <title>Lunarium 🌸</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -39,17 +39,12 @@
                 opacity: 1;
             }
         }
-        .cycle-day {
+        .cycle-segment {
             cursor: pointer;
-            transition: all 0.2s;
+            transition: opacity 0.2s;
         }
-        .cycle-day:hover {
-            transform: scale(1.05);
-            filter: brightness(1.1);
-        }
-        .cycle-day.selected {
-            filter: brightness(1.2);
-            box-shadow: 0 0 0 3px white, 0 0 0 5px #ec4899;
+        .cycle-segment:hover {
+            opacity: 0.85;
         }
         .sync-spinner {
             width: 16px;
@@ -61,28 +56,6 @@
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
-        }
-        .phase-legend {
-            display: flex;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-top: 24px;
-        }
-        .phase-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .event-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 4px;
         }
     </style>
 </head>
@@ -97,62 +70,6 @@
         const GOOGLE_API_KEY = 'AIzaSyA81G3xJq6iTJitDv6GO_rvjaOucTpeDNA';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar';
-
-        // CONFIGURATION DES PHASES DU CYCLE
-        const CYCLE_PHASES = {
-            menstruation: {
-                name: 'Lune Rouge',
-                archetype: 'Sorcière',
-                emoji: '🌑',
-                color: '#dc2626',
-                lightColor: '#fecaca',
-                description: 'Repos, introspection, prise de conscience',
-                getDays: (cycleLength) => [1, 2, 3]
-            },
-            preOvulation: {
-                name: 'Jeune Fille',
-                archetype: 'Dynamique',
-                emoji: '🌒',
-                color: '#16a34a',
-                lightColor: '#bbf7d0',
-                description: 'Énergie, créativité, nouveaux projets',
-                getDays: (cycleLength) => {
-                    const days = [];
-                    for (let i = 4; i <= Math.floor(cycleLength / 2) - 3; i++) {
-                        days.push(i);
-                    }
-                    return days;
-                }
-            },
-            ovulation: {
-                name: 'Mère',
-                archetype: 'Nourricière',
-                emoji: '🌕',
-                color: '#f59e0b',
-                lightColor: '#fde68a',
-                description: 'Ouverture, communication, collaboration',
-                getDays: (cycleLength) => {
-                    const ovulationDay = Math.floor(cycleLength / 2);
-                    return [ovulationDay - 1, ovulationDay, ovulationDay + 1];
-                }
-            },
-            preMenustruation: {
-                name: 'Enchanteresse',
-                archetype: 'Intuitive',
-                emoji: '🌘',
-                color: '#8b5cf6',
-                lightColor: '#ddd6fe',
-                description: 'Intuition, finition, recentrage',
-                getDays: (cycleLength) => {
-                    const days = [];
-                    const start = Math.floor(cycleLength / 2) + 2;
-                    for (let i = start; i <= cycleLength; i++) {
-                        days.push(i);
-                    }
-                    return days;
-                }
-            }
-        };
 
         // ===== ICÔNES =====
         const GoogleIcon = () => (
@@ -186,7 +103,135 @@
             </svg>
         );
 
-        // ===== GOOGLE CALENDAR SYNC COMPONENT =====
+        // ===== FONCTIONS UTILITAIRES =====
+        function getSunTimes(date) {
+            const lat = 45.5017; // Montréal
+            const lng = -73.5673;
+            
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            const a = Math.floor((14 - month) / 12);
+            const y = year + 4800 - a;
+            const m = month + 12 * a - 3;
+            const jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + 
+                       Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+            const n = jd - 2451545.0;
+            
+            const L = (280.460 + 0.9856474 * n) % 360;
+            const g = (357.528 + 0.9856003 * n) % 360;
+            const gRad = g * Math.PI / 180;
+            const lambda = (L + 1.915 * Math.sin(gRad) + 0.020 * Math.sin(2 * gRad)) % 360;
+            const lambdaRad = lambda * Math.PI / 180;
+            const epsilon = 23.439 - 0.0000004 * n;
+            const epsilonRad = epsilon * Math.PI / 180;
+            const dec = Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad)) * 180 / Math.PI;
+            
+            const latRad = lat * Math.PI / 180;
+            const decRad = dec * Math.PI / 180;
+            const cosH = -Math.tan(latRad) * Math.tan(decRad);
+            
+            if (cosH > 1 || cosH < -1) {
+                return { sunrise: '07:30', sunset: '17:00', sunriseDecimal: 7.5, sunsetDecimal: 17 };
+            }
+            
+            const H = Math.acos(cosH) * 180 / Math.PI;
+            const eqTime = 4 * (L - lambda);
+            const sunriseUTC = 12 - H / 15 - eqTime / 60 - lng / 15;
+            const sunsetUTC = 12 + H / 15 - eqTime / 60 - lng / 15;
+            
+            const tzOffset = -date.getTimezoneOffset() / 60;
+            const sunriseLocal = (sunriseUTC + tzOffset + 24) % 24;
+            const sunsetLocal = (sunsetUTC + tzOffset + 24) % 24;
+            
+            const formatTime = (hours) => {
+                const h = Math.floor(hours);
+                const m = Math.floor((hours - h) * 60);
+                return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            };
+            
+            return {
+                sunrise: formatTime(sunriseLocal),
+                sunset: formatTime(sunsetLocal),
+                sunriseDecimal: sunriseLocal,
+                sunsetDecimal: sunsetLocal
+            };
+        }
+
+        function getPhaseInfo(cycleDay, cycleLength) {
+            const ovulationDay = cycleLength - 14;
+            
+            if (cycleDay >= 1 && cycleDay <= 5) {
+                return { 
+                    name: 'Menstruation',
+                    shortName: 'Lune rouge',
+                    color: '#fca5a5', 
+                    border: '#f87171', 
+                    text: '#7f1d1d',
+                    description: 'Repos, introspection, détoxification'
+                };
+            } else if (cycleDay >= 6 && cycleDay < ovulationDay - 1) {
+                return { 
+                    name: 'Folliculaire',
+                    shortName: 'Jeune Fille',
+                    color: '#67e8f9', 
+                    border: '#06b6d4', 
+                    text: '#164e63',
+                    description: 'Créativité, nouveaux projets, brainstorming'
+                };
+            } else if (cycleDay >= ovulationDay - 1 && cycleDay <= ovulationDay + 1) {
+                return { 
+                    name: 'Ovulation',
+                    shortName: 'Mère',
+                    color: '#fcd34d', 
+                    border: '#f59e0b', 
+                    text: '#78350f',
+                    description: 'Communication, collaboration, être présente'
+                };
+            } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
+                return { 
+                    name: 'SPM',
+                    shortName: 'SPM',
+                    color: '#f0abfc', 
+                    border: '#c026d3', 
+                    text: '#701a75',
+                    description: 'Détails, finition, laisser passer la vague'
+                };
+            } else {
+                return { 
+                    name: 'Lutéale',
+                    shortName: 'Enchanteresse',
+                    color: '#f0abfc', 
+                    border: '#d946ef', 
+                    text: '#701a75',
+                    description: 'Intuition, focus, nettoyage'
+                };
+            }
+        }
+
+        function getMoonInfo(date) {
+            const knownNewMoon = new Date(2000, 0, 6, 18, 14);
+            const lunarCycle = 29.53058867;
+            
+            const diff = date - knownNewMoon;
+            const daysSinceKnownNewMoon = diff / (1000 * 60 * 60 * 24);
+            const lunarAge = daysSinceKnownNewMoon % lunarCycle;
+            
+            const phase = Math.floor((lunarAge / lunarCycle) * 8);
+            
+            const moonEmojis = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
+            const moonNames = ['Nouvelle lune', 'Premier croissant', 'Premier quartier', 'Gibbeuse croissante', 
+                              'Pleine lune', 'Gibbeuse décroissante', 'Dernier quartier', 'Dernier croissant'];
+            
+            return { 
+                emoji: moonEmojis[phase], 
+                name: moonNames[phase],
+                age: Math.round(lunarAge * 10) / 10
+            };
+        }
+
+        // ===== GOOGLE CALENDAR SYNC =====
         const GoogleCalendarSync = ({ onSync, onError }) => {
             const [isSignedIn, setIsSignedIn] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
@@ -495,9 +540,9 @@
             );
         };
 
-        // ===== CONFIGURATION MODAL =====
+        // ===== CONFIG MODAL =====
         const ConfigModal = ({ config, onSave, onClose }) => {
-            const [startDate, setStartDate] = useState(config.startDate);
+            const [startDate, setStartDate] = useState(config.cycleStartDate.toISOString().split('T')[0]);
             const [cycleLength, setCycleLength] = useState(config.cycleLength);
 
             return (
@@ -582,7 +627,7 @@
                                 Annuler
                             </button>
                             <button
-                                onClick={() => onSave({ startDate, cycleLength })}
+                                onClick={() => onSave({ cycleStartDate: new Date(startDate), cycleLength })}
                                 style={{
                                     padding: '10px 20px',
                                     borderRadius: '8px',
@@ -604,47 +649,78 @@
 
         // ===== COMPOSANT PRINCIPAL =====
         function LunariumPlanner() {
-            const [events, setEvents] = useState({});
+            const [activities, setActivities] = useState({});
             const [toast, setToast] = useState(null);
             const [showConfigModal, setShowConfigModal] = useState(false);
-            const [selectedDay, setSelectedDay] = useState(null);
-            const [primaryCalendarId, setPrimaryCalendarId] = useState(null);
+            const [selectedCircleDay, setSelectedCircleDay] = useState(null);
+            const [selectedDate, setSelectedDate] = useState(null);
 
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
-                return saved ? JSON.parse(saved) : {
-                    startDate: new Date().toISOString().split('T')[0],
-                    cycleLength: 28
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    return {
+                        cycleLength: parsed.cycleLength,
+                        cycleStartDate: new Date(parsed.cycleStartDate)
+                    };
+                }
+                return {
+                    cycleLength: 28,
+                    cycleStartDate: new Date()
                 };
             });
 
             useEffect(() => {
-                localStorage.setItem('cycleConfig', JSON.stringify(cycleConfig));
+                localStorage.setItem('cycleConfig', JSON.stringify({
+                    cycleLength: cycleConfig.cycleLength,
+                    cycleStartDate: cycleConfig.cycleStartDate.toISOString()
+                }));
             }, [cycleConfig]);
 
-            const syncFromGoogleCalendar = (googleEvents, primaryCal) => {
-                setPrimaryCalendarId(primaryCal);
+            const getCycleDay = (date) => {
+                const diffTime = date - cycleConfig.cycleStartDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const cycleDay = ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength;
+                return cycleDay === 0 ? cycleConfig.cycleLength : cycleDay;
+            };
+
+            const getDateForCycleDay = (cycleDay) => {
+                const currentCycleDay = getCycleDay(new Date());
+                const daysToAdd = cycleDay - currentCycleDay;
+                const date = new Date();
+                date.setDate(date.getDate() + daysToAdd);
+                return date;
+            };
+
+            const formatDate = (date) => {
+                return date.toISOString().split('T')[0];
+            };
+
+            const syncFromGoogleCalendar = (googleEvents) => {
+                const newActivities = {};
                 
-                const newEvents = {};
                 googleEvents.forEach(event => {
                     if (!event.start || !event.start.dateTime) return;
                     
-                    const dateKey = event.start.dateTime.split('T')[0];
-                    if (!newEvents[dateKey]) {
-                        newEvents[dateKey] = [];
+                    const startDate = new Date(event.start.dateTime);
+                    const endDate = new Date(event.end.dateTime);
+                    const dateKey = startDate.toISOString().split('T')[0];
+                    
+                    if (!newActivities[dateKey]) {
+                        newActivities[dateKey] = [];
                     }
                     
-                    newEvents[dateKey].push({
+                    newActivities[dateKey].push({
                         id: event.id,
                         title: event.summary || 'Sans titre',
-                        description: event.description || '',
-                        start: event.start.dateTime,
-                        end: event.end.dateTime,
-                        color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6'
+                        startTime: startDate.toTimeString().slice(0, 5),
+                        duration: Math.round((endDate - startDate) / (1000 * 60)),
+                        color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
+                        description: event.description || ''
                     });
                 });
                 
-                setEvents(newEvents);
+                setActivities(newActivities);
                 showToast('Synchronisation réussie ✓', 'success');
             };
 
@@ -662,258 +738,203 @@
                 setTimeout(() => setToast(null), 3000);
             };
 
-            const getCycleDay = (date) => {
-                const start = new Date(cycleConfig.startDate);
-                const current = new Date(date);
-                const diffTime = current - start;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                return ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength + 1;
-            };
-
-            const getPhaseForDay = (cycleDay) => {
-                for (const [key, phase] of Object.entries(CYCLE_PHASES)) {
-                    const days = phase.getDays(cycleConfig.cycleLength);
-                    if (days.includes(cycleDay)) {
-                        return { key, ...phase };
-                    }
-                }
-                return null;
-            };
-
-            const getCycleDayDate = (cycleDay) => {
-                const start = new Date(cycleConfig.startDate);
-                start.setDate(start.getDate() + cycleDay - 1);
-                return start.toISOString().split('T')[0];
-            };
-
-            const getEventsForCycleDay = (cycleDay) => {
-                const dateKey = getCycleDayDate(cycleDay);
-                return events[dateKey] || [];
-            };
-
-            const renderCycleView = () => {
-                const centerX = 300;
-                const centerY = 300;
-                const outerRadius = 240;
-                const innerRadius = 120;
+            const renderCircleView = () => {
+                const svgSize = Math.min(window.innerWidth - 40, 800);
+                const centerX = svgSize / 2;
+                const centerY = svgSize / 2;
+                const outerRadius = svgSize * 0.38;
+                const innerRadius = svgSize * 0.31;
+                const middleRadius = (outerRadius + innerRadius) / 2;
+                const anglePerDay = (2 * Math.PI) / cycleConfig.cycleLength;
+                
+                const today = new Date();
+                const currentCycleDay = getCycleDay(today);
+                const displayDay = selectedCircleDay || currentCycleDay;
+                
+                // Rotation pour mettre le jour actuel en haut
+                const rotationOffset = -((currentCycleDay - 0.5) * anglePerDay);
+                const rotationDegrees = rotationOffset * 180 / Math.PI;
 
                 return (
-                    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
-                            {/* Cercle du cycle */}
-                            <div style={{ flex: '1', display: 'flex', justifyContent: 'center' }}>
-                                <svg width="600" height="600" viewBox="0 0 600 600">
-                                    {/* Fond blanc */}
-                                    <circle cx={centerX} cy={centerY} r={outerRadius} fill="white" />
-                                    
-                                    {/* Segments de phases */}
-                                    {Object.entries(CYCLE_PHASES).map(([key, phase]) => {
-                                        const days = phase.getDays(cycleConfig.cycleLength);
-                                        const startDay = days[0];
-                                        const endDay = days[days.length - 1];
-                                        
-                                        const startAngle = ((startDay - 1) / cycleConfig.cycleLength) * 360 - 90;
-                                        const endAngle = (endDay / cycleConfig.cycleLength) * 360 - 90;
-                                        
-                                        const startRad = (startAngle * Math.PI) / 180;
-                                        const endRad = (endAngle * Math.PI) / 180;
-                                        
-                                        const x1 = centerX + innerRadius * Math.cos(startRad);
-                                        const y1 = centerY + innerRadius * Math.sin(startRad);
-                                        const x2 = centerX + outerRadius * Math.cos(startRad);
-                                        const y2 = centerY + outerRadius * Math.sin(startRad);
-                                        const x3 = centerX + outerRadius * Math.cos(endRad);
-                                        const y3 = centerY + outerRadius * Math.sin(endRad);
-                                        const x4 = centerX + innerRadius * Math.cos(endRad);
-                                        const y4 = centerY + innerRadius * Math.sin(endRad);
-                                        
-                                        const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
-                                        
-                                        return (
-                                            <path
-                                                key={key}
-                                                d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1} Z`}
-                                                fill={phase.lightColor}
-                                                stroke={phase.color}
-                                                strokeWidth="2"
-                                            />
-                                        );
-                                    })}
-                                    
-                                    {/* Jours du cycle */}
-                                    {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
-                                        const day = i + 1;
-                                        const angle = (day / cycleConfig.cycleLength) * 360 - 90;
-                                        const rad = (angle * Math.PI) / 180;
-                                        const radius = (innerRadius + outerRadius) / 2;
-                                        const x = centerX + radius * Math.cos(rad);
-                                        const y = centerY + radius * Math.sin(rad);
-                                        
-                                        const phase = getPhaseForDay(day);
-                                        const dayEvents = getEventsForCycleDay(day);
-                                        const today = new Date().toISOString().split('T')[0];
-                                        const isToday = getCycleDayDate(day) === today;
-                                        
-                                        return (
-                                            <g key={day}>
-                                                <circle
-                                                    cx={x}
-                                                    cy={y}
-                                                    r={isToday ? 20 : 16}
-                                                    fill={isToday ? phase?.color : 'white'}
-                                                    stroke={phase?.color}
-                                                    strokeWidth={isToday ? 3 : 2}
-                                                    className="cycle-day"
-                                                    onClick={() => setSelectedDay(day)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                                <text
-                                                    x={x}
-                                                    y={y + 5}
-                                                    textAnchor="middle"
-                                                    fontSize="12"
-                                                    fontWeight={isToday ? "bold" : "normal"}
-                                                    fill={isToday ? 'white' : '#374151'}
-                                                >
-                                                    {day}
-                                                </text>
-                                                {dayEvents.length > 0 && (
-                                                    <circle cx={x + 12} cy={y - 12} r="4" fill={phase?.color} />
-                                                )}
-                                            </g>
-                                        );
-                                    })}
-                                    
-                                    {/* Centre avec emoji */}
-                                    <text x={centerX} y={centerY} textAnchor="middle" fontSize="60">
-                                        🌸
-                                    </text>
-                                </svg>
-                            </div>
-
-                            {/* Détails du jour sélectionné */}
-                            {selectedDay && (
-                                <div style={{
-                                    width: '350px',
-                                    background: 'white',
-                                    borderRadius: '12px',
-                                    padding: '20px',
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                                }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-                                            Jour {selectedDay}
-                                        </h3>
-                                        <button
-                                            onClick={() => setSelectedDay(null)}
-                                            style={{
-                                                cursor: 'pointer',
-                                                border: 'none',
-                                                background: 'none',
-                                                padding: '4px'
-                                            }}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+                        <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
+                            {/* Flèche fixe en haut */}
+                            <polygon
+                                points={`${centerX},${centerY - outerRadius - 10} ${centerX - 12},${centerY - outerRadius - 25} ${centerX + 12},${centerY - outerRadius - 25}`}
+                                fill="#4b5563"
+                                stroke="#374151"
+                                strokeWidth="1.5"
+                                style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))' }}
+                            />
+                            
+                            {/* Segments rotatifs */}
+                            <g transform={`rotate(${rotationDegrees} ${centerX} ${centerY})`}>
+                            {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
+                                const cycleDay = i + 1;
+                                const phaseInfo = getPhaseInfo(cycleDay, cycleConfig.cycleLength);
+                                const date = getDateForCycleDay(cycleDay);
+                                const isToday = cycleDay === currentCycleDay;
+                                const isSelected = cycleDay === displayDay;
+                                
+                                const startAngle = -Math.PI / 2 + i * anglePerDay;
+                                const endAngle = startAngle + anglePerDay;
+                                
+                                const x1 = centerX + outerRadius * Math.cos(startAngle);
+                                const y1 = centerY + outerRadius * Math.sin(startAngle);
+                                const x2 = centerX + outerRadius * Math.cos(endAngle);
+                                const y2 = centerY + outerRadius * Math.sin(endAngle);
+                                const x3 = centerX + innerRadius * Math.cos(endAngle);
+                                const y3 = centerY + innerRadius * Math.sin(endAngle);
+                                const x4 = centerX + innerRadius * Math.cos(startAngle);
+                                const y4 = centerY + innerRadius * Math.sin(startAngle);
+                                
+                                const pathData = `M ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 0 0 ${x4} ${y4} Z`;
+                                
+                                return (
+                                    <path
+                                        key={cycleDay}
+                                        d={pathData}
+                                        fill={phaseInfo.color}
+                                        stroke={isToday ? '#2563eb' : (isSelected ? '#374151' : phaseInfo.border)}
+                                        strokeWidth={isToday ? 4 : (isSelected ? 3 : 1)}
+                                        className="cycle-segment"
+                                        onClick={() => {
+                                            setSelectedCircleDay(cycleDay);
+                                            setSelectedDate(date);
+                                        }}
+                                    />
+                                );
+                            })}
+                            </g>
+                            
+                            {/* Textes fixes */}
+                            {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
+                                const cycleDay = i + 1;
+                                const phaseInfo = getPhaseInfo(cycleDay, cycleConfig.cycleLength);
+                                const date = getDateForCycleDay(cycleDay);
+                                const moonInfo = getMoonInfo(date);
+                                
+                                const baseAngle = -Math.PI / 2 + i * anglePerDay + anglePerDay / 2;
+                                const adjustedAngle = baseAngle + rotationOffset;
+                                
+                                const textX = centerX + middleRadius * Math.cos(adjustedAngle);
+                                const textY = centerY + middleRadius * Math.sin(adjustedAngle);
+                                
+                                return (
+                                    <g key={`text-${cycleDay}`}>
+                                        <text
+                                            x={textX}
+                                            y={textY - 10}
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            style={{ fontSize: '10px', pointerEvents: 'none' }}
                                         >
-                                            <XIcon />
-                                        </button>
-                                    </div>
-
+                                            {moonInfo.emoji}
+                                        </text>
+                                        <text
+                                            x={textX}
+                                            y={textY + 1}
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            style={{ fontSize: '9px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                        >
+                                            J{cycleDay}
+                                        </text>
+                                        <text
+                                            x={textX}
+                                            y={textY + 11}
+                                            textAnchor="middle"
+                                            dominantBaseline="middle"
+                                            style={{ fontSize: '8px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                        >
+                                            {date.getDate()}/{date.getMonth() + 1}
+                                        </text>
+                                    </g>
+                                );
+                            })}
+                            
+                            {/* Centre blanc */}
+                            <circle
+                                cx={centerX}
+                                cy={centerY}
+                                r={innerRadius * 0.95}
+                                fill="white"
+                                stroke="#e5e7eb"
+                                strokeWidth="2"
+                            />
+                            
+                            {/* Contenu central */}
+                            <foreignObject
+                                x={centerX - innerRadius * 0.85}
+                                y={centerY - innerRadius * 0.85}
+                                width={innerRadius * 1.7}
+                                height={innerRadius * 1.7}
+                            >
+                                <div style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '16px',
+                                    overflow: 'auto'
+                                }}>
                                     {(() => {
-                                        const phase = getPhaseForDay(selectedDay);
-                                        const date = new Date(getCycleDayDate(selectedDay));
-                                        const dayEvents = getEventsForCycleDay(selectedDay);
-                                        
+                                        const date = getDateForCycleDay(displayDay);
+                                        const phaseInfo = getPhaseInfo(displayDay, cycleConfig.cycleLength);
+                                        const sunTimes = getSunTimes(date);
+                                        const moonInfo = getMoonInfo(date);
+                                        const dayActivities = activities[formatDate(date)] || [];
+
                                         return (
                                             <>
-                                                <div style={{
-                                                    padding: '12px',
-                                                    borderRadius: '8px',
-                                                    background: phase?.lightColor,
-                                                    marginBottom: '16px'
-                                                }}>
-                                                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>
-                                                        {phase?.emoji}
+                                                <div style={{ textAlign: 'center', marginBottom: '12px' }}>
+                                                    <div style={{ fontSize: '18px', fontWeight: '700', color: phaseInfo.text, marginBottom: '4px' }}>
+                                                        J{displayDay} • {phaseInfo.shortName}
                                                     </div>
-                                                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                                                        {phase?.name} - {phase?.archetype}
+                                                    <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                        {date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                     </div>
-                                                    <div style={{ fontSize: '13px', color: '#6b7280' }}>
-                                                        {phase?.description}
+                                                    <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+                                                        {moonInfo.emoji} {moonInfo.name}
+                                                    </div>
+                                                    <div style={{ fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>
+                                                        ☀️ {sunTimes.sunrise} → {sunTimes.sunset}
                                                     </div>
                                                 </div>
-
-                                                <div style={{ marginBottom: '16px' }}>
-                                                    <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
-                                                        {date.toLocaleDateString('fr-FR', {
-                                                            weekday: 'long',
-                                                            day: 'numeric',
-                                                            month: 'long'
-                                                        })}
-                                                    </div>
-                                                </div>
-
-                                                {dayEvents.length > 0 ? (
-                                                    <div>
-                                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>
-                                                            Événements ({dayEvents.length})
-                                                        </h4>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                            {dayEvents.map((event, idx) => (
-                                                                <div
-                                                                    key={idx}
-                                                                    style={{
-                                                                        padding: '10px',
-                                                                        borderRadius: '8px',
-                                                                        borderLeft: `4px solid ${event.color}`,
-                                                                        background: '#f9fafb',
-                                                                        fontSize: '13px'
-                                                                    }}
-                                                                >
-                                                                    <div style={{ fontWeight: '500', marginBottom: '4px' }}>
-                                                                        {event.title}
-                                                                    </div>
-                                                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                                        {new Date(event.start).toLocaleTimeString('fr-FR', {
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })}
-                                                                        {' - '}
-                                                                        {new Date(event.end).toLocaleTimeString('fr-FR', {
-                                                                            hour: '2-digit',
-                                                                            minute: '2-digit'
-                                                                        })}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af', fontSize: '14px' }}>
-                                                        Aucun événement ce jour
+                                                
+                                                {dayActivities.length > 0 && (
+                                                    <div style={{ width: '100%', maxHeight: '120px', overflowY: 'auto' }}>
+                                                        {dayActivities.slice(0, 3).map(act => (
+                                                            <div
+                                                                key={act.id}
+                                                                style={{
+                                                                    padding: '6px',
+                                                                    backgroundColor: act.color,
+                                                                    color: 'white',
+                                                                    borderRadius: '6px',
+                                                                    fontSize: '10px',
+                                                                    fontWeight: '600',
+                                                                    marginBottom: '4px'
+                                                                }}
+                                                            >
+                                                                {act.startTime} • {act.title}
+                                                            </div>
+                                                        ))}
+                                                        {dayActivities.length > 3 && (
+                                                            <div style={{ fontSize: '10px', color: '#9ca3af', textAlign: 'center' }}>
+                                                                +{dayActivities.length - 3} autres
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </>
                                         );
                                     })()}
                                 </div>
-                            )}
-                        </div>
-
-                        {/* Légende des phases */}
-                        <div className="phase-legend" style={{ justifyContent: 'center', marginTop: '32px' }}>
-                            {Object.entries(CYCLE_PHASES).map(([key, phase]) => (
-                                <div key={key} className="phase-badge">
-                                    <span style={{ fontSize: '20px' }}>{phase.emoji}</span>
-                                    <div>
-                                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                                            {phase.name}
-                                        </div>
-                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                            {phase.archetype}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                            </foreignObject>
+                        </svg>
                     </div>
                 );
             };
@@ -957,7 +978,7 @@
                         <button
                             onClick={() => setShowConfigModal(true)}
                             style={{
-                                padding: '8px 12px',
+                                padding: '8px 16px',
                                 backgroundColor: 'white',
                                 color: '#6b7280',
                                 borderRadius: '8px',
@@ -985,13 +1006,10 @@
                         <div style={{
                             background: 'white',
                             borderRadius: '12px',
-                            padding: '32px',
+                            padding: '24px',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                         }}>
-                            <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '20px', fontWeight: '600', textAlign: 'center' }}>
-                                Mon Cycle 🌙
-                            </h2>
-                            {renderCycleView()}
+                            {renderCircleView()}
                         </div>
                     </div>
 
@@ -1002,7 +1020,7 @@
                             onSave={(newConfig) => {
                                 setCycleConfig(newConfig);
                                 setShowConfigModal(false);
-                                showToast('Configuration enregistrée', 'success');
+                                showToast('Configuration enregistrée ✓', 'success');
                             }}
                             onClose={() => setShowConfigModal(false)}
                         />

@@ -658,11 +658,28 @@
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
                 if (saved) {
-                    const parsed = JSON.parse(saved);
-                    return {
-                        cycleLength: parsed.cycleLength,
-                        cycleStartDate: new Date(parsed.cycleStartDate)
-                    };
+                    try {
+                        const parsed = JSON.parse(saved);
+                        const startDate = new Date(parsed.cycleStartDate);
+                        // Vérifier que la date est valide
+                        if (isNaN(startDate.getTime())) {
+                            console.error('Invalid date in localStorage, using today');
+                            return {
+                                cycleLength: 28,
+                                cycleStartDate: new Date()
+                            };
+                        }
+                        return {
+                            cycleLength: parsed.cycleLength || 28,
+                            cycleStartDate: startDate
+                        };
+                    } catch (e) {
+                        console.error('Error parsing cycleConfig:', e);
+                        return {
+                            cycleLength: 28,
+                            cycleStartDate: new Date()
+                        };
+                    }
                 }
                 return {
                     cycleLength: 28,
@@ -671,13 +688,18 @@
             });
 
             useEffect(() => {
-                localStorage.setItem('cycleConfig', JSON.stringify({
-                    cycleLength: cycleConfig.cycleLength,
-                    cycleStartDate: cycleConfig.cycleStartDate.toISOString()
-                }));
+                if (cycleConfig.cycleStartDate && !isNaN(cycleConfig.cycleStartDate.getTime())) {
+                    localStorage.setItem('cycleConfig', JSON.stringify({
+                        cycleLength: cycleConfig.cycleLength,
+                        cycleStartDate: cycleConfig.cycleStartDate.toISOString()
+                    }));
+                }
             }, [cycleConfig]);
 
             const getCycleDay = (date) => {
+                if (!cycleConfig.cycleStartDate || isNaN(cycleConfig.cycleStartDate.getTime())) {
+                    return 1; // Retourner jour 1 par défaut si date invalide
+                }
                 const diffTime = date - cycleConfig.cycleStartDate;
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 const cycleDay = ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength;
@@ -685,14 +707,29 @@
             };
 
             const getDateForCycleDay = (cycleDay) => {
-                const currentCycleDay = getCycleDay(new Date());
-                const daysToAdd = cycleDay - currentCycleDay;
-                const date = new Date();
-                date.setDate(date.getDate() + daysToAdd);
-                return date;
+                try {
+                    const currentCycleDay = getCycleDay(new Date());
+                    const daysToAdd = cycleDay - currentCycleDay;
+                    const date = new Date();
+                    date.setDate(date.getDate() + daysToAdd);
+                    
+                    // Vérifier que la date calculée est valide
+                    if (isNaN(date.getTime())) {
+                        console.error('Invalid date calculated for cycle day:', cycleDay);
+                        return new Date(); // Retourner aujourd'hui par défaut
+                    }
+                    
+                    return date;
+                } catch (e) {
+                    console.error('Error in getDateForCycleDay:', e);
+                    return new Date();
+                }
             };
 
             const formatDate = (date) => {
+                if (!date || isNaN(date.getTime())) {
+                    return new Date().toISOString().split('T')[0]; // Retourner aujourd'hui si date invalide
+                }
                 return date.toISOString().split('T')[0];
             };
 

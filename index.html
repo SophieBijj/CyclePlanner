@@ -741,7 +741,12 @@
                     
                     const startDate = new Date(event.start.dateTime);
                     const endDate = new Date(event.end.dateTime);
-                    const dateKey = startDate.toISOString().split('T')[0];
+                    
+                    // Utiliser la date locale au lieu de UTC pour éviter les décalages
+                    const year = startDate.getFullYear();
+                    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(startDate.getDate()).padStart(2, '0');
+                    const dateKey = `${year}-${month}-${day}`;
                     
                     if (!newActivities[dateKey]) {
                         newActivities[dateKey] = [];

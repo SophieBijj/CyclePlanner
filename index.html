@@ -245,16 +245,6 @@
             useEffect(() => {
                 let gapiTimeout, gisTimeout;
                 
-                // Charger les calendriers sélectionnés depuis localStorage
-                const savedCalendars = localStorage.getItem('selectedCalendars');
-                if (savedCalendars) {
-                    try {
-                        setSelectedCalendars(JSON.parse(savedCalendars));
-                    } catch (e) {
-                        console.error('Error loading saved calendars:', e);
-                    }
-                }
-                
                 const checkAndLoad = () => {
                     if (typeof gapi !== 'undefined') {
                         gapiLoaded();
@@ -338,7 +328,7 @@
                             }
                             
                             setIsSignedIn(true);
-                            await loadCalendars();
+                            await loadCalendars(); // loadCalendars s'occupe de l'auto-sync
                         },
                     });
                     gisInited.current = true;
@@ -377,14 +367,7 @@
                     if (token !== null) {
                         console.log('Already signed in, loading calendars...');
                         setIsSignedIn(true);
-                        loadCalendars().then(() => {
-                            // Auto-sync si des calendriers sont sélectionnés
-                            const savedCalendars = localStorage.getItem('selectedCalendars');
-                            if (savedCalendars) {
-                                console.log('Auto-syncing...');
-                                setTimeout(() => handleSync(), 1000);
-                            }
-                        });
+                        loadCalendars(); // loadCalendars s'occupe maintenant de l'auto-sync
                     }
                 }
             };
@@ -440,7 +423,15 @@
                             // Vérifier que les calendriers sauvegardés existent toujours
                             const validSaved = saved.filter(id => cals.some(cal => cal.id === id));
                             if (validSaved.length > 0) {
+                                console.log('Restoring selected calendars:', validSaved);
                                 setSelectedCalendars(validSaved);
+                                
+                                // Auto-sync après avoir restauré les calendriers
+                                setTimeout(() => {
+                                    console.log('Auto-syncing with restored calendars...');
+                                    handleSync();
+                                }, 1000);
+                                
                                 return; // Ne pas sélectionner le principal par défaut
                             }
                         } catch (e) {

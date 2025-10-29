@@ -743,6 +743,7 @@
         // ===== CREATE EVENT MODAL =====
         const CreateEventModal = ({ date, calendars, onClose, onCreate }) => {
             const [title, setTitle] = useState('');
+            const [selectedDate, setSelectedDate] = useState(date);
             const [startTime, setStartTime] = useState('09:00');
             const [duration, setDuration] = useState(60);
             const [selectedCalendar, setSelectedCalendar] = useState(calendars[0]?.id || '');
@@ -758,7 +759,7 @@
                 try {
                     await onCreate({
                         title,
-                        date,
+                        date: selectedDate,
                         startTime,
                         duration,
                         calendarId: selectedCalendar
@@ -774,6 +775,19 @@
             const getCalendarColor = (calendarId) => {
                 const cal = calendars.find(c => c.id === calendarId);
                 return cal?.backgroundColor || '#3b82f6';
+            };
+
+            // Formater la date pour l'input type="date" (YYYY-MM-DD)
+            const formatDateForInput = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const handleDateChange = (e) => {
+                const newDate = new Date(e.target.value + 'T00:00:00');
+                setSelectedDate(newDate);
             };
 
             return (
@@ -828,17 +842,15 @@
                                 Date
                             </label>
                             <input
-                                type="text"
-                                value={date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                disabled
+                                type="date"
+                                value={formatDateForInput(selectedDate)}
+                                onChange={handleDateChange}
                                 style={{
                                     width: '100%',
                                     padding: '10px',
                                     borderRadius: '8px',
                                     border: '1px solid #e5e7eb',
-                                    fontSize: '14px',
-                                    backgroundColor: '#f9fafb',
-                                    color: '#6b7280'
+                                    fontSize: '14px'
                                 }}
                             />
                         </div>

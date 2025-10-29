@@ -426,10 +426,10 @@
                                 console.log('Restoring selected calendars:', validSaved);
                                 setSelectedCalendars(validSaved);
                                 
-                                // Auto-sync après avoir restauré les calendriers
+                                // Auto-sync en passant directement les calendriers pour éviter problème de timing React
                                 setTimeout(() => {
                                     console.log('Auto-syncing with restored calendars...');
-                                    handleSync();
+                                    handleSync(validSaved); // Passer les calendriers directement
                                 }, 1000);
                                 
                                 return; // Ne pas sélectionner le principal par défaut
@@ -451,10 +451,22 @@
                 }
             };
 
-            const handleSync = async () => {
-                if (!isSignedIn || selectedCalendars.length === 0) return;
+            const handleSync = async (calendarsToSync = null) => {
+                const calendars = calendarsToSync || selectedCalendars;
+                
+                if (calendars.length === 0) {
+                    console.log('Cannot sync: no calendars selected');
+                    return;
+                }
                 if (typeof gapi === 'undefined' || !gapi.client) {
                     onError?.('Google API non disponible');
+                    return;
+                }
+                
+                // Vérifier qu'on a un token valide
+                const token = gapi.client.getToken();
+                if (!token) {
+                    console.log('Cannot sync: no valid token');
                     return;
                 }
                 
@@ -465,7 +477,8 @@
                     const sixMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 6, 31);
                     
                     const allEvents = [];
-                    for (const calendarId of selectedCalendars) {
+                    for (const calendarId of calendars) {
+                        console.log('Fetching events from calendar:', calendarId);
                         const response = await gapi.client.calendar.events.list({
                             calendarId: calendarId,
                             timeMin: sixMonthsAgo.toISOString(),
@@ -475,10 +488,12 @@
                         });
                         
                         const events = response.result.items || [];
+                        console.log(`Found ${events.length} events in calendar ${calendarId}`);
                         allEvents.push(...events.map(e => ({ ...e, calendarId })));
                     }
                     
-                    onSync?.(allEvents, selectedCalendars[0]);
+                    console.log(`Total events found: ${allEvents.length}`);
+                    onSync?.(allEvents, calendars[0]);
                 } catch (err) {
                     console.error('Error syncing:', err);
                     onError?.('Erreur de synchronisation');

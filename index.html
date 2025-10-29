@@ -57,6 +57,21 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Scrollbar visible sur mobile */
+        .event-list-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .event-list-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 2px;
+        }
+        .event-list-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+        }
+        .event-list-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -232,12 +247,16 @@
         }
 
         function getMoonInfo(date) {
-            const knownNewMoon = new Date(2000, 0, 6, 18, 14);
+            // Nouvelle lune de référence: 21 octobre 2025, 13h25 UTC (récente pour meilleure précision)
+            const knownNewMoon = new Date(Date.UTC(2025, 9, 21, 13, 25)); // mois 9 = octobre
             const lunarCycle = 29.53058867;
             
             const diff = date - knownNewMoon;
             const daysSinceKnownNewMoon = diff / (1000 * 60 * 60 * 24);
-            const lunarAge = daysSinceKnownNewMoon % lunarCycle;
+            let lunarAge = daysSinceKnownNewMoon % lunarCycle;
+            
+            // Gérer les dates avant la référence
+            if (lunarAge < 0) lunarAge += lunarCycle;
             
             const phase = Math.floor((lunarAge / lunarCycle) * 8);
             
@@ -1831,17 +1850,17 @@
 
                                         return (
                                             <>
-                                                <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-                                                    <div style={{ fontSize: '18px', fontWeight: '700', color: phaseInfo.text, marginBottom: '4px' }}>
+                                                <div style={{ textAlign: 'center', marginBottom: window.innerWidth < 768 ? '8px' : '12px' }}>
+                                                    <div style={{ fontSize: window.innerWidth < 768 ? '16px' : '18px', fontWeight: '700', color: phaseInfo.text, marginBottom: '4px' }}>
                                                         J{displayDay} • {phaseInfo.shortName}
                                                     </div>
-                                                    <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                                                    <div style={{ fontSize: window.innerWidth < 768 ? '10px' : '11px', color: '#6b7280' }}>
                                                         {date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                                                     </div>
-                                                    <div style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
+                                                    <div style={{ fontSize: window.innerWidth < 768 ? '9px' : '10px', color: '#9ca3af', marginTop: '4px' }}>
                                                         {moonInfo.emoji} {moonInfo.name}
                                                     </div>
-                                                    <div style={{ fontSize: '9px', color: '#9ca3af', marginTop: '2px' }}>
+                                                    <div style={{ fontSize: window.innerWidth < 768 ? '8px' : '9px', color: '#9ca3af', marginTop: '2px' }}>
                                                         ☀️ {sunTimes.sunrise} → {sunTimes.sunset}
                                                     </div>
                                                 </div>
@@ -1853,14 +1872,14 @@
                                                     }}
                                                     style={{
                                                         width: '100%',
-                                                        padding: '8px',
-                                                        marginBottom: '12px',
+                                                        padding: window.innerWidth < 768 ? '6px' : '8px',
+                                                        marginBottom: window.innerWidth < 768 ? '8px' : '12px',
                                                         backgroundColor: '#ec4899',
                                                         color: 'white',
                                                         borderRadius: '6px',
                                                         border: 'none',
                                                         cursor: 'pointer',
-                                                        fontSize: '11px',
+                                                        fontSize: window.innerWidth < 768 ? '10px' : '11px',
                                                         fontWeight: '600',
                                                         display: 'flex',
                                                         alignItems: 'center',
@@ -1873,7 +1892,16 @@
                                                 </button>
                                                 
                                                 {dayActivities.length > 0 && (
-                                                    <div style={{ width: '100%', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                                                    <div 
+                                                        className="event-list-scroll"
+                                                        style={{ 
+                                                            width: '100%', 
+                                                            maxHeight: window.innerWidth < 768 ? '250px' : '200px', 
+                                                            overflowY: 'auto', 
+                                                            paddingRight: '4px',
+                                                            WebkitOverflowScrolling: 'touch' // Smooth scroll sur iOS
+                                                        }}
+                                                    >
                                                         {dayActivities.map(act => (
                                                             <div
                                                                 key={act.id}
@@ -1886,7 +1914,7 @@
                                                                     backgroundColor: act.color,
                                                                     color: 'white',
                                                                     borderRadius: '6px',
-                                                                    fontSize: '10px',
+                                                                    fontSize: window.innerWidth < 768 ? '9px' : '10px',
                                                                     fontWeight: '600',
                                                                     marginBottom: '4px',
                                                                     cursor: 'pointer',

@@ -3,33 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#2563eb">
-    <title>Mon Planning Personnalisé</title>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1vbiBQbGFubmluZyBQZXJzb25uYWxpc8OpIiwKICAic2hvcnRfbmFtZSI6ICJQbGFubmluZyIsCiAgImRlc2NyaXB0aW9uIjogIkdlc3Rpb24gZGUgdm90cmUgcGxhbm5pbmcgcGVyc29ubmVsIGF2ZWMgdmlzaW9ucyIsCiAgInN0YXJ0X3VybCI6ICIvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZmZmZmZmIiwKICAidGhlbWVfY29sb3IiOiAiIzI1NjNlYiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmclMjB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnJTIwd2lkdGg9JzE5MiclMjBoZWlnaHQ9JzE5MiclM0UlM0NyZWN0JTIwd2lkdGg9JzE5MiclMjBoZWlnaHQ9JzE5MiclMjBmaWxsPSclMjMyNTYzZWInLyUzRSUzQ3RleHQlMjB4PSc1MCUyNSclMjB5PSc1MCUyNSclMjBmb250LXNpemU9JzgwJyUyMGZpbGw9JyNmZmYnJTIwZG9taW5hbnQtYmFzZWxpbmU9J21pZGRsZSclMjB0ZXh0LWFuY2hvcj0nbWlkZGxlJyUzRSVGMCU5RiU5MyU4NSUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsCiAgICAgICJzaXplcyI6ICIxOTJ4MTkyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sLCUzQ3N2ZyUyMHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyclMjB3aWR0aD0nNTEyJyUyMGhlaWdodD0nNTEyJyUzRSUzQ3JlY3QlMjB3aWR0aD0nNTEyJyUyMGhlaWdodD0nNTEyJyUyMGZpbGw9JyUyMzI1NjNlYicvJTNFJTNDdGV4dCUyMHg9JzUwJTI1JyUyMHk9JzUwJTI1JyUyMGZvbnQtc2l6ZT0nMjQwJyUyMGZpbGw9JyNmZmYnJTIwZG9taW5hbnQtYmFzZWxpbmU9J21pZGRsZSclMjB0ZXh0LWFuY2hvcj0nbWlkZGxlJyUzRSVGMCU5RiU5MyU4NSUzQy90ZXh0JTNFJTNDL3N2ZyUzRSIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0=">
+    <meta name="theme-color" content="#ec4899">
+    <title>Planning Cyclique 🌸</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ical.js@1.5.0/build/ical.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f9fafb;
         }
         .activity-block:hover {
             filter: brightness(0.95);
         }
-        .calendar-day {
-            min-height: 120px;
-        }
-        .calendar-day:hover {
-            background-color: #f9fafb;
-        }
-    
-        /* Pattern pour temps de déplacement */
         .travel-time {
             background-color: #f3f4f6;
             background-image: repeating-linear-gradient(
@@ -42,8 +32,6 @@
             border: 2px solid #9ca3af;
             opacity: 0.9;
         }
-        
-        /* Toast notifications */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -55,7 +43,6 @@
             z-index: 10000;
             animation: slideIn 0.3s ease-out;
         }
-        
         @keyframes slideIn {
             from {
                 transform: translateX(400px);
@@ -66,6 +53,90 @@
                 opacity: 1;
             }
         }
+        .cycle-segment {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .cycle-segment:hover {
+            opacity: 0.85;
+        }
+        .sun-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .sun-badge {
+            position: absolute;
+            font-size: 10px;
+            font-weight: 700;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .cycle-day-cell {
+            min-height: 100px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .cycle-day-cell:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+        .node {
+            cursor: move;
+        }
+        .node:hover {
+            filter: brightness(1.15);
+        }
+        .node.selected {
+            filter: brightness(1.25);
+        }
+        .color-swatch {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .color-swatch.selected {
+            border: 3px solid #000;
+            transform: scale(1.15);
+        }
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+        .sync-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -74,7 +145,13 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Icônes SVG
+        // CONFIGURATION GOOGLE CALENDAR API
+        const GOOGLE_CLIENT_ID = 'VOTRE_CLIENT_ID_ICI.apps.googleusercontent.com';
+        const GOOGLE_API_KEY = 'VOTRE_API_KEY_ICI';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar';
+
+        // ===== ICÔNES =====
         const PlusIcon = () => (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -82,14 +159,6 @@
             </svg>
         );
 
-        const UploadIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-        );
-        
         const DownloadIcon = () => (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -110,12 +179,10 @@
             </svg>
         );
 
-        const CalendarIcon = () => (
+        const SettingsIcon = () => (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m5.66-17a10 10 0 0 1 0 16M6.34 4a10 10 0 0 0 0 16"></path>
             </svg>
         );
 
@@ -148,53 +215,312 @@
             </svg>
         );
 
-        // Toast component
-        function Toast({ message, type = 'success', onClose }) {
+        const SyncIcon = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+        );
+
+        const GoogleIcon = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+        );
+
+        // ===== GOOGLE CALENDAR API =====
+        const GoogleCalendarSync = ({ onSync, onError }) => {
+            const [isSignedIn, setIsSignedIn] = useState(false);
+            const [isSyncing, setIsSyncing] = useState(false);
+            const [calendars, setCalendars] = useState([]);
+            const [selectedCalendars, setSelectedCalendars] = useState([]);
+            const gapiInited = useRef(false);
+            const gisInited = useRef(false);
+            const tokenClient = useRef(null);
+
             useEffect(() => {
-                const timer = setTimeout(onClose, 3000);
-                return () => clearTimeout(timer);
-            }, [onClose]);
+                gapiLoaded();
+                gisLoaded();
+            }, []);
+
+            const gapiLoaded = () => {
+                if (typeof gapi !== 'undefined') {
+                    gapi.load('client', initializeGapiClient);
+                }
+            };
+
+            const initializeGapiClient = async () => {
+                try {
+                    await gapi.client.init({
+                        apiKey: GOOGLE_API_KEY,
+                        discoveryDocs: [DISCOVERY_DOC],
+                    });
+                    gapiInited.current = true;
+                    maybeEnableButtons();
+                } catch (err) {
+                    console.error('Error initializing GAPI:', err);
+                }
+            };
+
+            const gisLoaded = () => {
+                if (typeof google !== 'undefined') {
+                    tokenClient.current = google.accounts.oauth2.initTokenClient({
+                        client_id: GOOGLE_CLIENT_ID,
+                        scope: SCOPES,
+                        callback: async (response) => {
+                            if (response.error) {
+                                onError?.('Erreur d\'authentification Google');
+                                return;
+                            }
+                            setIsSignedIn(true);
+                            await loadCalendars();
+                        },
+                    });
+                    gisInited.current = true;
+                    maybeEnableButtons();
+                }
+            };
+
+            const maybeEnableButtons = () => {
+                if (gapiInited.current && gisInited.current) {
+                    // Vérifier si déjà connecté
+                    if (gapi.client.getToken()) {
+                        setIsSignedIn(true);
+                        loadCalendars();
+                    }
+                }
+            };
+
+            const handleAuthClick = () => {
+                if (!tokenClient.current) return;
+                
+                if (gapi.client.getToken() === null) {
+                    tokenClient.current.requestAccessToken({ prompt: 'consent' });
+                } else {
+                    tokenClient.current.requestAccessToken({ prompt: '' });
+                }
+            };
+
+            const handleSignoutClick = () => {
+                const token = gapi.client.getToken();
+                if (token !== null) {
+                    google.accounts.oauth2.revoke(token.access_token);
+                    gapi.client.setToken('');
+                    setIsSignedIn(false);
+                    setCalendars([]);
+                    setSelectedCalendars([]);
+                }
+            };
+
+            const loadCalendars = async () => {
+                try {
+                    const response = await gapi.client.calendar.calendarList.list();
+                    const cals = response.result.items || [];
+                    setCalendars(cals);
+                    
+                    // Sélectionner le calendrier principal par défaut
+                    const primary = cals.find(cal => cal.primary);
+                    if (primary) {
+                        setSelectedCalendars([primary.id]);
+                        localStorage.setItem('selectedCalendars', JSON.stringify([primary.id]));
+                    }
+                } catch (err) {
+                    console.error('Error loading calendars:', err);
+                    onError?.('Erreur de chargement des calendriers');
+                }
+            };
+
+            const handleSync = async () => {
+                if (!isSignedIn || selectedCalendars.length === 0) return;
+                
+                setIsSyncing(true);
+                try {
+                    // Récupérer les événements des calendriers sélectionnés
+                    const now = new Date();
+                    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+                    const sixMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 6, 31);
+                    
+                    const allEvents = [];
+                    for (const calendarId of selectedCalendars) {
+                        const response = await gapi.client.calendar.events.list({
+                            calendarId: calendarId,
+                            timeMin: sixMonthsAgo.toISOString(),
+                            timeMax: sixMonthsAhead.toISOString(),
+                            singleEvents: true,
+                            orderBy: 'startTime',
+                        });
+                        
+                        const events = response.result.items || [];
+                        allEvents.push(...events.map(e => ({ ...e, calendarId })));
+                    }
+                    
+                    onSync?.(allEvents, selectedCalendars[0]); // Premier calendrier = calendrier principal
+                } catch (err) {
+                    console.error('Error syncing:', err);
+                    onError?.('Erreur de synchronisation');
+                } finally {
+                    setIsSyncing(false);
+                }
+            };
+
+            const toggleCalendar = (calendarId) => {
+                const newSelected = selectedCalendars.includes(calendarId)
+                    ? selectedCalendars.filter(id => id !== calendarId)
+                    : [...selectedCalendars, calendarId];
+                
+                setSelectedCalendars(newSelected);
+                localStorage.setItem('selectedCalendars', JSON.stringify(newSelected));
+            };
 
             return (
-                <div className="toast" style={{
-                    borderLeft: `4px solid ${type === 'success' ? '#16a34a' : '#ef4444'}`
-                }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '20px' }}>
-                            {type === 'success' ? '✓' : '⚠'}
-                        </span>
-                        <span style={{ fontWeight: '500', color: '#1f2937' }}>{message}</span>
+                <div style={{ padding: '20px', background: 'white', borderRadius: '12px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <GoogleIcon />
+                            Google Calendar
+                        </h3>
+                        {!isSignedIn ? (
+                            <button
+                                onClick={handleAuthClick}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: '#4285F4',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                <GoogleIcon />
+                                Se connecter
+                            </button>
+                        ) : (
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                    onClick={handleSync}
+                                    disabled={isSyncing || selectedCalendars.length === 0}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
+                                        color: 'white',
+                                        borderRadius: '8px',
+                                        fontWeight: '500',
+                                        cursor: isSyncing ? 'not-allowed' : 'pointer',
+                                        border: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    <SyncIcon />
+                                    {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
+                                </button>
+                                <button
+                                    onClick={handleSignoutClick}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        borderRadius: '8px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        border: 'none',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Déconnecter
+                                </button>
+                            </div>
+                        )}
                     </div>
+
+                    {isSignedIn && calendars.length > 0 && (
+                        <div>
+                            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
+                                Sélectionnez les calendriers à synchroniser :
+                            </p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {calendars.map(cal => (
+                                    <label
+                                        key={cal.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '8px',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            background: selectedCalendars.includes(cal.id) ? '#f0fdf4' : 'transparent'
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedCalendars.includes(cal.id)}
+                                            onChange={() => toggleCalendar(cal.id)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                        <div
+                                            style={{
+                                                width: '12px',
+                                                height: '12px',
+                                                borderRadius: '50%',
+                                                backgroundColor: cal.backgroundColor || '#3b82f6'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '14px' }}>
+                                            {cal.summary} {cal.primary && '(Principal)'}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
-        }
+        };
 
-        function PlanningPersonnel() {
-            const [currentDate, setCurrentDate] = useState(new Date());
-            const [view, setView] = useState('cycle');
+        // ===== COMPOSANT PRINCIPAL =====
+        function PlanningCyclique() {
             const [activities, setActivities] = useState(() => {
                 const saved = localStorage.getItem('planningActivities');
                 return saved ? JSON.parse(saved) : {};
             });
-            const [cycleConfig, setCycleConfig] = useState(() => {
-                const saved = localStorage.getItem('cycleConfig');
-                return saved ? JSON.parse(saved) : { cycleLength: 28, cycleStartDate: null };
-            });
-            const [tasks, setTasks] = useState(() => {
-                const saved = localStorage.getItem('planningTasks');
+
+            const [visions, setVisions] = useState(() => {
+                const saved = localStorage.getItem('planningVisions');
                 return saved ? JSON.parse(saved) : [];
             });
+
+            const [currentDate, setCurrentDate] = useState(new Date());
+            const [view, setView] = useState('day');
             const [showAddModal, setShowAddModal] = useState(false);
-            const [showImportModal, setShowImportModal] = useState(false);
             const [showConfigModal, setShowConfigModal] = useState(false);
-            const [showExportModal, setShowExportModal] = useState(false);
-            const [importStatus, setImportStatus] = useState('');
+            const [selectedDate, setSelectedDate] = useState(null);
             const [editingActivity, setEditingActivity] = useState(null);
-            const [selectedDate, setSelectedDate] = useState(new Date());
             const [toast, setToast] = useState(null);
-            const fileInputRef = useRef(null);
-            const importInputRef = useRef(null);
-            
+            const [selectedCircleDay, setSelectedCircleDay] = useState(null);
+            const [draggedNode, setDraggedNode] = useState(null);
+            const [syncStatus, setSyncStatus] = useState(null);
+            const [primaryCalendarId, setPrimaryCalendarId] = useState(null);
+
+            const [cycleConfig, setCycleConfig] = useState(() => {
+                const saved = localStorage.getItem('cycleConfig');
+                return saved ? JSON.parse(saved) : {
+                    startDate: new Date().toISOString().split('T')[0],
+                    cycleLength: 28
+                };
+            });
+
             const [newActivity, setNewActivity] = useState({
                 title: '',
                 startTime: '09:00',
@@ -208,403 +534,436 @@
                 specificDates: [],
                 travelBefore: 0,
                 travelAfter: 0,
-                linkedVision: null
-            });
-            
-            // Charger les visions depuis le mind-map
-            const [visions, setVisions] = useState(() => {
-                const saved = localStorage.getItem('planningVisions');
-                return saved ? JSON.parse(saved) : [];
+                linkedVision: null,
+                googleEventId: null // Nouveau champ pour lier à Google Calendar
             });
 
-            // Sauvegarde automatique dans localStorage
+            // Sauvegarder automatiquement
             useEffect(() => {
                 localStorage.setItem('planningActivities', JSON.stringify(activities));
             }, [activities]);
 
             useEffect(() => {
-                localStorage.setItem('planningTasks', JSON.stringify(tasks));
-            }, [tasks]);
+                localStorage.setItem('planningVisions', JSON.stringify(visions));
+            }, [visions]);
 
             useEffect(() => {
                 localStorage.setItem('cycleConfig', JSON.stringify(cycleConfig));
             }, [cycleConfig]);
-            
-            // 🎨 Écouter les changements de visions et mettre à jour les couleurs des activités
+
+            // Synchronisation automatique au chargement
             useEffect(() => {
-                const handleStorageChange = () => {
-                    const saved = localStorage.getItem('planningVisions');
-                    if (saved) {
-                        const updatedVisions = JSON.parse(saved);
-                        setVisions(updatedVisions);
-                        
-                        // Mettre à jour les couleurs des activités liées
-                        const updatedActivities = {};
-                        let hasChanges = false;
-                        
-                        Object.entries(activities).forEach(([dateKey, acts]) => {
-                            updatedActivities[dateKey] = acts.map(activity => {
-                                if (activity.linkedVision) {
-                                    const visionColor = getVisionColorFromList(activity.linkedVision, updatedVisions);
-                                    if (visionColor && activity.color !== visionColor) {
-                                        hasChanges = true;
-                                        return { ...activity, color: visionColor };
-                                    }
-                                }
-                                return activity;
-                            });
-                        });
-                        
-                        if (hasChanges) {
-                            setActivities(updatedActivities);
-                        }
+                const timer = setTimeout(() => {
+                    const syncButton = document.querySelector('[data-sync-button]');
+                    if (syncButton && !syncButton.disabled) {
+                        syncButton.click();
                     }
-                };
+                }, 1000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            // ===== FONCTIONS GOOGLE CALENDAR =====
+            const syncFromGoogleCalendar = async (events, primaryCal) => {
+                setPrimaryCalendarId(primaryCal);
+                setSyncStatus('syncing');
                 
-                // Fonction helper pour obtenir la couleur depuis une liste de visions
-                const getVisionColorFromList = (nodeId, visionsList) => {
-                    if (!nodeId) return null;
+                try {
+                    const newActivities = { ...activities };
                     
-                    const vision = visionsList.find(v => v.id === nodeId);
-                    if (vision) return vision.color;
-                    
-                    for (const v of visionsList) {
-                        if (v.children) {
-                            const child = v.children.find(c => c.id === nodeId);
-                            if (child) return v.color;
-                        }
-                    }
-                    return null;
-                };
-                
-                window.addEventListener('storage', handleStorageChange);
-                return () => window.removeEventListener('storage', handleStorageChange);
-            }, [activities]);
-            
-            // 🎨 NOUVEAU : Fonction pour obtenir la couleur de la vision racine
-            const getVisionColor = (nodeId) => {
-                if (!nodeId) return null;
-                
-                // Chercher si c'est une vision racine
-                const vision = visions.find(v => v.id === nodeId);
-                if (vision) {
-                    return vision.color;
-                }
-                
-                // Sinon, chercher dans les enfants et remonter à la vision parente
-                for (const v of visions) {
-                    if (v.children) {
-                        const child = v.children.find(c => c.id === nodeId);
-                        if (child) {
-                            // Retourner la couleur de la vision parente, pas celle de l'enfant
-                            return v.color;
-                        }
-                    }
-                }
-                
-                return null;
-            };
-            
-            // 🎨 NOUVEAU : Appliquer automatiquement la couleur de la vision
-            const applyVisionColor = (activity) => {
-                const visionColor = getVisionColor(activity.linkedVision);
-                if (visionColor && activity.color !== visionColor) {
-                    return { ...activity, color: visionColor };
-                }
-                return activity;
-            };
-
-            // Fonctions de manipulation de dates
-            const formatDateKey = (date) => {
-                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-            };
-
-            const addDays = (date, days) => {
-                const result = new Date(date);
-                result.setDate(result.getDate() + days);
-                return result;
-            };
-
-            const getDayOfWeek = (date) => {
-                const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-                return days[date.getDay()];
-            };
-
-            const getMonthName = (date) => {
-                const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-                return months[date.getMonth()];
-            };
-
-            const isSameDay = (date1, date2) => {
-                return formatDateKey(date1) === formatDateKey(date2);
-            };
-
-            const getCycleDayNumber = (date) => {
-                if (!cycleConfig.cycleStartDate) return null;
-                const start = new Date(cycleConfig.cycleStartDate);
-                const diffTime = date - start;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                const cycleDay = (diffDays % cycleConfig.cycleLength) + 1;
-                return cycleDay > 0 ? cycleDay : cycleConfig.cycleLength + cycleDay;
-            };
-
-            // 🌸 Fonction pour obtenir les infos de phase (couleurs)
-            const getPhaseInfo = (cycleDay) => {
-                if (!cycleDay) return { borderColor: '#e5e7eb', bgColor: '#f3f4f6', textColor: '#6b7280', label: '' };
-                
-                const ovulationDay = cycleConfig.cycleLength - 14; // Ovulation = cycle - 14 jours
-                const cycleLength = cycleConfig.cycleLength;
-                
-                if (cycleDay >= 1 && cycleDay <= 5) {
-                    // Menstruation - Rouge
-                    return { 
-                        borderColor: '#f87171', 
-                        bgColor: '#fca5a5', 
-                        textColor: '#7f1d1d', 
-                        label: 'Menstruation' 
-                    };
-                } else if (cycleDay >= 6 && cycleDay < ovulationDay - 1) {
-                    // Folliculaire - Cyan/Aqua
-                    return { 
-                        borderColor: '#06b6d4', 
-                        bgColor: '#67e8f9', 
-                        textColor: '#164e63', 
-                        label: 'Folliculaire' 
-                    };
-                } else if (cycleDay >= ovulationDay - 1 && cycleDay <= ovulationDay + 1) {
-                    // Ovulation - Jaune/Or
-                    return { 
-                        borderColor: '#f59e0b', 
-                        bgColor: '#fcd34d', 
-                        textColor: '#78350f', 
-                        label: 'Ovulation' 
-                    };
-                } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
-                    // SPM - Rose/Orchidée
-                    return { 
-                        borderColor: '#c026d3', 
-                        bgColor: '#f0abfc', 
-                        textColor: '#701a75', 
-                        label: 'SPM' 
-                    };
-                } else {
-                    // Lutéale - Lavande
-                    return { 
-                        borderColor: '#d946ef', 
-                        bgColor: '#f0abfc', 
-                        textColor: '#701a75', 
-                        label: 'Lutéale' 
-                    };
-                }
-            };
-
-            // 🌙 Fonction pour calculer la phase de la lune
-            const getMoonPhase = (date) => {
-                let year = date.getFullYear();
-                let month = date.getMonth() + 1;
-                const day = date.getDate();
-                
-                let c, e, jd, b;
-                
-                if (month < 3) {
-                    year--;
-                    month += 12;
-                }
-                
-                ++month;
-                c = 365.25 * year;
-                e = 30.6 * month;
-                jd = c + e + day - 694039.09;
-                jd /= 29.5305882;
-                b = parseInt(jd);
-                jd -= b;
-                b = Math.round(jd * 8);
-                
-                if (b >= 8) b = 0;
-                
-                const phases = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘'];
-                const phaseNames = ['Nouvelle', 'Croissant', 'Premier quartier', 'Gibbeuse croissante', 'Pleine', 'Gibbeuse décroissante', 'Dernier quartier', 'Croissant décroissant'];
-                
-                return {
-                    emoji: phases[b],
-                    name: phaseNames[b],
-                    phase: b
-                };
-            };
-
-            // ☀️ Fonction pour calculer les heures de lever/coucher du soleil pour Montréal
-            const getSunTimes = (date) => {
-                const lat = 45.5017;
-                const lng = -73.5673;
-                
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1;
-                const day = date.getDate();
-                
-                const a = Math.floor((14 - month) / 12);
-                const y = year + 4800 - a;
-                const m = month + 12 * a - 3;
-                const jd = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
-                const n = jd - 2451545.0 + 0.0008;
-                
-                const L = (280.460 + 0.9856474 * n) % 360;
-                const g = (357.528 + 0.9856003 * n) % 360;
-                const gRad = g * Math.PI / 180;
-                const lambda = (L + 1.915 * Math.sin(gRad) + 0.020 * Math.sin(2 * gRad)) % 360;
-                const lambdaRad = lambda * Math.PI / 180;
-                const epsilon = 23.439 - 0.0000004 * n;
-                const epsilonRad = epsilon * Math.PI / 180;
-                const dec = Math.asin(Math.sin(epsilonRad) * Math.sin(lambdaRad)) * 180 / Math.PI;
-                const latRad = lat * Math.PI / 180;
-                const decRad = dec * Math.PI / 180;
-                const cosH = -Math.tan(latRad) * Math.tan(decRad);
-                
-                if (cosH > 1 || cosH < -1) {
-                    return { sunrise: '--:--', sunset: '--:--' };
-                }
-                
-                const H = Math.acos(cosH) * 180 / Math.PI;
-                const eqTime = 4 * (L - Math.atan2(Math.tan(lambdaRad), Math.cos(epsilonRad)) * 180 / Math.PI);
-                const sunriseUTC = 12 - H / 15 - eqTime / 60;
-                const sunsetUTC = 12 + H / 15 - eqTime / 60;
-                
-                // Utiliser le timezone du navigateur automatiquement
-                const tzOffset = -date.getTimezoneOffset() / 60;
-                const sunriseLocal = (sunriseUTC + tzOffset + 24) % 24;
-                const sunsetLocal = (sunsetUTC + tzOffset + 24) % 24;
-                
-                const formatTime = (hours) => {
-                    const h = Math.floor(hours);
-                    const m = Math.floor((hours - h) * 60);
-                    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                };
-                
-                return {
-                    sunrise: formatTime(sunriseLocal),
-                    sunset: formatTime(sunsetLocal)
-                };
-            };
-
-            // 🌼☀️🍂❄️ Fonction pour identifier les équinoxes et solstices
-            const getEquinoxSolstice = (date) => {
-                const year = date.getFullYear();
-                const month = date.getMonth() + 1;
-                const day = date.getDate();
-                
-                const events = [
-                    { month: 3, day: 20, emoji: '🌼', name: 'Équinoxe de printemps' },
-                    { month: 6, day: 20, emoji: '☀️', name: 'Solstice d\'été' },
-                    { month: 9, day: 22, emoji: '🍂', name: 'Équinoxe d\'automne' },
-                    { month: 12, day: 21, emoji: '❄️', name: 'Solstice d\'hiver' }
-                ];
-                
-                for (const event of events) {
-                    if (month === event.month && Math.abs(day - event.day) <= 1) {
-                        return event;
-                    }
-                }
-                
-                return null;
-            };
-
-            // Gestion des activités
-            const addActivity = (date, activityData) => {
-                const dateKey = formatDateKey(date);
-                const newId = Date.now().toString();
-                const activityWithId = { ...activityData, id: newId };
-                const updatedActivity = applyVisionColor(activityWithId); // 🎨 Applique la couleur
-                
-                setActivities(prev => ({
-                    ...prev,
-                    [dateKey]: [...(prev[dateKey] || []), updatedActivity]
-                }));
-                setShowAddModal(false);
-                setNewActivity({
-                    title: '',
-                    startTime: '09:00',
-                    duration: 60,
-                    color: '#3b82f6',
-                    description: '',
-                    tasks: [],
-                    recurring: false,
-                    recurrencePattern: 'none',
-                    recurrenceDays: [],
-                    specificDates: [],
-                    travelBefore: 0,
-                    travelAfter: 0,
-                    linkedVision: null
-                });
-                
-                setToast({ message: 'Activité ajoutée avec succès', type: 'success' });
-            };
-
-            const updateActivity = (date, updatedActivity) => {
-                const dateKey = formatDateKey(date);
-                const activityWithColor = applyVisionColor(updatedActivity); // 🎨 Applique la couleur
-                
-                setActivities(prev => ({
-                    ...prev,
-                    [dateKey]: prev[dateKey].map(a => a.id === updatedActivity.id ? activityWithColor : a)
-                }));
-                setEditingActivity(null);
-                setToast({ message: 'Activité modifiée avec succès', type: 'success' });
-            };
-
-            const deleteActivity = (date, activityId) => {
-                const dateKey = formatDateKey(date);
-                setActivities(prev => ({
-                    ...prev,
-                    [dateKey]: prev[dateKey].filter(a => a.id !== activityId)
-                }));
-                setToast({ message: 'Activité supprimée', type: 'success' });
-            };
-
-            const getActivitiesForDate = (date) => {
-                const dateKey = formatDateKey(date);
-                const dayActivities = activities[dateKey] || [];
-                
-                // Récupérer aussi les activités récurrentes
-                const allActivities = [...dayActivities];
-                Object.entries(activities).forEach(([key, acts]) => {
-                    acts.forEach(activity => {
-                        if (activity.recurring && key !== dateKey) {
-                            if (shouldShowRecurringActivity(activity, date)) {
-                                allActivities.push({ ...activity, date: dateKey, isRecurring: true });
-                            }
+                    // Marquer tous les événements Google existants pour vérification
+                    const existingGoogleEvents = new Set();
+                    Object.values(newActivities).flat().forEach(act => {
+                        if (act.googleEventId) {
+                            existingGoogleEvents.add(act.googleEventId);
                         }
                     });
-                });
-                
-                // 🎨 Appliquer les couleurs des visions à toutes les activités
-                return allActivities.map(applyVisionColor).sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+                    // Traiter chaque événement Google
+                    for (const event of events) {
+                        if (!event.start || !event.start.dateTime) continue;
+                        
+                        const startDate = new Date(event.start.dateTime);
+                        const endDate = new Date(event.end.dateTime);
+                        const dateKey = startDate.toISOString().split('T')[0];
+                        
+                        const duration = Math.round((endDate - startDate) / (1000 * 60));
+                        
+                        // Chercher si cet événement existe déjà dans le planner
+                        const existingIndex = newActivities[dateKey]?.findIndex(
+                            act => act.googleEventId === event.id
+                        );
+
+                        const activityData = {
+                            title: event.summary || 'Sans titre',
+                            startTime: startDate.toTimeString().slice(0, 5),
+                            duration: duration,
+                            color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
+                            description: event.description || '',
+                            tasks: [],
+                            recurring: false,
+                            recurrencePattern: 'none',
+                            recurrenceDays: [],
+                            specificDates: [],
+                            travelBefore: 0,
+                            travelAfter: 0,
+                            linkedVision: null,
+                            googleEventId: event.id,
+                            googleCalendarId: event.calendarId,
+                            googleUpdated: event.updated
+                        };
+
+                        if (existingIndex >= 0) {
+                            // Mettre à jour l'événement existant
+                            newActivities[dateKey][existingIndex] = {
+                                ...newActivities[dateKey][existingIndex],
+                                ...activityData
+                            };
+                        } else {
+                            // Ajouter le nouvel événement
+                            if (!newActivities[dateKey]) {
+                                newActivities[dateKey] = [];
+                            }
+                            newActivities[dateKey].push(activityData);
+                        }
+                        
+                        existingGoogleEvents.delete(event.id);
+                    }
+
+                    // Supprimer les événements qui n'existent plus dans Google Calendar
+                    Object.keys(newActivities).forEach(dateKey => {
+                        newActivities[dateKey] = newActivities[dateKey].filter(act => {
+                            if (act.googleEventId && existingGoogleEvents.has(act.googleEventId)) {
+                                return false; // Supprimer
+                            }
+                            return true; // Garder
+                        });
+                        
+                        if (newActivities[dateKey].length === 0) {
+                            delete newActivities[dateKey];
+                        }
+                    });
+
+                    setActivities(newActivities);
+                    setSyncStatus('success');
+                    showToast('Synchronisation réussie', 'success');
+                    
+                    setTimeout(() => setSyncStatus(null), 3000);
+                } catch (err) {
+                    console.error('Sync error:', err);
+                    setSyncStatus('error');
+                    showToast('Erreur de synchronisation', 'error');
+                    setTimeout(() => setSyncStatus(null), 3000);
+                }
             };
 
-            const shouldShowRecurringActivity = (activity, date) => {
-                if (!activity.recurring) return false;
-                const dayOfWeek = date.getDay();
-                
-                switch (activity.recurrencePattern) {
-                    case 'daily':
-                        return true;
-                    case 'weekly':
-                        return activity.recurrenceDays.includes(dayOfWeek);
-                    case 'specific':
-                        return activity.specificDates && activity.specificDates.includes(formatDateKey(date));
-                    default:
-                        return false;
+            const createGoogleEvent = async (dateKey, activity) => {
+                if (!primaryCalendarId || !gapi.client.getToken()) return null;
+
+                try {
+                    const [year, month, day] = dateKey.split('-');
+                    const startDateTime = new Date(year, month - 1, day);
+                    const [hours, minutes] = activity.startTime.split(':');
+                    startDateTime.setHours(parseInt(hours), parseInt(minutes));
+                    
+                    const endDateTime = new Date(startDateTime);
+                    endDateTime.setMinutes(endDateTime.getMinutes() + activity.duration);
+
+                    const event = {
+                        summary: activity.title,
+                        description: activity.description,
+                        start: {
+                            dateTime: startDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        },
+                        end: {
+                            dateTime: endDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        },
+                    };
+
+                    if (activity.recurring && activity.recurrencePattern !== 'none') {
+                        const rrule = buildRRule(activity);
+                        if (rrule) {
+                            event.recurrence = [rrule];
+                        }
+                    }
+
+                    const response = await gapi.client.calendar.events.insert({
+                        calendarId: primaryCalendarId,
+                        resource: event,
+                    });
+
+                    return response.result.id;
+                } catch (err) {
+                    console.error('Error creating Google event:', err);
+                    showToast('Erreur lors de la création dans Google Calendar', 'error');
+                    return null;
                 }
+            };
+
+            const updateGoogleEvent = async (activity) => {
+                if (!activity.googleEventId || !activity.googleCalendarId || !gapi.client.getToken()) return;
+
+                try {
+                    // Trouver la date de l'activité
+                    let dateKey = null;
+                    for (const [key, acts] of Object.entries(activities)) {
+                        if (acts.some(a => a.googleEventId === activity.googleEventId)) {
+                            dateKey = key;
+                            break;
+                        }
+                    }
+                    
+                    if (!dateKey) return;
+
+                    const [year, month, day] = dateKey.split('-');
+                    const startDateTime = new Date(year, month - 1, day);
+                    const [hours, minutes] = activity.startTime.split(':');
+                    startDateTime.setHours(parseInt(hours), parseInt(minutes));
+                    
+                    const endDateTime = new Date(startDateTime);
+                    endDateTime.setMinutes(endDateTime.getMinutes() + activity.duration);
+
+                    const event = {
+                        summary: activity.title,
+                        description: activity.description,
+                        start: {
+                            dateTime: startDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        },
+                        end: {
+                            dateTime: endDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        },
+                    };
+
+                    await gapi.client.calendar.events.update({
+                        calendarId: activity.googleCalendarId,
+                        eventId: activity.googleEventId,
+                        resource: event,
+                    });
+                } catch (err) {
+                    console.error('Error updating Google event:', err);
+                    showToast('Erreur lors de la mise à jour dans Google Calendar', 'error');
+                }
+            };
+
+            const deleteGoogleEvent = async (activity) => {
+                if (!activity.googleEventId || !activity.googleCalendarId || !gapi.client.getToken()) return;
+
+                try {
+                    await gapi.client.calendar.events.delete({
+                        calendarId: activity.googleCalendarId,
+                        eventId: activity.googleEventId,
+                    });
+                } catch (err) {
+                    console.error('Error deleting Google event:', err);
+                    showToast('Erreur lors de la suppression dans Google Calendar', 'error');
+                }
+            };
+
+            const buildRRule = (activity) => {
+                if (activity.recurrencePattern === 'daily') {
+                    return 'RRULE:FREQ=DAILY';
+                } else if (activity.recurrencePattern === 'weekly' && activity.recurrenceDays.length > 0) {
+                    const days = activity.recurrenceDays.map(d => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][d]).join(',');
+                    return `RRULE:FREQ=WEEKLY;BYDAY=${days}`;
+                }
+                return null;
+            };
+
+            const getGoogleColor = (colorId) => {
+                const colors = {
+                    '1': '#7986cb', '2': '#33b679', '3': '#8e24aa', '4': '#e67c73',
+                    '5': '#f6c026', '6': '#f5511d', '7': '#039be5', '8': '#616161',
+                    '9': '#3f51b5', '10': '#0b8043', '11': '#d60000'
+                };
+                return colors[colorId] || '#3b82f6';
+            };
+
+            // ===== FONCTIONS ACTIVITÉS =====
+            const addActivity = async (date, data) => {
+                const dateKey = date.toISOString().split('T')[0];
+                const newActivities = { ...activities };
+                
+                if (!newActivities[dateKey]) {
+                    newActivities[dateKey] = [];
+                }
+
+                // Créer dans Google Calendar si connecté
+                const googleEventId = await createGoogleEvent(dateKey, data);
+                
+                const activityToAdd = {
+                    ...data,
+                    id: Date.now(),
+                    googleEventId: googleEventId,
+                    googleCalendarId: googleEventId ? primaryCalendarId : null
+                };
+
+                newActivities[dateKey].push(activityToAdd);
+
+                // Gérer la récurrence
+                if (data.recurring) {
+                    if (data.recurrencePattern === 'daily') {
+                        for (let i = 1; i <= 90; i++) {
+                            const futureDate = new Date(date);
+                            futureDate.setDate(futureDate.getDate() + i);
+                            const futureDateKey = futureDate.toISOString().split('T')[0];
+                            
+                            if (!newActivities[futureDateKey]) {
+                                newActivities[futureDateKey] = [];
+                            }
+                            
+                            newActivities[futureDateKey].push({
+                                ...data,
+                                id: Date.now() + i,
+                                googleEventId: googleEventId, // Même ID pour événement récurrent
+                                googleCalendarId: googleEventId ? primaryCalendarId : null
+                            });
+                        }
+                    } else if (data.recurrencePattern === 'weekly' && data.recurrenceDays.length > 0) {
+                        const currentDay = date.getDay();
+                        for (let week = 0; week < 12; week++) {
+                            data.recurrenceDays.forEach(targetDay => {
+                                const daysAhead = (targetDay - currentDay + 7) % 7 + (week * 7);
+                                if (daysAhead === 0 && week === 0) return;
+                                
+                                const futureDate = new Date(date);
+                                futureDate.setDate(futureDate.getDate() + daysAhead);
+                                const futureDateKey = futureDate.toISOString().split('T')[0];
+                                
+                                if (!newActivities[futureDateKey]) {
+                                    newActivities[futureDateKey] = [];
+                                }
+                                
+                                newActivities[futureDateKey].push({
+                                    ...data,
+                                    id: Date.now() + daysAhead,
+                                    googleEventId: googleEventId,
+                                    googleCalendarId: googleEventId ? primaryCalendarId : null
+                                });
+                            });
+                        }
+                    } else if (data.recurrencePattern === 'specific' && data.specificDates.length > 0) {
+                        data.specificDates.forEach((specificDate, index) => {
+                            if (specificDate === dateKey) return;
+                            
+                            if (!newActivities[specificDate]) {
+                                newActivities[specificDate] = [];
+                            }
+                            
+                            newActivities[specificDate].push({
+                                ...data,
+                                id: Date.now() + index + 1
+                            });
+                        });
+                    }
+                }
+
+                setActivities(newActivities);
+                setShowAddModal(false);
+                showToast('Activité ajoutée', 'success');
+            };
+
+            const updateActivity = async (date, updatedActivity) => {
+                const dateKey = date.toISOString().split('T')[0];
+                const newActivities = { ...activities };
+                
+                if (newActivities[dateKey]) {
+                    const index = newActivities[dateKey].findIndex(a => a.id === updatedActivity.id);
+                    if (index !== -1) {
+                        newActivities[dateKey][index] = updatedActivity;
+                        
+                        // Mettre à jour dans Google Calendar si lié
+                        if (updatedActivity.googleEventId) {
+                            await updateGoogleEvent(updatedActivity);
+                        }
+                        
+                        setActivities(newActivities);
+                        setEditingActivity(null);
+                        showToast('Activité modifiée', 'success');
+                    }
+                }
+            };
+
+            const deleteActivity = async (date, activityId) => {
+                const dateKey = date.toISOString().split('T')[0];
+                const newActivities = { ...activities };
+                
+                if (newActivities[dateKey]) {
+                    const activityToDelete = newActivities[dateKey].find(a => a.id === activityId);
+                    
+                    newActivities[dateKey] = newActivities[dateKey].filter(a => a.id !== activityId);
+                    
+                    if (newActivities[dateKey].length === 0) {
+                        delete newActivities[dateKey];
+                    }
+                    
+                    // Supprimer de Google Calendar si lié
+                    if (activityToDelete?.googleEventId) {
+                        await deleteGoogleEvent(activityToDelete);
+                    }
+                    
+                    setActivities(newActivities);
+                    showToast('Activité supprimée', 'success');
+                }
+            };
+
+            const showToast = (message, type = 'info') => {
+                setToast({ message, type });
+                setTimeout(() => setToast(null), 3000);
+            };
+
+            // ===== FONCTIONS VISIONS =====
+            const addVision = (phase, title, description) => {
+                const newVision = {
+                    id: Date.now(),
+                    phase,
+                    title,
+                    description,
+                    nodes: [],
+                    connections: []
+                };
+                setVisions([...visions, newVision]);
+                showToast('Vision ajoutée', 'success');
+            };
+
+            const updateVision = (visionId, updates) => {
+                setVisions(visions.map(v => v.id === visionId ? { ...v, ...updates } : v));
+                showToast('Vision mise à jour', 'success');
+            };
+
+            const deleteVision = (visionId) => {
+                setVisions(visions.filter(v => v.id !== visionId));
+                showToast('Vision supprimée', 'success');
+            };
+
+            // ===== RENDU =====
+            const Toast = ({ message, type, onClose }) => {
+                useEffect(() => {
+                    const timer = setTimeout(onClose, 3000);
+                    return () => clearTimeout(timer);
+                }, [onClose]);
+
+                const colors = {
+                    success: '#16a34a',
+                    error: '#ef4444',
+                    info: '#3b82f6'
+                };
+
+                return (
+                    <div className="toast" style={{ borderLeft: `4px solid ${colors[type]}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{message}</span>
+                        </div>
+                    </div>
+                );
             };
 
             // Navigation
-            const changeDate = (increment) => {
+            const changeDate = (days) => {
                 const newDate = new Date(currentDate);
-                if (view === 'day') {
-                    newDate.setDate(newDate.getDate() + increment);
-                } else if (view === 'week') {
-                    newDate.setDate(newDate.getDate() + (increment * 14));
-                } else if (view === 'month') {
-                    newDate.setMonth(newDate.getMonth() + increment);
-                }
+                newDate.setDate(newDate.getDate() + days);
                 setCurrentDate(newDate);
             };
 
@@ -614,1165 +973,243 @@
 
             const getViewTitle = () => {
                 if (view === 'day') {
-                    return `${getDayOfWeek(currentDate)} ${currentDate.getDate()} ${getMonthName(currentDate)}`;
-                } else if (view === 'week') {
-                    const endDate = addDays(currentDate, 13);
-                    return `${currentDate.getDate()} ${getMonthName(currentDate)} - ${endDate.getDate()} ${getMonthName(endDate)}`;
-                } else if (view === 'month') {
-                    return `${getMonthName(currentDate)} ${currentDate.getFullYear()}`;
+                    return currentDate.toLocaleDateString('fr-FR', { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    });
                 }
                 return '';
             };
 
-            // Calcul du temps total d'une activité (avec déplacements)
-            const getTotalDuration = (activity) => {
-                return (activity.travelBefore || 0) + activity.duration + (activity.travelAfter || 0);
-            };
-
-            // 💾 NOUVEAU : Export des données
-            const exportData = () => {
-                const exportData = {
-                    version: '1.0',
-                    exportDate: new Date().toISOString(),
-                    activities,
-                    tasks,
-                    cycleConfig,
-                    visions
-                };
-                
-                const dataStr = JSON.stringify(exportData, null, 2);
-                const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                const url = URL.createObjectURL(dataBlob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `planning-export-${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                URL.revokeObjectURL(url);
-                
-                setShowExportModal(false);
-                setToast({ message: 'Données exportées avec succès', type: 'success' });
-            };
-
-            // 💾 NOUVEAU : Import des données
-            const importData = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const importedData = JSON.parse(e.target.result);
-                        
-                        if (importedData.activities) {
-                            setActivities(importedData.activities);
-                        }
-                        if (importedData.tasks) {
-                            setTasks(importedData.tasks);
-                        }
-                        if (importedData.cycleConfig) {
-                            setCycleConfig(importedData.cycleConfig);
-                        }
-                        if (importedData.visions) {
-                            setVisions(importedData.visions);
-                            localStorage.setItem('planningVisions', JSON.stringify(importedData.visions));
-                        }
-                        
-                        setToast({ message: 'Données importées avec succès', type: 'success' });
-                    } catch (error) {
-                        setToast({ message: 'Erreur lors de l\'import', type: 'error' });
-                        console.error('Erreur import:', error);
-                    }
-                };
-                reader.readAsText(file);
-                event.target.value = '';
-            };
-
-            // Rendu des vues
-            const renderDayView = () => {
-                const dayActivities = getActivitiesForDate(currentDate);
-                const hours = Array.from({ length: 24 }, (_, i) => i);
-                const cycleDayNum = getCycleDayNumber(currentDate);
-                const phaseInfo = getPhaseInfo(cycleDayNum);
-                const moonPhase = getMoonPhase(currentDate);
-                const sunTimes = getSunTimes(currentDate);
-                const sunriseHour = parseInt(sunTimes.sunrise.split(':')[0]);
-                const sunriseMin = parseInt(sunTimes.sunrise.split(':')[1]);
-                const sunsetHour = parseInt(sunTimes.sunset.split(':')[0]);
-                const sunsetMin = parseInt(sunTimes.sunset.split(':')[1]);
-
-                return (
-                    <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', borderLeft: `4px solid ${phaseInfo.borderColor}` }}>
-                        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
-                                {getViewTitle()}
-                            </h2>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                {cycleDayNum && (
-                                    <div style={{ 
-                                        backgroundColor: phaseInfo.bgColor, 
-                                        padding: '6px 12px', 
-                                        borderRadius: '20px',
-                                        fontSize: '13px',
-                                        fontWeight: '600',
-                                        color: phaseInfo.textColor
-                                    }}>
-                                        🌸 J{cycleDayNum}
-                                    </div>
-                                )}
-                                <div style={{ fontSize: '24px', lineHeight: '1' }} title={moonPhase ? moonPhase.name : ''}>
-                                    {moonPhase ? moonPhase.emoji : '🌕'}
-                                </div>
-                            </div>
+            return (
+                <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+                    {syncStatus && (
+                        <div className="sync-status">
+                            {syncStatus === 'syncing' && (
+                                <>
+                                    <div className="sync-spinner" />
+                                    <span>Synchronisation...</span>
+                                </>
+                            )}
+                            {syncStatus === 'success' && (
+                                <>
+                                    <span style={{ color: '#16a34a' }}>✓</span>
+                                    <span>Synchronisé</span>
+                                </>
+                            )}
+                            {syncStatus === 'error' && (
+                                <>
+                                    <span style={{ color: '#ef4444' }}>✗</span>
+                                    <span>Erreur</span>
+                                </>
+                            )}
                         </div>
+                    )}
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: '0' }}>
-                            {hours.map(hour => (
-                                <React.Fragment key={hour}>
-                                    <div style={{ padding: '8px', fontSize: '12px', color: '#6b7280', textAlign: 'right', borderTop: '1px solid #e5e7eb' }}>
-                                        {String(hour).padStart(2, '0')}:00
-                                    </div>
-                                    <div style={{ borderTop: '1px solid #e5e7eb', minHeight: '40px', position: 'relative' }}>
-                                        {hour === sunriseHour && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: `${(sunriseMin / 60) * 40}px`,
-                                                left: '0',
-                                                right: '0',
-                                                height: '2px',
-                                                background: 'linear-gradient(to right, #fbbf24, transparent)',
-                                                zIndex: 1
-                                            }}>
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    left: '4px',
-                                                    top: '-10px',
-                                                    fontSize: '11px',
-                                                    fontWeight: '600',
-                                                    color: '#92400e',
-                                                    backgroundColor: 'white',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid #fbbf24'
-                                                }}>
-                                                    🌅 {sunTimes.sunrise}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {hour === sunsetHour && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: `${(sunsetMin / 60) * 40}px`,
-                                                left: '0',
-                                                right: '0',
-                                                height: '2px',
-                                                background: 'linear-gradient(to left, #fb923c, transparent)',
-                                                zIndex: 1
-                                            }}>
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    right: '4px',
-                                                    top: '-10px',
-                                                    fontSize: '11px',
-                                                    fontWeight: '600',
-                                                    color: '#c2410c',
-                                                    backgroundColor: 'white',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '4px',
-                                                    border: '1px solid #fb923c'
-                                                }}>
-                                                    🌇 {sunTimes.sunset}
-                                                </span>
-                                            </div>
-                                        )}
-                                        {dayActivities.filter(act => {
-                                            const actHour = parseInt(act.startTime.split(':')[0]);
-                                            return actHour === hour;
-                                        }).map((activity, idx) => {
-                                            const [hours, minutes] = activity.startTime.split(':').map(Number);
-                                            const topPosition = (minutes / 60) * 40;
-                                            const height = (getTotalDuration(activity) / 60) * 40;
-                                            
-                                            // Obtenir le nom de la vision liée
-                                            const linkedVisionName = activity.linkedVision 
-                                                ? visions.find(v => v.id === activity.linkedVision)?.title 
-                                                : null;
-
-                                            return (
-                                                <div
-                                                    key={activity.id + idx}
-                                                    className="activity-block"
-                                                    onClick={() => {
-                                                        if (!activity.isRecurring) {
-                                                            setEditingActivity(activity);
-                                                            setSelectedDate(currentDate);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: `${topPosition}px`,
-                                                        left: '4px',
-                                                        right: '4px',
-                                                        height: `${height}px`,
-                                                        backgroundColor: activity.color,
-                                                        borderRadius: '6px',
-                                                        padding: '8px',
-                                                        color: 'white',
-                                                        fontSize: '13px',
-                                                        fontWeight: '600',
-                                                        cursor: activity.isRecurring ? 'default' : 'pointer',
-                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                                        zIndex: 10,
-                                                        overflow: 'hidden'
-                                                    }}
-                                                >
-                                                    {activity.travelBefore > 0 && (
-                                                        <div style={{ fontSize: '11px', opacity: 0.9 }}>
-                                                            🚗 {activity.travelBefore}min
-                                                        </div>
-                                                    )}
-                                                    <div>{activity.title}</div>
-                                                    <div style={{ fontSize: '11px', opacity: 0.9 }}>
-                                                        {activity.startTime} • {activity.duration}min
-                                                    </div>
-                                                    {linkedVisionName && (
-                                                        <div style={{ fontSize: '10px', opacity: 0.8, marginTop: '2px' }}>
-                                                            🎯 {linkedVisionName}
-                                                        </div>
-                                                    )}
-                                                    {activity.travelAfter > 0 && (
-                                                        <div style={{ fontSize: '11px', opacity: 0.9 }}>
-                                                            🚗 {activity.travelAfter}min
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </React.Fragment>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            const renderWeekView = () => {
-                const days = Array.from({ length: 14 }, (_, i) => addDays(currentDate, i));
-                const START_HOUR = 5; // 5h du matin
-                const END_HOUR = 24; // Minuit
-                const HOURS_RANGE = END_HOUR - START_HOUR; // 19 heures
-                
-                return (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '12px' }}>
-                        {days.map(day => {
-                            const dayActivities = getActivitiesForDate(day);
-                            const isToday = isSameDay(day, new Date());
-                            const cycleDayNum = getCycleDayNumber(day);
-                            const phaseInfo = getPhaseInfo(cycleDayNum);
-                            const moonPhase = getMoonPhase(day);
-                            const sunTimes = getSunTimes(day);
-                            const sunriseHour = parseInt(sunTimes.sunrise.split(':')[0]);
-                            const sunriseMin = parseInt(sunTimes.sunrise.split(':')[1]);
-                            const sunsetHour = parseInt(sunTimes.sunset.split(':')[0]);
-                            const sunsetMin = parseInt(sunTimes.sunset.split(':')[1]);
-
-                            return (
-                                <div
-                                    key={formatDateKey(day)}
-                                    className="calendar-day"
-                                    style={{
-                                        backgroundColor: 'white',
-                                        borderRadius: '8px',
-                                        padding: '8px',
-                                        border: isToday ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                                        borderLeft: `4px solid ${phaseInfo.borderColor}`,
-                                        cursor: 'pointer',
-                                        minHeight: '500px',
-                                        display: 'flex',
-                                        flexDirection: 'column'
-                                    }}
-                                    onClick={() => {
-                                        setSelectedDate(day);
-                                        setShowAddModal(true);
-                                    }}
-                                >
-                                    {/* En-tête du jour */}
-                                    <div style={{ marginBottom: '8px', flexShrink: 0 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                                            <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '500' }}>
-                                                {getDayOfWeek(day)}
-                                            </div>
-                                            <div style={{ fontSize: '16px', lineHeight: '1' }} title={moonPhase ? moonPhase.name : ''}>
-                                                {moonPhase ? moonPhase.emoji : '🌕'}
-                                            </div>
-                                        </div>
-                                        <div style={{ 
-                                            fontSize: '18px', 
-                                            fontWeight: 'bold',
-                                            color: isToday ? '#2563eb' : '#1f2937'
-                                        }}>
-                                            {day.getDate()}
-                                        </div>
-                                        {cycleDayNum && (
-                                            <div style={{ 
-                                                display: 'inline-block',
-                                                padding: '3px 8px',
-                                                borderRadius: '8px',
-                                                backgroundColor: phaseInfo.bgColor,
-                                                fontSize: '10px',
-                                                fontWeight: '600',
-                                                color: phaseInfo.textColor,
-                                                marginTop: '4px'
-                                            }}>
-                                                J{cycleDayNum}
-                                            </div>
-                                        )}
-                                    </div>
-                                    
-                                    {/* Grille horaire avec activités */}
-                                    <div style={{ flex: 1, position: 'relative', borderTop: '1px solid #e5e7eb' }}>
-                                        {/* Lignes horaires de fond (6h, 12h, 18h) */}
-                                        {[6, 12, 18].map(hour => (
-                                            <div
-                                                key={hour}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: `${((hour - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: '1px',
-                                                    backgroundColor: '#f3f4f6',
-                                                    zIndex: 0
-                                                }}
-                                            />
-                                        ))}
-                                        
-                                        {/* Ligne lever du soleil */}
-                                        {sunriseHour >= START_HOUR && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: `${((sunriseHour + sunriseMin / 60 - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                left: 0,
-                                                right: 0,
-                                                height: '2px',
-                                                background: 'linear-gradient(to right, #fbbf24, transparent)',
-                                                zIndex: 1
-                                            }}>
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    left: '2px',
-                                                    top: '-8px',
-                                                    fontSize: '8px',
-                                                    fontWeight: '600',
-                                                    color: '#92400e',
-                                                    backgroundColor: 'white',
-                                                    padding: '1px 3px',
-                                                    borderRadius: '3px',
-                                                    border: '1px solid #fbbf24'
-                                                }}>
-                                                    🌅
-                                                </span>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Ligne coucher du soleil */}
-                                        {sunsetHour >= START_HOUR && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: `${((sunsetHour + sunsetMin / 60 - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                left: 0,
-                                                right: 0,
-                                                height: '2px',
-                                                background: 'linear-gradient(to left, #fb923c, transparent)',
-                                                zIndex: 1
-                                            }}>
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    right: '2px',
-                                                    top: '-8px',
-                                                    fontSize: '8px',
-                                                    fontWeight: '600',
-                                                    color: '#c2410c',
-                                                    backgroundColor: 'white',
-                                                    padding: '1px 3px',
-                                                    borderRadius: '3px',
-                                                    border: '1px solid #fb923c'
-                                                }}>
-                                                    🌇
-                                                </span>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Activités positionnées proportionnellement */}
-                                        {dayActivities.map((activity, idx) => {
-                                            const [hours, minutes] = activity.startTime.split(':').map(Number);
-                                            const activityTime = hours + minutes / 60;
-                                            
-                                            // N'afficher que les activités dans la plage 5h-24h
-                                            if (activityTime < START_HOUR || activityTime >= END_HOUR) {
-                                                return null;
-                                            }
-                                            
-                                            const startPercent = ((activityTime - START_HOUR) / HOURS_RANGE) * 100;
-                                            const heightPercent = (getTotalDuration(activity) / (HOURS_RANGE * 60)) * 100;
-                                            
-                                            const linkedVisionName = activity.linkedVision 
-                                                ? visions.find(v => v.id === activity.linkedVision)?.title 
-                                                : null;
-
-                                            return (
-                                                <div
-                                                    key={activity.id + idx}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (!activity.isRecurring) {
-                                                            setEditingActivity(activity);
-                                                            setSelectedDate(day);
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: `${startPercent}%`,
-                                                        left: '2px',
-                                                        right: '2px',
-                                                        height: `${heightPercent}%`,
-                                                        minHeight: '20px',
-                                                        padding: '4px',
-                                                        backgroundColor: activity.color,
-                                                        borderRadius: '4px',
-                                                        color: 'white',
-                                                        fontSize: '9px',
-                                                        fontWeight: '600',
-                                                        cursor: activity.isRecurring ? 'default' : 'pointer',
-                                                        zIndex: 2,
-                                                        overflow: 'hidden',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    <div style={{ 
-                                                        whiteSpace: 'nowrap', 
-                                                        overflow: 'hidden', 
-                                                        textOverflow: 'ellipsis' 
-                                                    }}>
-                                                        {activity.title}
-                                                    </div>
-                                                    <div style={{ fontSize: '8px', opacity: 0.9 }}>
-                                                        {activity.startTime}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                );
-            };
-
-            const renderCycleView = () => {
-                if (!cycleConfig.cycleStartDate) {
-                    return (
-                        <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '40px', textAlign: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🌸</div>
-                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '8px' }}>
-                                Configurer votre cycle
-                            </h3>
-                            <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-                                Définissez la durée de votre cycle et la date de début
-                            </p>
-                            <button
-                                onClick={() => setShowConfigModal(true)}
-                                style={{
-                                    padding: '12px 24px',
-                                    backgroundColor: '#2563eb',
-                                    color: 'white',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    border: 'none'
-                                }}
-                            >
-                                Configurer
-                            </button>
-                        </div>
-                    );
-                }
-
-                const startDate = new Date(cycleConfig.cycleStartDate);
-                const days = Array.from({ length: cycleConfig.cycleLength }, (_, i) => addDays(startDate, i));
-                const START_HOUR = 5; // 5h du matin
-                const END_HOUR = 24; // Minuit
-                const HOURS_RANGE = END_HOUR - START_HOUR; // 19 heures
-                
-                return (
-                    <div>
-                        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937' }}>
-                                Vue Cycle • {cycleConfig.cycleLength} jours
-                            </h2>
-                            <button
-                                onClick={() => setShowConfigModal(true)}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#6b7280',
-                                    borderRadius: '8px',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    border: 'none',
-                                    fontSize: '13px'
-                                }}
-                            >
-                                Modifier
-                            </button>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
-                            {days.map((day, cycleDay) => {
-                                const dayActivities = getActivitiesForDate(day);
-                                const isToday = isSameDay(day, new Date());
-                                const cycleDayNumber = cycleDay + 1;
-                                const phaseInfo = getPhaseInfo(cycleDayNumber);
-                                const moonPhase = getMoonPhase(day);
-                                const sunTimes = getSunTimes(day);
-                                const sunriseHour = parseInt(sunTimes.sunrise.split(':')[0]);
-                                const sunriseMin = parseInt(sunTimes.sunrise.split(':')[1]);
-                                const sunsetHour = parseInt(sunTimes.sunset.split(':')[0]);
-                                const sunsetMin = parseInt(sunTimes.sunset.split(':')[1]);
-
-                                return (
-                                    <div
-                                        key={formatDateKey(day)}
-                                        className="calendar-day"
-                                        style={{
-                                            backgroundColor: 'white',
-                                            borderRadius: '8px',
-                                            padding: '8px',
-                                            border: isToday ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                                            borderLeft: `4px solid ${phaseInfo.borderColor}`,
-                                            cursor: 'pointer',
-                                            minHeight: '400px',
-                                            display: 'flex',
-                                            flexDirection: 'column'
-                                        }}
-                                        onClick={() => {
-                                            setSelectedDate(day);
-                                            setShowAddModal(true);
-                                        }}
-                                    >
-                                        {/* En-tête du jour */}
-                                        <div style={{ marginBottom: '8px', flexShrink: 0 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                                <div style={{ 
-                                                    display: 'inline-block',
-                                                    padding: '4px 10px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: phaseInfo.bgColor,
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    color: phaseInfo.textColor
-                                                }}>
-                                                    J{cycleDayNumber}
-                                                </div>
-                                                <div style={{ fontSize: '18px', lineHeight: '1' }} title={moonPhase ? moonPhase.name : ''}>
-                                                    {moonPhase ? moonPhase.emoji : '🌕'}
-                                                </div>
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                                                {getDayOfWeek(day)} {day.getDate()} {getMonthName(day).substring(0, 3)}
-                                            </div>
-                                        </div>
-                                        
-                                        {/* Grille horaire avec activités */}
-                                        <div style={{ flex: 1, position: 'relative', borderTop: '1px solid #e5e7eb' }}>
-                                            {/* Lignes horaires de fond (6h, 12h, 18h) */}
-                                            {[6, 12, 18].map(hour => (
-                                                <div
-                                                    key={hour}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: `${((hour - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                        left: 0,
-                                                        right: 0,
-                                                        height: '1px',
-                                                        backgroundColor: '#f3f4f6',
-                                                        zIndex: 0
-                                                    }}
-                                                />
-                                            ))}
-                                            
-                                            {/* Ligne lever du soleil */}
-                                            {sunriseHour >= START_HOUR && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: `${((sunriseHour + sunriseMin / 60 - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: '2px',
-                                                    background: 'linear-gradient(to right, #fbbf24, transparent)',
-                                                    zIndex: 1
-                                                }}>
-                                                    <span style={{
-                                                        position: 'absolute',
-                                                        left: '2px',
-                                                        top: '-8px',
-                                                        fontSize: '8px',
-                                                        fontWeight: '600',
-                                                        color: '#92400e',
-                                                        backgroundColor: 'white',
-                                                        padding: '1px 3px',
-                                                        borderRadius: '3px',
-                                                        border: '1px solid #fbbf24'
-                                                    }}>
-                                                        🌅
-                                                    </span>
-                                                </div>
-                                            )}
-                                            
-                                            {/* Ligne coucher du soleil */}
-                                            {sunsetHour >= START_HOUR && (
-                                                <div style={{
-                                                    position: 'absolute',
-                                                    top: `${((sunsetHour + sunsetMin / 60 - START_HOUR) / HOURS_RANGE) * 100}%`,
-                                                    left: 0,
-                                                    right: 0,
-                                                    height: '2px',
-                                                    background: 'linear-gradient(to left, #fb923c, transparent)',
-                                                    zIndex: 1
-                                                }}>
-                                                    <span style={{
-                                                        position: 'absolute',
-                                                        right: '2px',
-                                                        top: '-8px',
-                                                        fontSize: '8px',
-                                                        fontWeight: '600',
-                                                        color: '#c2410c',
-                                                        backgroundColor: 'white',
-                                                        padding: '1px 3px',
-                                                        borderRadius: '3px',
-                                                        border: '1px solid #fb923c'
-                                                    }}>
-                                                        🌇
-                                                    </span>
-                                                </div>
-                                            )}
-                                            
-                                            {/* Activités positionnées proportionnellement */}
-                                            {dayActivities.map((activity, idx) => {
-                                                const [hours, minutes] = activity.startTime.split(':').map(Number);
-                                                const activityTime = hours + minutes / 60;
-                                                
-                                                // N'afficher que les activités dans la plage 5h-24h
-                                                if (activityTime < START_HOUR || activityTime >= END_HOUR) {
-                                                    return null;
-                                                }
-                                                
-                                                const startPercent = ((activityTime - START_HOUR) / HOURS_RANGE) * 100;
-                                                const heightPercent = (getTotalDuration(activity) / (HOURS_RANGE * 60)) * 100;
-                                                
-                                                const linkedVisionName = activity.linkedVision 
-                                                    ? visions.find(v => v.id === activity.linkedVision)?.title 
-                                                    : null;
-
-                                                return (
-                                                    <div
-                                                        key={activity.id + idx}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (!activity.isRecurring) {
-                                                                setEditingActivity(activity);
-                                                                setSelectedDate(day);
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            position: 'absolute',
-                                                            top: `${startPercent}%`,
-                                                            left: '2px',
-                                                            right: '2px',
-                                                            height: `${heightPercent}%`,
-                                                            minHeight: '18px',
-                                                            padding: '3px',
-                                                            backgroundColor: activity.color,
-                                                            borderRadius: '4px',
-                                                            color: 'white',
-                                                            fontSize: '9px',
-                                                            fontWeight: '600',
-                                                            cursor: activity.isRecurring ? 'default' : 'pointer',
-                                                            zIndex: 2,
-                                                            overflow: 'hidden',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            justifyContent: 'center'
-                                                        }}
-                                                    >
-                                                        <div style={{ 
-                                                            whiteSpace: 'nowrap', 
-                                                            overflow: 'hidden', 
-                                                            textOverflow: 'ellipsis' 
-                                                        }}>
-                                                            {activity.title}
-                                                        </div>
-                                                        <div style={{ fontSize: '8px', opacity: 0.9 }}>
-                                                            {activity.startTime}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            };
-
-
-            const renderMonthView = () => {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth();
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                const startDate = addDays(firstDay, -firstDay.getDay());
-                const daysToShow = 35;
-                const days = Array.from({ length: daysToShow }, (_, i) => addDays(startDate, i));
-
-                return (
-                    <div>
-                        <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', marginBottom: '20px' }}>
-                            {getViewTitle()}
-                        </h2>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-                            {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(day => (
-                                <div key={day} style={{ 
-                                    padding: '8px',
-                                    textAlign: 'center',
-                                    fontSize: '12px',
-                                    fontWeight: '600',
-                                    color: '#6b7280'
-                                }}>
-                                    {day}
-                                </div>
-                            ))}
-                            
-                            {days.map(day => {
-                                const dayActivities = getActivitiesForDate(day);
-                                const isCurrentMonth = day.getMonth() === month;
-                                const isToday = isSameDay(day, new Date());
-                                const cycleDayNum = getCycleDayNumber(day);
-                                const phaseInfo = getPhaseInfo(cycleDayNum);
-                                const moonPhase = getMoonPhase(day);
-
-                                return (
-                                    <div
-                                        key={formatDateKey(day)}
-                                        className="calendar-day"
-                                        style={{
-                                            backgroundColor: isCurrentMonth ? 'white' : '#f9fafb',
-                                            borderRadius: '8px',
-                                            padding: '8px',
-                                            border: isToday ? '2px solid #2563eb' : '1px solid #e5e7eb',
-                                            borderLeft: `4px solid ${phaseInfo.borderColor}`,
-                                            cursor: 'pointer',
-                                            opacity: isCurrentMonth ? 1 : 0.5
-                                        }}
-                                        onClick={() => {
-                                            setSelectedDate(day);
-                                            setShowAddModal(true);
-                                        }}
-                                    >
-                                        <div style={{ marginBottom: '6px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                                                <div style={{ 
-                                                    fontSize: '14px',
-                                                    fontWeight: isToday ? 'bold' : '600',
-                                                    color: isToday ? '#2563eb' : '#1f2937'
-                                                }}>
-                                                    {day.getDate()}
-                                                </div>
-                                                <div style={{ fontSize: '14px', lineHeight: '1' }} title={moonPhase ? moonPhase.name : ''}>
-                                                    {moonPhase ? moonPhase.emoji : '🌕'}
-                                                </div>
-                                            </div>
-                                            {cycleDayNum && (
-                                                <div style={{ 
-                                                    display: 'inline-block',
-                                                    padding: '2px 6px',
-                                                    borderRadius: '6px',
-                                                    backgroundColor: phaseInfo.bgColor,
-                                                    fontSize: '9px',
-                                                    fontWeight: '600',
-                                                    color: phaseInfo.textColor
-                                                }}>
-                                                    J{cycleDayNum}
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        {/* 🚫 MODIFIÉ : Pas d'affichage des temps de déplacement en vue mois */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                            {dayActivities.slice(0, 3).map((activity, idx) => {
-                                                const linkedVisionName = activity.linkedVision 
-                                                    ? visions.find(v => v.id === activity.linkedVision)?.title 
-                                                    : null;
-
-                                                return (
-                                                    <div
-                                                        key={activity.id + idx}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (!activity.isRecurring) {
-                                                                setEditingActivity(activity);
-                                                                setSelectedDate(day);
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            padding: '3px 6px',
-                                                            backgroundColor: activity.color,
-                                                            borderRadius: '3px',
-                                                            color: 'white',
-                                                            fontSize: '9px',
-                                                            fontWeight: '600',
-                                                            cursor: activity.isRecurring ? 'default' : 'pointer',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                    >
-                                                        {activity.title}
-                                                    </div>
-                                                );
-                                            })}
-                                            {dayActivities.length > 3 && (
-                                                <div style={{ 
-                                                    fontSize: '9px',
-                                                    color: '#6b7280',
-                                                    textAlign: 'center'
-                                                }}>
-                                                    +{dayActivities.length - 3}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            };
-
-            // Modale d'import iCal
-            const ImportModal = () => (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
+                    {/* Menu de navigation */}
                     <div style={{
                         backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '500px',
-                        width: '90%',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        borderBottom: '1px solid #e5e7eb',
+                        padding: '16px 24px',
+                        display: 'flex',
+                        gap: '16px',
+                        alignItems: 'center',
+                        flexWrap: 'wrap'
                     }}>
-                        <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
-                            Importer depuis iCal
-                        </h3>
-                        
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".ics"
-                            onChange={handleICSImport}
-                            style={{ marginBottom: '16px' }}
-                        />
-                        
-                        {importStatus && (
-                            <div style={{
-                                padding: '12px',
-                                backgroundColor: importStatus.includes('succès') ? '#d1fae5' : '#fee2e2',
+                        <h1 style={{ 
+                            margin: 0, 
+                            fontSize: '24px', 
+                            fontWeight: '700',
+                            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            marginRight: 'auto'
+                        }}>
+                            Planning Cyclique 🌸
+                        </h1>
+
+                        <button
+                            onClick={() => setView('circle')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: view === 'circle' ? '#ec4899' : 'white',
+                                color: view === 'circle' ? 'white' : '#6b7280',
                                 borderRadius: '8px',
-                                marginBottom: '16px',
-                                color: importStatus.includes('succès') ? '#065f46' : '#991b1b'
-                            }}>
-                                {importStatus}
-                            </div>
-                        )}
-                        
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                border: view === 'circle' ? 'none' : '1px solid #e5e7eb',
+                                fontSize: '14px'
+                            }}
+                        >
+                            🌙 Cycle
+                        </button>
+
+                        <button
+                            onClick={() => setView('day')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: view === 'day' ? '#ec4899' : 'white',
+                                color: view === 'day' ? 'white' : '#6b7280',
+                                borderRadius: '8px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                border: view === 'day' ? 'none' : '1px solid #e5e7eb',
+                                fontSize: '14px'
+                            }}
+                        >
+                            📅 Jour
+                        </button>
+
+                        <button
+                            onClick={() => setView('timeline')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: view === 'timeline' ? '#ec4899' : 'white',
+                                color: view === 'timeline' ? 'white' : '#6b7280',
+                                borderRadius: '8px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                border: view === 'timeline' ? 'none' : '1px solid #e5e7eb',
+                                fontSize: '14px'
+                            }}
+                        >
+                            📊 Timeline
+                        </button>
+
+                        <button
+                            onClick={() => setView('cycle')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: view === 'cycle' ? '#ec4899' : 'white',
+                                color: view === 'cycle' ? 'white' : '#6b7280',
+                                borderRadius: '8px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                border: view === 'cycle' ? 'none' : '1px solid #e5e7eb',
+                                fontSize: '14px'
+                            }}
+                        >
+                            📆 Calendrier
+                        </button>
+
+                        <button
+                            onClick={() => setView('visions')}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: view === 'visions' ? '#ec4899' : 'white',
+                                color: view === 'visions' ? 'white' : '#6b7280',
+                                borderRadius: '8px',
+                                fontWeight: '500',
+                                cursor: 'pointer',
+                                border: view === 'visions' ? 'none' : '1px solid #e5e7eb',
+                                fontSize: '14px'
+                            }}
+                        >
+                            ✨ Visions
+                        </button>
+
+                        <button
+                            onClick={() => setShowConfigModal(true)}
+                            style={{
+                                padding: '8px 12px',
+                                backgroundColor: 'white',
+                                color: '#6b7280',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                border: '1px solid #e5e7eb',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <SettingsIcon />
+                        </button>
+                    </div>
+
+                    {/* Panneau Google Calendar */}
+                    <div style={{ padding: '24px', paddingBottom: '0' }}>
+                        <GoogleCalendarSync
+                            onSync={syncFromGoogleCalendar}
+                            onError={(msg) => showToast(msg, 'error')}
+                        />
+                    </div>
+
+                    {/* Barre d'actions */}
+                    <div style={{
+                        padding: '16px 24px',
+                        backgroundColor: 'white',
+                        borderBottom: '1px solid #e5e7eb',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '16px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            {view === 'day' && (
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => changeDate(-1)}
+                                        style={{
+                                            padding: '6px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            background: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <ChevronLeftIcon />
+                                    </button>
+                                    <button
+                                        onClick={goToToday}
+                                        style={{
+                                            padding: '6px 12px',
+                                            backgroundColor: 'white',
+                                            color: '#ec4899',
+                                            borderRadius: '8px',
+                                            fontWeight: '500',
+                                            cursor: 'pointer',
+                                            border: '1px solid #e5e7eb',
+                                            fontSize: '13px'
+                                        }}
+                                    >
+                                        Aujourd'hui
+                                    </button>
+                                    <button
+                                        onClick={() => changeDate(1)}
+                                        style={{
+                                            padding: '6px',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            background: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            display: 'flex',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <ChevronRightIcon />
+                                    </button>
+                                </div>
+                            )}
+
+                            {view === 'day' && (
+                                <div style={{ fontSize: '15px', fontWeight: '500', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                                    {getViewTitle()}
+                                </div>
+                            )}
+                        </div>
+
+                        {view !== 'circle' && view !== 'visions' && (
                             <button
                                 onClick={() => {
-                                    setShowImportModal(false);
-                                    setImportStatus('');
+                                    setSelectedDate(currentDate);
+                                    setShowAddModal(true);
                                 }}
                                 style={{
-                                    padding: '10px 20px',
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#6b7280',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    border: 'none'
-                                }}
-                            >
-                                Fermer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            const handleICSImport = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const icsData = e.target.result;
-                        const jcalData = ICAL.parse(icsData);
-                        const comp = new ICAL.Component(jcalData);
-                        const vevents = comp.getAllSubcomponents('vevent');
-                        
-                        let imported = 0;
-                        vevents.forEach(vevent => {
-                            const event = new ICAL.Event(vevent);
-                            const startDate = new Date(event.startDate.toString());
-                            const endDate = new Date(event.endDate.toString());
-                            const duration = Math.round((endDate - startDate) / (1000 * 60));
-                            
-                            const dateKey = formatDateKey(startDate);
-                            const newActivity = {
-                                id: Date.now().toString() + Math.random(),
-                                title: event.summary,
-                                startTime: `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`,
-                                duration: duration,
-                                color: '#3b82f6',
-                                description: event.description || '',
-                                tasks: [],
-                                recurring: false,
-                                recurrencePattern: 'none',
-                                recurrenceDays: [],
-                                specificDates: [],
-                                travelBefore: 0,
-                                travelAfter: 0,
-                                linkedVision: null
-                            };
-                            
-                            setActivities(prev => ({
-                                ...prev,
-                                [dateKey]: [...(prev[dateKey] || []), newActivity]
-                            }));
-                            imported++;
-                        });
-                        
-                        setImportStatus(`✓ ${imported} événement(s) importé(s) avec succès`);
-                    } catch (error) {
-                        setImportStatus('✗ Erreur lors de l\'import du fichier');
-                        console.error(error);
-                    }
-                };
-                reader.readAsText(file);
-            };
-
-            // Modale de configuration du cycle
-            const ConfigModal = () => {
-                const [cycleLength, setCycleLength] = useState(cycleConfig.cycleLength);
-                const [startDate, setStartDate] = useState(
-                    cycleConfig.cycleStartDate ? 
-                    new Date(cycleConfig.cycleStartDate).toISOString().split('T')[0] : 
-                    ''
-                );
-
-                return (
-                    <div style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000
-                    }}>
-                        <div style={{
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            maxWidth: '400px',
-                            width: '90%',
-                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                        }}>
-                            <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '20px' }}>
-                                🌸 Configuration du Cycle
-                            </h3>
-                            
-                            <div style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                    Durée du cycle (jours)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={cycleLength}
-                                    onChange={(e) => setCycleLength(parseInt(e.target.value))}
-                                    min="1"
-                                    max="60"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '8px',
-                                        fontSize: '14px'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ marginBottom: '24px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                    Date de début du cycle
-                                </label>
-                                <input
-                                    type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '8px',
-                                        fontSize: '14px'
-                                    }}
-                                />
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                                <button
-                                    onClick={() => setShowConfigModal(false)}
-                                    style={{
-                                        padding: '10px 20px',
-                                        backgroundColor: '#f3f4f6',
-                                        color: '#6b7280',
-                                        borderRadius: '8px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        border: 'none'
-                                    }}
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setCycleConfig({
-                                            cycleLength,
-                                            cycleStartDate: startDate
-                                        });
-                                        setShowConfigModal(false);
-                                        setToast({ message: 'Configuration du cycle mise à jour', type: 'success' });
-                                    }}
-                                    style={{
-                                        padding: '10px 20px',
-                                        backgroundColor: '#2563eb',
-                                        color: 'white',
-                                        borderRadius: '8px',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        border: 'none'
-                                    }}
-                                >
-                                    Enregistrer
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            // 💾 NOUVEAU : Modale d'export
-            const ExportModal = () => (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '500px',
-                        width: '90%',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
-                            💾 Exporter mes données
-                        </h3>
-                        
-                        <div style={{ 
-                            padding: '16px', 
-                            backgroundColor: '#f3f4f6', 
-                            borderRadius: '8px',
-                            marginBottom: '20px'
-                        }}>
-                            <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '12px' }}>
-                                L'export inclut :
-                            </p>
-                            <ul style={{ fontSize: '13px', color: '#6b7280', paddingLeft: '20px' }}>
-                                <li>✓ Toutes vos activités</li>
-                                <li>✓ Vos tâches</li>
-                                <li>✓ Configuration du cycle</li>
-                                <li>✓ Vos visions</li>
-                            </ul>
-                        </div>
-
-                        <div style={{
-                            padding: '12px',
-                            backgroundColor: '#dbeafe',
-                            borderRadius: '8px',
-                            marginBottom: '20px',
-                            fontSize: '13px',
-                            color: '#1e40af'
-                        }}>
-                            💡 Vous pourrez réimporter ce fichier sur un autre appareil pour synchroniser vos données
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setShowExportModal(false)}
-                                style={{
-                                    padding: '10px 20px',
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#6b7280',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    border: 'none'
-                                }}
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                onClick={exportData}
-                                style={{
-                                    padding: '10px 20px',
+                                    padding: '8px 16px',
                                     backgroundColor: '#16a34a',
                                     color: 'white',
                                     borderRadius: '8px',
@@ -1781,769 +1218,52 @@
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '8px'
+                                    gap: '8px',
+                                    fontSize: '14px'
                                 }}
-                            >
-                                <DownloadIcon />
-                                Télécharger
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            // Modale d'activité
-            function ActivityModal({ activity, date, title, isEdit, onSave, onClose, onDuplicate }) {
-                const [formData, setFormData] = useState(activity);
-                const [showTaskInput, setShowTaskInput] = useState(false);
-                const [newTask, setNewTask] = useState('');
-
-                const updateFormData = (field, value) => {
-                    setFormData(prev => ({ ...prev, [field]: value }));
-                };
-
-                const addTask = () => {
-                    if (newTask.trim()) {
-                        updateFormData('tasks', [...formData.tasks, { id: Date.now(), text: newTask, completed: false }]);
-                        setNewTask('');
-                        setShowTaskInput(false);
-                    }
-                };
-
-                const toggleTask = (taskId) => {
-                    updateFormData('tasks', formData.tasks.map(t => 
-                        t.id === taskId ? { ...t, completed: !t.completed } : t
-                    ));
-                };
-
-                const removeTask = (taskId) => {
-                    updateFormData('tasks', formData.tasks.filter(t => t.id !== taskId));
-                };
-
-                return (
-                    <div style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundColor: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                        padding: '20px'
-                    }}>
-                        <div style={{
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            maxWidth: '600px',
-                            width: '100%',
-                            maxHeight: '90vh',
-                            overflow: 'auto',
-                            boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                                <h3 style={{ fontSize: '20px', fontWeight: 'bold' }}>{title}</h3>
-                                <button
-                                    onClick={onClose}
-                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}
-                                >
-                                    <XIcon />
-                                </button>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {/* Titre */}
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                        Titre *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.title}
-                                        onChange={(e) => updateFormData('title', e.target.value)}
-                                        placeholder="Nom de l'activité"
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '8px',
-                                            fontSize: '14px'
-                                        }}
-                                    />
-                                </div>
-
-                                {/* 🎯 NOUVEAU : Sélecteur de vision avec couleurs */}
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                        🎯 Vision liée
-                                    </label>
-                                    <select
-                                        value={formData.linkedVision || ''}
-                                        onChange={(e) => {
-                                            const visionId = e.target.value || null;
-                                            const visionColor = getVisionColor(visionId);
-                                            updateFormData('linkedVision', visionId);
-                                            if (visionColor) {
-                                                updateFormData('color', visionColor);
-                                            }
-                                        }}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '8px',
-                                            fontSize: '14px',
-                                            backgroundColor: formData.linkedVision ? getVisionColor(formData.linkedVision) : 'white',
-                                            color: formData.linkedVision ? 'white' : 'inherit',
-                                            fontWeight: formData.linkedVision ? '600' : 'normal'
-                                        }}
-                                    >
-                                        <option value="">Aucune vision</option>
-                                        {visions.map(vision => (
-                                            <option key={vision.id} value={vision.id}>
-                                                {vision.title}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    {formData.linkedVision && (
-                                        <div style={{ 
-                                            fontSize: '12px', 
-                                            color: '#6b7280',
-                                            marginTop: '6px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px'
-                                        }}>
-                                            <div style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                borderRadius: '4px',
-                                                backgroundColor: getVisionColor(formData.linkedVision)
-                                            }}></div>
-                                            Couleur appliquée automatiquement
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Couleur (désactivé si vision liée) */}
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                        Couleur
-                                    </label>
-                                    <input
-                                        type="color"
-                                        value={formData.color}
-                                        onChange={(e) => updateFormData('color', e.target.value)}
-                                        disabled={!!formData.linkedVision}
-                                        style={{
-                                            width: '80px',
-                                            height: '40px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '8px',
-                                            cursor: formData.linkedVision ? 'not-allowed' : 'pointer',
-                                            opacity: formData.linkedVision ? 0.5 : 1
-                                        }}
-                                    />
-                                    {formData.linkedVision && (
-                                        <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px' }}>
-                                            La couleur est définie par la vision
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Heure et durée */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                            Heure
-                                        </label>
-                                        <input
-                                            type="time"
-                                            value={formData.startTime}
-                                            onChange={(e) => updateFormData('startTime', e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px',
-                                                border: '1px solid #d1d5db',
-                                                borderRadius: '8px',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                            Durée (min)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={formData.duration}
-                                            onChange={(e) => updateFormData('duration', parseInt(e.target.value))}
-                                            min="5"
-                                            step="5"
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px',
-                                                border: '1px solid #d1d5db',
-                                                borderRadius: '8px',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Temps de déplacement */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                            🚗 Avant (min)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={formData.travelBefore}
-                                            onChange={(e) => updateFormData('travelBefore', parseInt(e.target.value) || 0)}
-                                            min="0"
-                                            step="5"
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px',
-                                                border: '1px solid #d1d5db',
-                                                borderRadius: '8px',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                            🚗 Après (min)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            value={formData.travelAfter}
-                                            onChange={(e) => updateFormData('travelAfter', parseInt(e.target.value) || 0)}
-                                            min="0"
-                                            step="5"
-                                            style={{
-                                                width: '100%',
-                                                padding: '10px',
-                                                border: '1px solid #d1d5db',
-                                                borderRadius: '8px',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Description */}
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) => updateFormData('description', e.target.value)}
-                                        rows="3"
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px',
-                                            border: '1px solid #d1d5db',
-                                            borderRadius: '8px',
-                                            fontSize: '14px',
-                                            resize: 'vertical'
-                                        }}
-                                    />
-                                </div>
-
-                                {/* Tâches */}
-                                <div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                        <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                            Tâches
-                                        </label>
-                                        <button
-                                            onClick={() => setShowTaskInput(true)}
-                                            style={{
-                                                padding: '6px 12px',
-                                                backgroundColor: '#f3f4f6',
-                                                color: '#374151',
-                                                borderRadius: '6px',
-                                                border: 'none',
-                                                fontSize: '12px',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px'
-                                            }}
-                                        >
-                                            <PlusIcon />
-                                            Ajouter
-                                        </button>
-                                    </div>
-
-                                    {showTaskInput && (
-                                        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                                            <input
-                                                type="text"
-                                                value={newTask}
-                                                onChange={(e) => setNewTask(e.target.value)}
-                                                onKeyPress={(e) => e.key === 'Enter' && addTask()}
-                                                placeholder="Nouvelle tâche..."
-                                                autoFocus
-                                                style={{
-                                                    flex: 1,
-                                                    padding: '8px',
-                                                    border: '1px solid #d1d5db',
-                                                    borderRadius: '6px',
-                                                    fontSize: '13px'
-                                                }}
-                                            />
-                                            <button
-                                                onClick={addTask}
-                                                style={{
-                                                    padding: '8px 16px',
-                                                    backgroundColor: '#16a34a',
-                                                    color: 'white',
-                                                    borderRadius: '6px',
-                                                    border: 'none',
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                Ajouter
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                        {formData.tasks.map(task => (
-                                            <div
-                                                key={task.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '8px',
-                                                    padding: '8px',
-                                                    backgroundColor: '#f9fafb',
-                                                    borderRadius: '6px'
-                                                }}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={task.completed}
-                                                    onChange={() => toggleTask(task.id)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                                <span style={{
-                                                    flex: 1,
-                                                    fontSize: '13px',
-                                                    textDecoration: task.completed ? 'line-through' : 'none',
-                                                    color: task.completed ? '#9ca3af' : '#374151'
-                                                }}>
-                                                    {task.text}
-                                                </span>
-                                                <button
-                                                    onClick={() => removeTask(task.id)}
-                                                    style={{
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        color: '#ef4444',
-                                                        cursor: 'pointer',
-                                                        fontSize: '18px',
-                                                        lineHeight: '1'
-                                                    }}
-                                                >
-                                                    ×
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Récurrence */}
-                                <div>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.recurring}
-                                            onChange={(e) => updateFormData('recurring', e.target.checked)}
-                                        />
-                                        <span style={{ fontSize: '14px', fontWeight: '500', color: '#374151' }}>
-                                            Activité récurrente
-                                        </span>
-                                    </label>
-
-                                    {formData.recurring && (
-                                        <div style={{ marginTop: '12px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                                            <select
-                                                value={formData.recurrencePattern}
-                                                onChange={(e) => updateFormData('recurrencePattern', e.target.value)}
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px',
-                                                    border: '1px solid #d1d5db',
-                                                    borderRadius: '8px',
-                                                    fontSize: '14px',
-                                                    marginBottom: '12px'
-                                                }}
-                                            >
-                                                <option value="none">Choisir...</option>
-                                                <option value="daily">Tous les jours</option>
-                                                <option value="weekly">Certains jours de la semaine</option>
-                                            </select>
-
-                                            {formData.recurrencePattern === 'weekly' && (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day, index) => (
-                                                        <button
-                                                            key={day}
-                                                            onClick={() => {
-                                                                const days = formData.recurrenceDays.includes(index === 6 ? 0 : index + 1)
-                                                                    ? formData.recurrenceDays.filter(d => d !== (index === 6 ? 0 : index + 1))
-                                                                    : [...formData.recurrenceDays, index === 6 ? 0 : index + 1];
-                                                                updateFormData('recurrenceDays', days);
-                                                            }}
-                                                            style={{
-                                                                padding: '8px 12px',
-                                                                backgroundColor: formData.recurrenceDays.includes(index === 6 ? 0 : index + 1) ? '#2563eb' : 'white',
-                                                                color: formData.recurrenceDays.includes(index === 6 ? 0 : index + 1) ? 'white' : '#374151',
-                                                                border: '1px solid #d1d5db',
-                                                                borderRadius: '6px',
-                                                                fontSize: '13px',
-                                                                fontWeight: '600',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                        >
-                                                            {day}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Boutons */}
-                                <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                                    <div>
-                                        {isEdit && (
-                                            <>
-                                                <button
-                                                    onClick={() => {
-                                                        if (window.confirm('Supprimer cette activité ?')) {
-                                                            deleteActivity(date, formData.id);
-                                                            onClose();
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        padding: '10px 16px',
-                                                        backgroundColor: '#fee2e2',
-                                                        color: '#dc2626',
-                                                        borderRadius: '8px',
-                                                        fontWeight: '600',
-                                                        cursor: 'pointer',
-                                                        border: 'none',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '8px',
-                                                        marginRight: '8px'
-                                                    }}
-                                                >
-                                                    <TrashIcon />
-                                                    Supprimer
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <button
-                                            onClick={onClose}
-                                            style={{
-                                                padding: '10px 20px',
-                                                backgroundColor: '#f3f4f6',
-                                                color: '#6b7280',
-                                                borderRadius: '8px',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                border: 'none'
-                                            }}
-                                        >
-                                            Annuler
-                                        </button>
-                                        <button
-                                            onClick={() => onSave(formData)}
-                                            disabled={!formData.title.trim()}
-                                            style={{
-                                                padding: '10px 20px',
-                                                backgroundColor: formData.title.trim() ? '#2563eb' : '#d1d5db',
-                                                color: 'white',
-                                                borderRadius: '8px',
-                                                fontWeight: '600',
-                                                cursor: formData.title.trim() ? 'pointer' : 'not-allowed',
-                                                border: 'none',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '8px'
-                                            }}
-                                        >
-                                            <SaveIcon />
-                                            Enregistrer
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            }
-
-            // Render principal
-            return (
-                <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6' }}>
-                    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-                        {/* Header */}
-                        <div style={{
-                            backgroundColor: 'white',
-                            padding: '16px 24px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                            marginBottom: '20px',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '12px'
-                        }}>
-                            {/* Gauche : Titre + Import/Export */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>
-                                    📅 Mon Planning
-                                </h1>
-                                
-                                {/* 💾 NOUVEAU : Boutons Import/Export */}
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        onClick={() => importInputRef.current?.click()}
-                                        style={{
-                                            padding: '8px 12px',
-                                            backgroundColor: '#f3f4f6',
-                                            color: '#6b7280',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            border: 'none',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            fontSize: '13px',
-                                            fontWeight: '500',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#e5e7eb';
-                                            e.currentTarget.style.color = '#374151';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                            e.currentTarget.style.color = '#6b7280';
-                                        }}
-                                        title="Importer depuis un autre appareil"
-                                    >
-                                        <UploadIcon />
-                                        Importer
-                                    </button>
-                                    
-                                    <button
-                                        onClick={() => setShowExportModal(true)}
-                                        style={{
-                                            padding: '8px 12px',
-                                            backgroundColor: '#f3f4f6',
-                                            color: '#6b7280',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            border: 'none',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            fontSize: '13px',
-                                            fontWeight: '500',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#e5e7eb';
-                                            e.currentTarget.style.color = '#374151';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                            e.currentTarget.style.color = '#6b7280';
-                                        }}
-                                        title="Exporter pour sauvegarder"
-                                    >
-                                        <DownloadIcon />
-                                        Exporter
-                                    </button>
-                                    
-                                    <input
-                                        ref={importInputRef}
-                                        type="file"
-                                        accept=".json"
-                                        onChange={importData}
-                                        style={{ display: 'none' }}
-                                    />
-                                </div>
-                                
-                                <button
-                                    onClick={() => setShowImportModal(true)}
-                                    style={{
-                                        padding: '8px 12px',
-                                        backgroundColor: '#f3f4f6',
-                                        color: '#6b7280',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        border: 'none',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#e5e7eb';
-                                        e.currentTarget.style.color = '#374151';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                        e.currentTarget.style.color = '#6b7280';
-                                    }}
-                                    title="Import iCal"
-                                >
-                                    <UploadIcon />
-                                </button>
-                            </div>
-
-                            {/* Centre : Choix de vue + Navigation */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                {/* Boutons de vue */}
-                                <div style={{ display: 'flex', gap: '4px', backgroundColor: '#f3f4f6', padding: '4px', borderRadius: '8px' }}>
-                                    {['day', 'week', 'cycle', 'month'].map(v => (
-                                        <button
-                                            key={v}
-                                            onClick={() => setView(v)}
-                                            style={{
-                                                padding: '6px 12px',
-                                                backgroundColor: view === v ? '#2563eb' : 'transparent',
-                                                color: view === v ? 'white' : '#6b7280',
-                                                borderRadius: '6px',
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                border: 'none',
-                                                fontSize: '13px'
-                                            }}
-                                        >
-                                            {v === 'day' ? 'Jour' : v === 'week' ? '2 sem' : v === 'cycle' ? '🌸' : 'Mois'}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Navigation */}
-                                {view !== 'cycle' && (
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <button
-                                            onClick={() => changeDate(-1)}
-                                            style={{ padding: '6px', borderRadius: '8px', cursor: 'pointer', background: 'white', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}
-                                        >
-                                            <ChevronLeftIcon />
-                                        </button>
-                                        <button
-                                            onClick={goToToday}
-                                            style={{ padding: '6px 12px', backgroundColor: 'white', color: '#2563eb', borderRadius: '8px', fontWeight: '500', cursor: 'pointer', border: '1px solid #e5e7eb', fontSize: '13px' }}
-                                        >
-                                            Aujourd'hui
-                                        </button>
-                                        <button
-                                            onClick={() => changeDate(1)}
-                                            style={{ padding: '6px', borderRadius: '8px', cursor: 'pointer', background: 'white', border: '1px solid #e5e7eb', display: 'flex', alignItems: 'center' }}
-                                        >
-                                            <ChevronRightIcon />
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Titre de la vue */}
-                                {(view === 'day' || view === 'week') && (
-                                    <div style={{ fontSize: '15px', fontWeight: '500', color: '#6b7280', whiteSpace: 'nowrap' }}>
-                                        {getViewTitle()}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Droite : Bouton Ajouter */}
-                            <button
-                                onClick={() => {
-                                    setSelectedDate(currentDate);
-                                    setShowAddModal(true);
-                                }}
-                                style={{ padding: '8px 16px', backgroundColor: '#16a34a', color: 'white', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}
                             >
                                 <PlusIcon />
                                 Ajouter
                             </button>
-                        </div>
-
-                        <div style={{ padding: '24px' }}>
-                            {view === 'day' && renderDayView()}
-                            {view === 'week' && renderWeekView()}
-                            {view === 'cycle' && renderCycleView()}
-                            {view === 'month' && renderMonthView()}
-                        </div>
+                        )}
                     </div>
 
-                    {showAddModal && (
-                        <ActivityModal
-                            activity={newActivity}
-                            date={selectedDate}
-                            title="Nouvelle activité"
-                            isEdit={false}
-                            onSave={(data) => {
-                                addActivity(selectedDate, data);
-                            }}
-                            onClose={() => {
-                                setShowAddModal(false);
-                                setNewActivity({
-                                    title: '',
-                                    startTime: '09:00',
-                                    duration: 60,
-                                    color: '#3b82f6',
-                                    description: '',
-                                    tasks: [],
-                                    recurring: false,
-                                    recurrencePattern: 'none',
-                                    recurrenceDays: [],
-                                    specificDates: [],
-                                    travelBefore: 0,
-                                    travelAfter: 0,
-                                    linkedVision: null
-                                });
-                            }}
-                        />
-                    )}
+                    {/* Contenu principal */}
+                    <div style={{ padding: '24px' }}>
+                        {view === 'day' && (
+                            <div style={{ 
+                                maxWidth: '800px', 
+                                margin: '0 auto',
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
+                                    Connectez-vous à Google Calendar pour voir vos activités
+                                </p>
+                            </div>
+                        )}
+                        
+                        {view === 'visions' && (
+                            <div style={{ 
+                                maxWidth: '1200px', 
+                                margin: '0 auto',
+                                backgroundColor: 'white',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '20px', fontWeight: '600' }}>
+                                    Mes Visions ✨
+                                </h2>
+                                <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                                    Fonctionnalité Visions à venir...
+                                </p>
+                            </div>
+                        )}
+                    </div>
 
-                    {editingActivity && (
-                        <ActivityModal
-                            activity={editingActivity}
-                            date={selectedDate}
-                            title="Modifier l'activité"
-                            isEdit={true}
-                            onSave={(data) => {
-                                updateActivity(selectedDate, data);
-                            }}
-                            onClose={() => setEditingActivity(null)}
-                        />
-                    )}
-
-                    {showImportModal && <ImportModal />}
-                    {showConfigModal && <ConfigModal />}
-                    {showExportModal && <ExportModal />}
-                    
                     {/* Toast notification */}
                     {toast && (
                         <Toast
@@ -2557,7 +1277,7 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<PlanningPersonnel />);
+        root.render(<PlanningCyclique />);
     </script>
 </body>
 </html>

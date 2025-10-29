@@ -474,9 +474,9 @@
             };
 
             const handleSync = async (calendarsToSync = null) => {
-                const calendars = calendarsToSync || selectedCalendars;
+                const calendarIds = calendarsToSync || selectedCalendars;
                 
-                if (calendars.length === 0) {
+                if (calendarIds.length === 0) {
                     console.log('Cannot sync: no calendars selected');
                     return;
                 }
@@ -499,8 +499,15 @@
                     const sixMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 6, 31);
                     
                     const allEvents = [];
-                    for (const calendarId of calendars) {
+                    const calendarMap = {};
+                    
+                    for (const calendarId of calendarIds) {
                         console.log('Fetching events from calendar:', calendarId);
+                        const calInfo = calendars.find(c => c.id === calendarId);
+                        if (calInfo) {
+                            calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';
+                        }
+                        
                         const response = await gapi.client.calendar.events.list({
                             calendarId: calendarId,
                             timeMin: sixMonthsAgo.toISOString(),
@@ -515,7 +522,7 @@
                     }
                     
                     console.log(`Total events found: ${allEvents.length}`);
-                    onSync?.(allEvents, calendars[0]);
+                    onSync?.(allEvents, calendarMap);
                 } catch (err) {
                     console.error('Error syncing:', err);
                     onError?.('Erreur de synchronisation');
@@ -1352,6 +1359,31 @@
                 }
             }, [cycleConfig]);
 
+            // Auto-update à minuit - Force le re-render du cycle
+            useEffect(() => {
+                const checkMidnight = () => {
+                    const now = new Date();
+                    const tomorrow = new Date(now);
+                    tomorrow.setHours(24, 0, 0, 0);
+                    const msUntilMidnight = tomorrow - now;
+                    
+                    // Programmer un timeout jusqu'à minuit
+                    const timeoutId = setTimeout(() => {
+                        console.log('Midnight! Updating cycle view...');
+                        // Force un re-render en mettant à jour un état
+                        setActivities(prev => ({...prev}));
+                        // Re-programmer pour la prochaine minuit
+                        checkMidnight();
+                    }, msUntilMidnight);
+                    
+                    return () => clearTimeout(timeoutId);
+                };
+                
+                // Démarrer la vérification
+                const cleanup = checkMidnight();
+                return cleanup;
+            }, []);
+
             const getCycleDay = (date) => {
                 if (!cycleConfig.cycleStartDate || isNaN(cycleConfig.cycleStartDate.getTime())) {
                     return 1; // Retourner jour 1 par défaut si date invalide
@@ -1571,6 +1603,14 @@
                     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
                     const sixMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 6, 31);
                     
+                    // Récupérer les infos complètes des calendriers pour les couleurs
+                    const calendarMap = {};
+                    for (const cal of googleCalendars) {
+                        if (calendarsToSync.includes(cal.id)) {
+                            calendarMap[cal.id] = cal.backgroundColor || '#3b82f6';
+                        }
+                    }
+                    
                     const allEvents = [];
                     for (const calendarId of calendarsToSync) {
                         const response = await gapi.client.calendar.events.list({
@@ -1602,15 +1642,34 @@
                             newActivities[dateKey] = [];
                         }
                         
+                        // Déterminer la couleur: backgroundColor > colorId > calendar color
+                        let eventColor = '#3b82f6'; // Couleur par défaut
+                        if (event.backgroundColor) {
+                            eventColor = event.backgroundColor;
+                        } else if (event.colorId) {
+                            eventColor = getGoogleColor(event.colorId);
+                        } else if (calendarMap && calendarMap[event.calendarId]) {
+                            eventColor = calendarMap[event.calendarId];
+                        }
+                        
                         newActivities[dateKey].push({
                             id: event.id,
                             title: event.summary || 'Sans titre',
                             startTime: startDate.toTimeString().slice(0, 5),
                             duration: Math.round((endDate - startDate) / (1000 * 60)),
-                            color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
+                            color: eventColor,
                             description: event.description || '',
                             calendarId: event.calendarId,
                             date: startDate
+                        });
+                    });
+                    
+                    // Trier tous les événements de chaque jour par ordre chronologique
+                    Object.keys(newActivities).forEach(dateKey => {
+                        newActivities[dateKey].sort((a, b) => {
+                            const timeA = a.startTime.split(':').map(Number);
+                            const timeB = b.startTime.split(':').map(Number);
+                            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
                         });
                     });
                     
@@ -1814,8 +1873,8 @@
                                                 </button>
                                                 
                                                 {dayActivities.length > 0 && (
-                                                    <div style={{ width: '100%', maxHeight: '120px', overflowY: 'auto' }}>
-                                                        {dayActivities.slice(0, 3).map(act => (
+                                                    <div style={{ width: '100%', maxHeight: '150px', overflowY: 'auto', paddingRight: '4px' }}>
+                                                        {dayActivities.map(act => (
                                                             <div
                                                                 key={act.id}
                                                                 onClick={() => {
@@ -1843,11 +1902,6 @@
                                                                 <EditIcon />
                                                             </div>
                                                         ))}
-                                                        {dayActivities.length > 3 && (
-                                                            <div style={{ fontSize: '10px', color: '#9ca3af', textAlign: 'center' }}>
-                                                                +{dayActivities.length - 3} autres
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 )}
                                             </>
@@ -1920,7 +1974,7 @@
                     {/* Contenu */}
                     <div style={{ padding: '24px' }}>
                         <GoogleCalendarSync
-                            onSync={(events) => {
+                            onSync={(events, calendarMap) => {
                                 const newActivities = {};
                                 
                                 events.forEach(event => {
@@ -1938,15 +1992,34 @@
                                         newActivities[dateKey] = [];
                                     }
                                     
+                                    // Déterminer la couleur: backgroundColor > colorId > calendar color
+                                    let eventColor = '#3b82f6'; // Couleur par défaut
+                                    if (event.backgroundColor) {
+                                        eventColor = event.backgroundColor;
+                                    } else if (event.colorId) {
+                                        eventColor = getGoogleColor(event.colorId);
+                                    } else if (calendarMap && calendarMap[event.calendarId]) {
+                                        eventColor = calendarMap[event.calendarId];
+                                    }
+                                    
                                     newActivities[dateKey].push({
                                         id: event.id,
                                         title: event.summary || 'Sans titre',
                                         startTime: startDate.toTimeString().slice(0, 5),
                                         duration: Math.round((endDate - startDate) / (1000 * 60)),
-                                        color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
+                                        color: eventColor,
                                         description: event.description || '',
                                         calendarId: event.calendarId,
                                         date: startDate
+                                    });
+                                });
+                                
+                                // Trier tous les événements de chaque jour par ordre chronologique
+                                Object.keys(newActivities).forEach(dateKey => {
+                                    newActivities[dateKey].sort((a, b) => {
+                                        const timeA = a.startTime.split(':').map(Number);
+                                        const timeB = b.startTime.split(':').map(Number);
+                                        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
                                     });
                                 });
                                 

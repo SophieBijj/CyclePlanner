@@ -238,6 +238,7 @@
             const [isSyncing, setIsSyncing] = useState(false);
             const [calendars, setCalendars] = useState([]);
             const [selectedCalendars, setSelectedCalendars] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
             const gapiInited = useRef(false);
             const gisInited = useRef(false);
             const tokenClient = useRef(null);
@@ -287,6 +288,7 @@
 
             const maybeEnableButtons = () => {
                 if (gapiInited.current && gisInited.current) {
+                    setIsLoading(false);
                     // Vérifier si déjà connecté
                     if (gapi.client.getToken()) {
                         setIsSignedIn(true);
@@ -296,7 +298,15 @@
             };
 
             const handleAuthClick = () => {
-                if (!tokenClient.current) return;
+                if (!tokenClient.current) {
+                    onError?.('Initialisation en cours, veuillez réessayer dans quelques secondes');
+                    return;
+                }
+                
+                if (typeof gapi === 'undefined' || !gapi.client) {
+                    onError?.('Google API en cours de chargement, veuillez réessayer');
+                    return;
+                }
                 
                 if (gapi.client.getToken() === null) {
                     tokenClient.current.requestAccessToken({ prompt: 'consent' });
@@ -306,6 +316,8 @@
             };
 
             const handleSignoutClick = () => {
+                if (typeof gapi === 'undefined' || !gapi.client) return;
+                
                 const token = gapi.client.getToken();
                 if (token !== null) {
                     google.accounts.oauth2.revoke(token.access_token);
@@ -317,6 +329,8 @@
             };
 
             const loadCalendars = async () => {
+                if (typeof gapi === 'undefined' || !gapi.client) return;
+                
                 try {
                     const response = await gapi.client.calendar.calendarList.list();
                     const cals = response.result.items || [];
@@ -336,6 +350,10 @@
 
             const handleSync = async () => {
                 if (!isSignedIn || selectedCalendars.length === 0) return;
+                if (typeof gapi === 'undefined' || !gapi.client) {
+                    onError?.('Google API non disponible');
+                    return;
+                }
                 
                 setIsSyncing(true);
                 try {
@@ -386,13 +404,14 @@
                         {!isSignedIn ? (
                             <button
                                 onClick={handleAuthClick}
+                                disabled={isLoading}
                                 style={{
                                     padding: '8px 16px',
-                                    backgroundColor: '#4285F4',
+                                    backgroundColor: isLoading ? '#9ca3af' : '#4285F4',
                                     color: 'white',
                                     borderRadius: '8px',
                                     fontWeight: '500',
-                                    cursor: 'pointer',
+                                    cursor: isLoading ? 'not-allowed' : 'pointer',
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -401,13 +420,14 @@
                                 }}
                             >
                                 <GoogleIcon />
-                                Se connecter
+                                {isLoading ? 'Chargement...' : 'Se connecter'}
                             </button>
                         ) : (
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                     onClick={handleSync}
                                     disabled={isSyncing || selectedCalendars.length === 0}
+                                    data-sync-button="true"
                                     style={{
                                         padding: '8px 16px',
                                         backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
@@ -657,7 +677,7 @@
             };
 
             const createGoogleEvent = async (dateKey, activity) => {
-                if (!primaryCalendarId || !gapi.client.getToken()) return null;
+                if (!primaryCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return null;
 
                 try {
                     const [year, month, day] = dateKey.split('-');
@@ -702,7 +722,7 @@
             };
 
             const updateGoogleEvent = async (activity) => {
-                if (!activity.googleEventId || !activity.googleCalendarId || !gapi.client.getToken()) return;
+                if (!activity.googleEventId || !activity.googleCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
 
                 try {
                     // Trouver la date de l'activité
@@ -749,7 +769,7 @@
             };
 
             const deleteGoogleEvent = async (activity) => {
-                if (!activity.googleEventId || !activity.googleCalendarId || !gapi.client.getToken()) return;
+                if (!activity.googleEventId || !activity.googleCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
 
                 try {
                     await gapi.client.calendar.events.delete({

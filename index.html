@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#ec4899">
-    <title>Planning Cyclique 🌸</title>
+    <title>Lunarium - Planning Cyclique 🌸</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,21 +17,6 @@
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             background-color: #f9fafb;
-        }
-        .activity-block:hover {
-            filter: brightness(0.95);
-        }
-        .travel-time {
-            background-color: #f3f4f6;
-            background-image: repeating-linear-gradient(
-                45deg,
-                #6b7280 0px,
-                #6b7280 8px,
-                transparent 8px,
-                transparent 16px
-            );
-            border: 2px solid #9ca3af;
-            opacity: 0.9;
         }
         .toast {
             position: fixed;
@@ -54,78 +39,17 @@
                 opacity: 1;
             }
         }
-        .cycle-segment {
+        .cycle-day {
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
         }
-        .cycle-segment:hover {
-            opacity: 0.85;
+        .cycle-day:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
         }
-        .sun-line {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 2px;
-            z-index: 5;
-            pointer-events: none;
-        }
-        .sun-badge {
-            position: absolute;
-            font-size: 10px;
-            font-weight: 700;
-            background: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            z-index: 6;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .cycle-day-cell {
-            min-height: 100px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .cycle-day-cell:hover {
-            background-color: rgba(0,0,0,0.02);
-        }
-        .node {
-            cursor: move;
-        }
-        .node:hover {
-            filter: brightness(1.15);
-        }
-        .node.selected {
-            filter: brightness(1.25);
-        }
-        .color-swatch {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 2px solid transparent;
-        }
-        .color-swatch:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        .color-swatch.selected {
-            border: 3px solid #000;
-            transform: scale(1.15);
-        }
-        .sync-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
+        .cycle-day.selected {
+            filter: brightness(1.2);
+            box-shadow: 0 0 0 3px white, 0 0 0 5px #ec4899;
         }
         .sync-spinner {
             width: 16px;
@@ -137,6 +61,28 @@
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+        .phase-legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+        .phase-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .event-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 4px;
         }
     </style>
 </head>
@@ -152,67 +98,69 @@
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
+        // CONFIGURATION DES PHASES DU CYCLE
+        const CYCLE_PHASES = {
+            menstruation: {
+                name: 'Lune Rouge',
+                archetype: 'Sorcière',
+                emoji: '🌑',
+                color: '#dc2626',
+                lightColor: '#fecaca',
+                description: 'Repos, introspection, prise de conscience',
+                getDays: (cycleLength) => [1, 2, 3]
+            },
+            preOvulation: {
+                name: 'Jeune Fille',
+                archetype: 'Dynamique',
+                emoji: '🌒',
+                color: '#16a34a',
+                lightColor: '#bbf7d0',
+                description: 'Énergie, créativité, nouveaux projets',
+                getDays: (cycleLength) => {
+                    const days = [];
+                    for (let i = 4; i <= Math.floor(cycleLength / 2) - 3; i++) {
+                        days.push(i);
+                    }
+                    return days;
+                }
+            },
+            ovulation: {
+                name: 'Mère',
+                archetype: 'Nourricière',
+                emoji: '🌕',
+                color: '#f59e0b',
+                lightColor: '#fde68a',
+                description: 'Ouverture, communication, collaboration',
+                getDays: (cycleLength) => {
+                    const ovulationDay = Math.floor(cycleLength / 2);
+                    return [ovulationDay - 1, ovulationDay, ovulationDay + 1];
+                }
+            },
+            preMenustruation: {
+                name: 'Enchanteresse',
+                archetype: 'Intuitive',
+                emoji: '🌘',
+                color: '#8b5cf6',
+                lightColor: '#ddd6fe',
+                description: 'Intuition, finition, recentrage',
+                getDays: (cycleLength) => {
+                    const days = [];
+                    const start = Math.floor(cycleLength / 2) + 2;
+                    for (let i = start; i <= cycleLength; i++) {
+                        days.push(i);
+                    }
+                    return days;
+                }
+            }
+        };
+
         // ===== ICÔNES =====
-        const PlusIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        );
-
-        const DownloadIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-        );
-
-        const ChevronLeftIcon = () => (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-        );
-
-        const ChevronRightIcon = () => (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
-        );
-
-        const SettingsIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6m5.66-17a10 10 0 0 1 0 16M6.34 4a10 10 0 0 0 0 16"></path>
-            </svg>
-        );
-
-        const ClockIcon = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-        );
-
-        const XIcon = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        );
-
-        const SaveIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                <polyline points="7 3 7 8 15 8"></polyline>
-            </svg>
-        );
-
-        const TrashIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        const GoogleIcon = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
         );
 
@@ -224,16 +172,21 @@
             </svg>
         );
 
-        const GoogleIcon = () => (
-            <svg width="18" height="18" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        const SettingsIcon = () => (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m5.66-17a10 10 0 0 1 0 16M6.34 4a10 10 0 0 0 0 16"></path>
             </svg>
         );
 
-        // ===== GOOGLE CALENDAR API =====
+        const XIcon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        // ===== GOOGLE CALENDAR SYNC COMPONENT =====
         const GoogleCalendarSync = ({ onSync, onError }) => {
             const [isSignedIn, setIsSignedIn] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
@@ -247,11 +200,8 @@
             useEffect(() => {
                 let gapiTimeout, gisTimeout;
                 
-                // Attendre que les scripts soient disponibles avec timeout
                 const checkAndLoad = () => {
-                    console.log('Checking for gapi...', typeof gapi);
                     if (typeof gapi !== 'undefined') {
-                        console.log('gapi found, loading...');
                         gapiLoaded();
                         clearTimeout(gapiTimeout);
                     } else {
@@ -260,9 +210,7 @@
                 };
                 
                 const checkAndLoadGis = () => {
-                    console.log('Checking for google.accounts...', typeof google !== 'undefined' ? (google.accounts ? 'yes' : 'no google.accounts') : 'no google');
                     if (typeof google !== 'undefined' && google.accounts) {
-                        console.log('google.accounts found, loading...');
                         gisLoaded();
                         clearTimeout(gisTimeout);
                     } else {
@@ -270,16 +218,13 @@
                     }
                 };
                 
-                // Commencer à vérifier après un court délai
                 setTimeout(() => {
                     checkAndLoad();
                     checkAndLoadGis();
                 }, 500);
                 
-                // Timeout après 10 secondes
                 setTimeout(() => {
                     if (!gapiInited.current || !gisInited.current) {
-                        console.error('Timeout: Scripts Google non chargés');
                         setIsLoading(false);
                         onError?.('Impossible de charger Google Calendar. Veuillez recharger la page.');
                     }
@@ -292,21 +237,17 @@
             }, []);
 
             const gapiLoaded = () => {
-                console.log('gapiLoaded called');
                 if (typeof gapi !== 'undefined') {
-                    console.log('Loading gapi client...');
                     gapi.load('client', initializeGapiClient);
                 }
             };
 
             const initializeGapiClient = async () => {
-                console.log('initializeGapiClient called');
                 try {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
                         discoveryDocs: [DISCOVERY_DOC],
                     });
-                    console.log('gapi client initialized successfully');
                     gapiInited.current = true;
                     maybeEnableButtons();
                 } catch (err) {
@@ -316,14 +257,11 @@
             };
 
             const gisLoaded = () => {
-                console.log('gisLoaded called');
                 if (typeof google !== 'undefined') {
-                    console.log('Initializing token client...');
                     tokenClient.current = google.accounts.oauth2.initTokenClient({
                         client_id: GOOGLE_CLIENT_ID,
                         scope: SCOPES,
                         callback: async (response) => {
-                            console.log('Token callback received:', response);
                             if (response.error) {
                                 console.error('Auth error:', response.error);
                                 onError?.('Erreur d\'authentification Google');
@@ -333,20 +271,15 @@
                             await loadCalendars();
                         },
                     });
-                    console.log('Token client initialized');
                     gisInited.current = true;
                     maybeEnableButtons();
                 }
             };
 
             const maybeEnableButtons = () => {
-                console.log('maybeEnableButtons called. gapiInited:', gapiInited.current, 'gisInited:', gisInited.current);
                 if (gapiInited.current && gisInited.current) {
-                    console.log('Both APIs ready, enabling buttons');
                     setIsLoading(false);
-                    // Vérifier si déjà connecté
                     if (gapi.client.getToken()) {
-                        console.log('Already has token, signing in...');
                         setIsSignedIn(true);
                         loadCalendars();
                     }
@@ -392,7 +325,6 @@
                     const cals = response.result.items || [];
                     setCalendars(cals);
                     
-                    // Sélectionner le calendrier principal par défaut
                     const primary = cals.find(cal => cal.primary);
                     if (primary) {
                         setSelectedCalendars([primary.id]);
@@ -413,7 +345,6 @@
                 
                 setIsSyncing(true);
                 try {
-                    // Récupérer les événements des calendriers sélectionnés
                     const now = new Date();
                     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
                     const sixMonthsAhead = new Date(now.getFullYear(), now.getMonth() + 6, 31);
@@ -432,7 +363,7 @@
                         allEvents.push(...events.map(e => ({ ...e, calendarId })));
                     }
                     
-                    onSync?.(allEvents, selectedCalendars[0]); // Premier calendrier = calendrier principal
+                    onSync?.(allEvents, selectedCalendars[0]);
                 } catch (err) {
                     console.error('Error syncing:', err);
                     onError?.('Erreur de synchronisation');
@@ -451,7 +382,7 @@
             };
 
             return (
-                <div style={{ padding: '20px', background: 'white', borderRadius: '12px', marginBottom: '20px' }}>
+                <div style={{ padding: '20px', background: 'white', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <GoogleIcon />
@@ -483,7 +414,6 @@
                                 <button
                                     onClick={handleSync}
                                     disabled={isSyncing || selectedCalendars.length === 0}
-                                    data-sync-button="true"
                                     style={{
                                         padding: '8px 16px',
                                         backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
@@ -523,7 +453,7 @@
                     {isSignedIn && calendars.length > 0 && (
                         <div>
                             <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
-                                Sélectionnez les calendriers à synchroniser :
+                                Calendriers synchronisés :
                             </p>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {calendars.map(cal => (
@@ -565,28 +495,119 @@
             );
         };
 
+        // ===== CONFIGURATION MODAL =====
+        const ConfigModal = ({ config, onSave, onClose }) => {
+            const [startDate, setStartDate] = useState(config.startDate);
+            const [cycleLength, setCycleLength] = useState(config.cycleLength);
+
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Configuration du cycle</h2>
+                            <button onClick={onClose} style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
+                                <XIcon />
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Premier jour des dernières règles
+                            </label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Durée du cycle (jours)
+                            </label>
+                            <input
+                                type="number"
+                                min="21"
+                                max="35"
+                                value={cycleLength}
+                                onChange={(e) => setCycleLength(parseInt(e.target.value))}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={onClose}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    background: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => onSave({ startDate, cycleLength })}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#ec4899',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // ===== COMPOSANT PRINCIPAL =====
-        function PlanningCyclique() {
-            const [activities, setActivities] = useState(() => {
-                const saved = localStorage.getItem('planningActivities');
-                return saved ? JSON.parse(saved) : {};
-            });
-
-            const [visions, setVisions] = useState(() => {
-                const saved = localStorage.getItem('planningVisions');
-                return saved ? JSON.parse(saved) : [];
-            });
-
-            const [currentDate, setCurrentDate] = useState(new Date());
-            const [view, setView] = useState('day');
-            const [showAddModal, setShowAddModal] = useState(false);
-            const [showConfigModal, setShowConfigModal] = useState(false);
-            const [selectedDate, setSelectedDate] = useState(null);
-            const [editingActivity, setEditingActivity] = useState(null);
+        function LunariumPlanner() {
+            const [events, setEvents] = useState({});
             const [toast, setToast] = useState(null);
-            const [selectedCircleDay, setSelectedCircleDay] = useState(null);
-            const [draggedNode, setDraggedNode] = useState(null);
-            const [syncStatus, setSyncStatus] = useState(null);
+            const [showConfigModal, setShowConfigModal] = useState(false);
+            const [selectedDay, setSelectedDay] = useState(null);
             const [primaryCalendarId, setPrimaryCalendarId] = useState(null);
 
             const [cycleConfig, setCycleConfig] = useState(() => {
@@ -597,255 +618,34 @@
                 };
             });
 
-            const [newActivity, setNewActivity] = useState({
-                title: '',
-                startTime: '09:00',
-                duration: 60,
-                color: '#3b82f6',
-                description: '',
-                tasks: [],
-                recurring: false,
-                recurrencePattern: 'none',
-                recurrenceDays: [],
-                specificDates: [],
-                travelBefore: 0,
-                travelAfter: 0,
-                linkedVision: null,
-                googleEventId: null // Nouveau champ pour lier à Google Calendar
-            });
-
-            // Sauvegarder automatiquement
-            useEffect(() => {
-                localStorage.setItem('planningActivities', JSON.stringify(activities));
-            }, [activities]);
-
-            useEffect(() => {
-                localStorage.setItem('planningVisions', JSON.stringify(visions));
-            }, [visions]);
-
             useEffect(() => {
                 localStorage.setItem('cycleConfig', JSON.stringify(cycleConfig));
             }, [cycleConfig]);
 
-            // Synchronisation automatique au chargement
-            useEffect(() => {
-                const timer = setTimeout(() => {
-                    const syncButton = document.querySelector('[data-sync-button]');
-                    if (syncButton && !syncButton.disabled) {
-                        syncButton.click();
-                    }
-                }, 1000);
-                return () => clearTimeout(timer);
-            }, []);
-
-            // ===== FONCTIONS GOOGLE CALENDAR =====
-            const syncFromGoogleCalendar = async (events, primaryCal) => {
+            const syncFromGoogleCalendar = (googleEvents, primaryCal) => {
                 setPrimaryCalendarId(primaryCal);
-                setSyncStatus('syncing');
                 
-                try {
-                    const newActivities = { ...activities };
+                const newEvents = {};
+                googleEvents.forEach(event => {
+                    if (!event.start || !event.start.dateTime) return;
                     
-                    // Marquer tous les événements Google existants pour vérification
-                    const existingGoogleEvents = new Set();
-                    Object.values(newActivities).flat().forEach(act => {
-                        if (act.googleEventId) {
-                            existingGoogleEvents.add(act.googleEventId);
-                        }
-                    });
-
-                    // Traiter chaque événement Google
-                    for (const event of events) {
-                        if (!event.start || !event.start.dateTime) continue;
-                        
-                        const startDate = new Date(event.start.dateTime);
-                        const endDate = new Date(event.end.dateTime);
-                        const dateKey = startDate.toISOString().split('T')[0];
-                        
-                        const duration = Math.round((endDate - startDate) / (1000 * 60));
-                        
-                        // Chercher si cet événement existe déjà dans le planner
-                        const existingIndex = newActivities[dateKey]?.findIndex(
-                            act => act.googleEventId === event.id
-                        );
-
-                        const activityData = {
-                            title: event.summary || 'Sans titre',
-                            startTime: startDate.toTimeString().slice(0, 5),
-                            duration: duration,
-                            color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
-                            description: event.description || '',
-                            tasks: [],
-                            recurring: false,
-                            recurrencePattern: 'none',
-                            recurrenceDays: [],
-                            specificDates: [],
-                            travelBefore: 0,
-                            travelAfter: 0,
-                            linkedVision: null,
-                            googleEventId: event.id,
-                            googleCalendarId: event.calendarId,
-                            googleUpdated: event.updated
-                        };
-
-                        if (existingIndex >= 0) {
-                            // Mettre à jour l'événement existant
-                            newActivities[dateKey][existingIndex] = {
-                                ...newActivities[dateKey][existingIndex],
-                                ...activityData
-                            };
-                        } else {
-                            // Ajouter le nouvel événement
-                            if (!newActivities[dateKey]) {
-                                newActivities[dateKey] = [];
-                            }
-                            newActivities[dateKey].push(activityData);
-                        }
-                        
-                        existingGoogleEvents.delete(event.id);
-                    }
-
-                    // Supprimer les événements qui n'existent plus dans Google Calendar
-                    Object.keys(newActivities).forEach(dateKey => {
-                        newActivities[dateKey] = newActivities[dateKey].filter(act => {
-                            if (act.googleEventId && existingGoogleEvents.has(act.googleEventId)) {
-                                return false; // Supprimer
-                            }
-                            return true; // Garder
-                        });
-                        
-                        if (newActivities[dateKey].length === 0) {
-                            delete newActivities[dateKey];
-                        }
-                    });
-
-                    setActivities(newActivities);
-                    setSyncStatus('success');
-                    showToast('Synchronisation réussie', 'success');
-                    
-                    setTimeout(() => setSyncStatus(null), 3000);
-                } catch (err) {
-                    console.error('Sync error:', err);
-                    setSyncStatus('error');
-                    showToast('Erreur de synchronisation', 'error');
-                    setTimeout(() => setSyncStatus(null), 3000);
-                }
-            };
-
-            const createGoogleEvent = async (dateKey, activity) => {
-                if (!primaryCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return null;
-
-                try {
-                    const [year, month, day] = dateKey.split('-');
-                    const startDateTime = new Date(year, month - 1, day);
-                    const [hours, minutes] = activity.startTime.split(':');
-                    startDateTime.setHours(parseInt(hours), parseInt(minutes));
-                    
-                    const endDateTime = new Date(startDateTime);
-                    endDateTime.setMinutes(endDateTime.getMinutes() + activity.duration);
-
-                    const event = {
-                        summary: activity.title,
-                        description: activity.description,
-                        start: {
-                            dateTime: startDateTime.toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        },
-                        end: {
-                            dateTime: endDateTime.toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        },
-                    };
-
-                    if (activity.recurring && activity.recurrencePattern !== 'none') {
-                        const rrule = buildRRule(activity);
-                        if (rrule) {
-                            event.recurrence = [rrule];
-                        }
-                    }
-
-                    const response = await gapi.client.calendar.events.insert({
-                        calendarId: primaryCalendarId,
-                        resource: event,
-                    });
-
-                    return response.result.id;
-                } catch (err) {
-                    console.error('Error creating Google event:', err);
-                    showToast('Erreur lors de la création dans Google Calendar', 'error');
-                    return null;
-                }
-            };
-
-            const updateGoogleEvent = async (activity) => {
-                if (!activity.googleEventId || !activity.googleCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
-
-                try {
-                    // Trouver la date de l'activité
-                    let dateKey = null;
-                    for (const [key, acts] of Object.entries(activities)) {
-                        if (acts.some(a => a.googleEventId === activity.googleEventId)) {
-                            dateKey = key;
-                            break;
-                        }
+                    const dateKey = event.start.dateTime.split('T')[0];
+                    if (!newEvents[dateKey]) {
+                        newEvents[dateKey] = [];
                     }
                     
-                    if (!dateKey) return;
-
-                    const [year, month, day] = dateKey.split('-');
-                    const startDateTime = new Date(year, month - 1, day);
-                    const [hours, minutes] = activity.startTime.split(':');
-                    startDateTime.setHours(parseInt(hours), parseInt(minutes));
-                    
-                    const endDateTime = new Date(startDateTime);
-                    endDateTime.setMinutes(endDateTime.getMinutes() + activity.duration);
-
-                    const event = {
-                        summary: activity.title,
-                        description: activity.description,
-                        start: {
-                            dateTime: startDateTime.toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        },
-                        end: {
-                            dateTime: endDateTime.toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        },
-                    };
-
-                    await gapi.client.calendar.events.update({
-                        calendarId: activity.googleCalendarId,
-                        eventId: activity.googleEventId,
-                        resource: event,
+                    newEvents[dateKey].push({
+                        id: event.id,
+                        title: event.summary || 'Sans titre',
+                        description: event.description || '',
+                        start: event.start.dateTime,
+                        end: event.end.dateTime,
+                        color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6'
                     });
-                } catch (err) {
-                    console.error('Error updating Google event:', err);
-                    showToast('Erreur lors de la mise à jour dans Google Calendar', 'error');
-                }
-            };
-
-            const deleteGoogleEvent = async (activity) => {
-                if (!activity.googleEventId || !activity.googleCalendarId || typeof gapi === 'undefined' || !gapi.client || !gapi.client.getToken()) return;
-
-                try {
-                    await gapi.client.calendar.events.delete({
-                        calendarId: activity.googleCalendarId,
-                        eventId: activity.googleEventId,
-                    });
-                } catch (err) {
-                    console.error('Error deleting Google event:', err);
-                    showToast('Erreur lors de la suppression dans Google Calendar', 'error');
-                }
-            };
-
-            const buildRRule = (activity) => {
-                if (activity.recurrencePattern === 'daily') {
-                    return 'RRULE:FREQ=DAILY';
-                } else if (activity.recurrencePattern === 'weekly' && activity.recurrenceDays.length > 0) {
-                    const days = activity.recurrenceDays.map(d => ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][d]).join(',');
-                    return `RRULE:FREQ=WEEKLY;BYDAY=${days}`;
-                }
-                return null;
+                });
+                
+                setEvents(newEvents);
+                showToast('Synchronisation réussie ✓', 'success');
             };
 
             const getGoogleColor = (colorId) => {
@@ -857,170 +657,268 @@
                 return colors[colorId] || '#3b82f6';
             };
 
-            // ===== FONCTIONS ACTIVITÉS =====
-            const addActivity = async (date, data) => {
-                const dateKey = date.toISOString().split('T')[0];
-                const newActivities = { ...activities };
-                
-                if (!newActivities[dateKey]) {
-                    newActivities[dateKey] = [];
-                }
-
-                // Créer dans Google Calendar si connecté
-                const googleEventId = await createGoogleEvent(dateKey, data);
-                
-                const activityToAdd = {
-                    ...data,
-                    id: Date.now(),
-                    googleEventId: googleEventId,
-                    googleCalendarId: googleEventId ? primaryCalendarId : null
-                };
-
-                newActivities[dateKey].push(activityToAdd);
-
-                // Gérer la récurrence
-                if (data.recurring) {
-                    if (data.recurrencePattern === 'daily') {
-                        for (let i = 1; i <= 90; i++) {
-                            const futureDate = new Date(date);
-                            futureDate.setDate(futureDate.getDate() + i);
-                            const futureDateKey = futureDate.toISOString().split('T')[0];
-                            
-                            if (!newActivities[futureDateKey]) {
-                                newActivities[futureDateKey] = [];
-                            }
-                            
-                            newActivities[futureDateKey].push({
-                                ...data,
-                                id: Date.now() + i,
-                                googleEventId: googleEventId, // Même ID pour événement récurrent
-                                googleCalendarId: googleEventId ? primaryCalendarId : null
-                            });
-                        }
-                    } else if (data.recurrencePattern === 'weekly' && data.recurrenceDays.length > 0) {
-                        const currentDay = date.getDay();
-                        for (let week = 0; week < 12; week++) {
-                            data.recurrenceDays.forEach(targetDay => {
-                                const daysAhead = (targetDay - currentDay + 7) % 7 + (week * 7);
-                                if (daysAhead === 0 && week === 0) return;
-                                
-                                const futureDate = new Date(date);
-                                futureDate.setDate(futureDate.getDate() + daysAhead);
-                                const futureDateKey = futureDate.toISOString().split('T')[0];
-                                
-                                if (!newActivities[futureDateKey]) {
-                                    newActivities[futureDateKey] = [];
-                                }
-                                
-                                newActivities[futureDateKey].push({
-                                    ...data,
-                                    id: Date.now() + daysAhead,
-                                    googleEventId: googleEventId,
-                                    googleCalendarId: googleEventId ? primaryCalendarId : null
-                                });
-                            });
-                        }
-                    } else if (data.recurrencePattern === 'specific' && data.specificDates.length > 0) {
-                        data.specificDates.forEach((specificDate, index) => {
-                            if (specificDate === dateKey) return;
-                            
-                            if (!newActivities[specificDate]) {
-                                newActivities[specificDate] = [];
-                            }
-                            
-                            newActivities[specificDate].push({
-                                ...data,
-                                id: Date.now() + index + 1
-                            });
-                        });
-                    }
-                }
-
-                setActivities(newActivities);
-                setShowAddModal(false);
-                showToast('Activité ajoutée', 'success');
-            };
-
-            const updateActivity = async (date, updatedActivity) => {
-                const dateKey = date.toISOString().split('T')[0];
-                const newActivities = { ...activities };
-                
-                if (newActivities[dateKey]) {
-                    const index = newActivities[dateKey].findIndex(a => a.id === updatedActivity.id);
-                    if (index !== -1) {
-                        newActivities[dateKey][index] = updatedActivity;
-                        
-                        // Mettre à jour dans Google Calendar si lié
-                        if (updatedActivity.googleEventId) {
-                            await updateGoogleEvent(updatedActivity);
-                        }
-                        
-                        setActivities(newActivities);
-                        setEditingActivity(null);
-                        showToast('Activité modifiée', 'success');
-                    }
-                }
-            };
-
-            const deleteActivity = async (date, activityId) => {
-                const dateKey = date.toISOString().split('T')[0];
-                const newActivities = { ...activities };
-                
-                if (newActivities[dateKey]) {
-                    const activityToDelete = newActivities[dateKey].find(a => a.id === activityId);
-                    
-                    newActivities[dateKey] = newActivities[dateKey].filter(a => a.id !== activityId);
-                    
-                    if (newActivities[dateKey].length === 0) {
-                        delete newActivities[dateKey];
-                    }
-                    
-                    // Supprimer de Google Calendar si lié
-                    if (activityToDelete?.googleEventId) {
-                        await deleteGoogleEvent(activityToDelete);
-                    }
-                    
-                    setActivities(newActivities);
-                    showToast('Activité supprimée', 'success');
-                }
-            };
-
             const showToast = (message, type = 'info') => {
                 setToast({ message, type });
                 setTimeout(() => setToast(null), 3000);
             };
 
-            // ===== FONCTIONS VISIONS =====
-            const addVision = (phase, title, description) => {
-                const newVision = {
-                    id: Date.now(),
-                    phase,
-                    title,
-                    description,
-                    nodes: [],
-                    connections: []
-                };
-                setVisions([...visions, newVision]);
-                showToast('Vision ajoutée', 'success');
+            const getCycleDay = (date) => {
+                const start = new Date(cycleConfig.startDate);
+                const current = new Date(date);
+                const diffTime = current - start;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                return ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength + 1;
             };
 
-            const updateVision = (visionId, updates) => {
-                setVisions(visions.map(v => v.id === visionId ? { ...v, ...updates } : v));
-                showToast('Vision mise à jour', 'success');
+            const getPhaseForDay = (cycleDay) => {
+                for (const [key, phase] of Object.entries(CYCLE_PHASES)) {
+                    const days = phase.getDays(cycleConfig.cycleLength);
+                    if (days.includes(cycleDay)) {
+                        return { key, ...phase };
+                    }
+                }
+                return null;
             };
 
-            const deleteVision = (visionId) => {
-                setVisions(visions.filter(v => v.id !== visionId));
-                showToast('Vision supprimée', 'success');
+            const getCycleDayDate = (cycleDay) => {
+                const start = new Date(cycleConfig.startDate);
+                start.setDate(start.getDate() + cycleDay - 1);
+                return start.toISOString().split('T')[0];
             };
 
-            // ===== RENDU =====
-            const Toast = ({ message, type, onClose }) => {
-                useEffect(() => {
-                    const timer = setTimeout(onClose, 3000);
-                    return () => clearTimeout(timer);
-                }, [onClose]);
+            const getEventsForCycleDay = (cycleDay) => {
+                const dateKey = getCycleDayDate(cycleDay);
+                return events[dateKey] || [];
+            };
 
+            const renderCycleView = () => {
+                const centerX = 300;
+                const centerY = 300;
+                const outerRadius = 240;
+                const innerRadius = 120;
+
+                return (
+                    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                        <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+                            {/* Cercle du cycle */}
+                            <div style={{ flex: '1', display: 'flex', justifyContent: 'center' }}>
+                                <svg width="600" height="600" viewBox="0 0 600 600">
+                                    {/* Fond blanc */}
+                                    <circle cx={centerX} cy={centerY} r={outerRadius} fill="white" />
+                                    
+                                    {/* Segments de phases */}
+                                    {Object.entries(CYCLE_PHASES).map(([key, phase]) => {
+                                        const days = phase.getDays(cycleConfig.cycleLength);
+                                        const startDay = days[0];
+                                        const endDay = days[days.length - 1];
+                                        
+                                        const startAngle = ((startDay - 1) / cycleConfig.cycleLength) * 360 - 90;
+                                        const endAngle = (endDay / cycleConfig.cycleLength) * 360 - 90;
+                                        
+                                        const startRad = (startAngle * Math.PI) / 180;
+                                        const endRad = (endAngle * Math.PI) / 180;
+                                        
+                                        const x1 = centerX + innerRadius * Math.cos(startRad);
+                                        const y1 = centerY + innerRadius * Math.sin(startRad);
+                                        const x2 = centerX + outerRadius * Math.cos(startRad);
+                                        const y2 = centerY + outerRadius * Math.sin(startRad);
+                                        const x3 = centerX + outerRadius * Math.cos(endRad);
+                                        const y3 = centerY + outerRadius * Math.sin(endRad);
+                                        const x4 = centerX + innerRadius * Math.cos(endRad);
+                                        const y4 = centerY + innerRadius * Math.sin(endRad);
+                                        
+                                        const largeArc = (endAngle - startAngle) > 180 ? 1 : 0;
+                                        
+                                        return (
+                                            <path
+                                                key={key}
+                                                d={`M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x1} ${y1} Z`}
+                                                fill={phase.lightColor}
+                                                stroke={phase.color}
+                                                strokeWidth="2"
+                                            />
+                                        );
+                                    })}
+                                    
+                                    {/* Jours du cycle */}
+                                    {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
+                                        const day = i + 1;
+                                        const angle = (day / cycleConfig.cycleLength) * 360 - 90;
+                                        const rad = (angle * Math.PI) / 180;
+                                        const radius = (innerRadius + outerRadius) / 2;
+                                        const x = centerX + radius * Math.cos(rad);
+                                        const y = centerY + radius * Math.sin(rad);
+                                        
+                                        const phase = getPhaseForDay(day);
+                                        const dayEvents = getEventsForCycleDay(day);
+                                        const today = new Date().toISOString().split('T')[0];
+                                        const isToday = getCycleDayDate(day) === today;
+                                        
+                                        return (
+                                            <g key={day}>
+                                                <circle
+                                                    cx={x}
+                                                    cy={y}
+                                                    r={isToday ? 20 : 16}
+                                                    fill={isToday ? phase?.color : 'white'}
+                                                    stroke={phase?.color}
+                                                    strokeWidth={isToday ? 3 : 2}
+                                                    className="cycle-day"
+                                                    onClick={() => setSelectedDay(day)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                <text
+                                                    x={x}
+                                                    y={y + 5}
+                                                    textAnchor="middle"
+                                                    fontSize="12"
+                                                    fontWeight={isToday ? "bold" : "normal"}
+                                                    fill={isToday ? 'white' : '#374151'}
+                                                >
+                                                    {day}
+                                                </text>
+                                                {dayEvents.length > 0 && (
+                                                    <circle cx={x + 12} cy={y - 12} r="4" fill={phase?.color} />
+                                                )}
+                                            </g>
+                                        );
+                                    })}
+                                    
+                                    {/* Centre avec emoji */}
+                                    <text x={centerX} y={centerY} textAnchor="middle" fontSize="60">
+                                        🌸
+                                    </text>
+                                </svg>
+                            </div>
+
+                            {/* Détails du jour sélectionné */}
+                            {selectedDay && (
+                                <div style={{
+                                    width: '350px',
+                                    background: 'white',
+                                    borderRadius: '12px',
+                                    padding: '20px',
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+                                            Jour {selectedDay}
+                                        </h3>
+                                        <button
+                                            onClick={() => setSelectedDay(null)}
+                                            style={{
+                                                cursor: 'pointer',
+                                                border: 'none',
+                                                background: 'none',
+                                                padding: '4px'
+                                            }}
+                                        >
+                                            <XIcon />
+                                        </button>
+                                    </div>
+
+                                    {(() => {
+                                        const phase = getPhaseForDay(selectedDay);
+                                        const date = new Date(getCycleDayDate(selectedDay));
+                                        const dayEvents = getEventsForCycleDay(selectedDay);
+                                        
+                                        return (
+                                            <>
+                                                <div style={{
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    background: phase?.lightColor,
+                                                    marginBottom: '16px'
+                                                }}>
+                                                    <div style={{ fontSize: '24px', marginBottom: '8px' }}>
+                                                        {phase?.emoji}
+                                                    </div>
+                                                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                                                        {phase?.name} - {phase?.archetype}
+                                                    </div>
+                                                    <div style={{ fontSize: '13px', color: '#6b7280' }}>
+                                                        {phase?.description}
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ marginBottom: '16px' }}>
+                                                    <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
+                                                        {date.toLocaleDateString('fr-FR', {
+                                                            weekday: 'long',
+                                                            day: 'numeric',
+                                                            month: 'long'
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {dayEvents.length > 0 ? (
+                                                    <div>
+                                                        <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>
+                                                            Événements ({dayEvents.length})
+                                                        </h4>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                            {dayEvents.map((event, idx) => (
+                                                                <div
+                                                                    key={idx}
+                                                                    style={{
+                                                                        padding: '10px',
+                                                                        borderRadius: '8px',
+                                                                        borderLeft: `4px solid ${event.color}`,
+                                                                        background: '#f9fafb',
+                                                                        fontSize: '13px'
+                                                                    }}
+                                                                >
+                                                                    <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                                                        {event.title}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                                                        {new Date(event.start).toLocaleTimeString('fr-FR', {
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit'
+                                                                        })}
+                                                                        {' - '}
+                                                                        {new Date(event.end).toLocaleTimeString('fr-FR', {
+                                                                            hour: '2-digit',
+                                                                            minute: '2-digit'
+                                                                        })}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af', fontSize: '14px' }}>
+                                                        Aucun événement ce jour
+                                                    </div>
+                                                )}
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Légende des phases */}
+                        <div className="phase-legend" style={{ justifyContent: 'center', marginTop: '32px' }}>
+                            {Object.entries(CYCLE_PHASES).map(([key, phase]) => (
+                                <div key={key} className="phase-badge">
+                                    <span style={{ fontSize: '20px' }}>{phase.emoji}</span>
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                                            {phase.name}
+                                        </div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                            {phase.archetype}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const Toast = ({ message, type }) => {
                 const colors = {
                     success: '#16a34a',
                     error: '#ef4444',
@@ -1029,162 +927,32 @@
 
                 return (
                     <div className="toast" style={{ borderLeft: `4px solid ${colors[type]}` }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '14px', fontWeight: '500' }}>{message}</span>
-                        </div>
+                        <span style={{ fontSize: '14px', fontWeight: '500' }}>{message}</span>
                     </div>
                 );
             };
 
-            // Navigation
-            const changeDate = (days) => {
-                const newDate = new Date(currentDate);
-                newDate.setDate(newDate.getDate() + days);
-                setCurrentDate(newDate);
-            };
-
-            const goToToday = () => {
-                setCurrentDate(new Date());
-            };
-
-            const getViewTitle = () => {
-                if (view === 'day') {
-                    return currentDate.toLocaleDateString('fr-FR', { 
-                        weekday: 'long', 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
-                    });
-                }
-                return '';
-            };
-
             return (
                 <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-                    {syncStatus && (
-                        <div className="sync-status">
-                            {syncStatus === 'syncing' && (
-                                <>
-                                    <div className="sync-spinner" />
-                                    <span>Synchronisation...</span>
-                                </>
-                            )}
-                            {syncStatus === 'success' && (
-                                <>
-                                    <span style={{ color: '#16a34a' }}>✓</span>
-                                    <span>Synchronisé</span>
-                                </>
-                            )}
-                            {syncStatus === 'error' && (
-                                <>
-                                    <span style={{ color: '#ef4444' }}>✗</span>
-                                    <span>Erreur</span>
-                                </>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Menu de navigation */}
+                    {/* Header */}
                     <div style={{
                         backgroundColor: 'white',
                         borderBottom: '1px solid #e5e7eb',
                         padding: '16px 24px',
                         display: 'flex',
-                        gap: '16px',
-                        alignItems: 'center',
-                        flexWrap: 'wrap'
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
                     }}>
-                        <h1 style={{ 
-                            margin: 0, 
-                            fontSize: '24px', 
+                        <h1 style={{
+                            margin: 0,
+                            fontSize: '24px',
                             fontWeight: '700',
                             background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
                             WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            marginRight: 'auto'
+                            WebkitTextFillColor: 'transparent'
                         }}>
-                            Planning Cyclique 🌸
+                            Lunarium 🌸
                         </h1>
-
-                        <button
-                            onClick={() => setView('circle')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: view === 'circle' ? '#ec4899' : 'white',
-                                color: view === 'circle' ? 'white' : '#6b7280',
-                                borderRadius: '8px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                border: view === 'circle' ? 'none' : '1px solid #e5e7eb',
-                                fontSize: '14px'
-                            }}
-                        >
-                            🌙 Cycle
-                        </button>
-
-                        <button
-                            onClick={() => setView('day')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: view === 'day' ? '#ec4899' : 'white',
-                                color: view === 'day' ? 'white' : '#6b7280',
-                                borderRadius: '8px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                border: view === 'day' ? 'none' : '1px solid #e5e7eb',
-                                fontSize: '14px'
-                            }}
-                        >
-                            📅 Jour
-                        </button>
-
-                        <button
-                            onClick={() => setView('timeline')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: view === 'timeline' ? '#ec4899' : 'white',
-                                color: view === 'timeline' ? 'white' : '#6b7280',
-                                borderRadius: '8px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                border: view === 'timeline' ? 'none' : '1px solid #e5e7eb',
-                                fontSize: '14px'
-                            }}
-                        >
-                            📊 Timeline
-                        </button>
-
-                        <button
-                            onClick={() => setView('cycle')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: view === 'cycle' ? '#ec4899' : 'white',
-                                color: view === 'cycle' ? 'white' : '#6b7280',
-                                borderRadius: '8px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                border: view === 'cycle' ? 'none' : '1px solid #e5e7eb',
-                                fontSize: '14px'
-                            }}
-                        >
-                            📆 Calendrier
-                        </button>
-
-                        <button
-                            onClick={() => setView('visions')}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: view === 'visions' ? '#ec4899' : 'white',
-                                color: view === 'visions' ? 'white' : '#6b7280',
-                                borderRadius: '8px',
-                                fontWeight: '500',
-                                cursor: 'pointer',
-                                border: view === 'visions' ? 'none' : '1px solid #e5e7eb',
-                                fontSize: '14px'
-                            }}
-                        >
-                            ✨ Visions
-                        </button>
 
                         <button
                             onClick={() => setShowConfigModal(true)}
@@ -1196,164 +964,58 @@
                                 cursor: 'pointer',
                                 border: '1px solid #e5e7eb',
                                 display: 'flex',
-                                alignItems: 'center'
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500'
                             }}
                         >
                             <SettingsIcon />
+                            Configuration
                         </button>
                     </div>
 
-                    {/* Panneau Google Calendar */}
-                    <div style={{ padding: '24px', paddingBottom: '0' }}>
+                    {/* Contenu */}
+                    <div style={{ padding: '24px' }}>
                         <GoogleCalendarSync
                             onSync={syncFromGoogleCalendar}
                             onError={(msg) => showToast(msg, 'error')}
                         />
-                    </div>
 
-                    {/* Barre d'actions */}
-                    <div style={{
-                        padding: '16px 24px',
-                        backgroundColor: 'white',
-                        borderBottom: '1px solid #e5e7eb',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '16px',
-                        flexWrap: 'wrap'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {view === 'day' && (
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        onClick={() => changeDate(-1)}
-                                        style={{
-                                            padding: '6px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            background: 'white',
-                                            border: '1px solid #e5e7eb',
-                                            display: 'flex',
-                                            alignItems: 'center'
-                                        }}
-                                    >
-                                        <ChevronLeftIcon />
-                                    </button>
-                                    <button
-                                        onClick={goToToday}
-                                        style={{
-                                            padding: '6px 12px',
-                                            backgroundColor: 'white',
-                                            color: '#ec4899',
-                                            borderRadius: '8px',
-                                            fontWeight: '500',
-                                            cursor: 'pointer',
-                                            border: '1px solid #e5e7eb',
-                                            fontSize: '13px'
-                                        }}
-                                    >
-                                        Aujourd'hui
-                                    </button>
-                                    <button
-                                        onClick={() => changeDate(1)}
-                                        style={{
-                                            padding: '6px',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer',
-                                            background: 'white',
-                                            border: '1px solid #e5e7eb',
-                                            display: 'flex',
-                                            alignItems: 'center'
-                                        }}
-                                    >
-                                        <ChevronRightIcon />
-                                    </button>
-                                </div>
-                            )}
-
-                            {view === 'day' && (
-                                <div style={{ fontSize: '15px', fontWeight: '500', color: '#6b7280', whiteSpace: 'nowrap' }}>
-                                    {getViewTitle()}
-                                </div>
-                            )}
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '32px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                        }}>
+                            <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '20px', fontWeight: '600', textAlign: 'center' }}>
+                                Mon Cycle 🌙
+                            </h2>
+                            {renderCycleView()}
                         </div>
-
-                        {view !== 'circle' && view !== 'visions' && (
-                            <button
-                                onClick={() => {
-                                    setSelectedDate(currentDate);
-                                    setShowAddModal(true);
-                                }}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#16a34a',
-                                    color: 'white',
-                                    borderRadius: '8px',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    border: 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    fontSize: '14px'
-                                }}
-                            >
-                                <PlusIcon />
-                                Ajouter
-                            </button>
-                        )}
                     </div>
 
-                    {/* Contenu principal */}
-                    <div style={{ padding: '24px' }}>
-                        {view === 'day' && (
-                            <div style={{ 
-                                maxWidth: '800px', 
-                                margin: '0 auto',
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '24px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}>
-                                <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
-                                    Connectez-vous à Google Calendar pour voir vos activités
-                                </p>
-                            </div>
-                        )}
-                        
-                        {view === 'visions' && (
-                            <div style={{ 
-                                maxWidth: '1200px', 
-                                margin: '0 auto',
-                                backgroundColor: 'white',
-                                borderRadius: '12px',
-                                padding: '24px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}>
-                                <h2 style={{ marginTop: 0, marginBottom: '24px', fontSize: '20px', fontWeight: '600' }}>
-                                    Mes Visions ✨
-                                </h2>
-                                <p style={{ color: '#6b7280', fontSize: '14px' }}>
-                                    Fonctionnalité Visions à venir...
-                                </p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Toast notification */}
-                    {toast && (
-                        <Toast
-                            message={toast.message}
-                            type={toast.type}
-                            onClose={() => setToast(null)}
+                    {/* Modals */}
+                    {showConfigModal && (
+                        <ConfigModal
+                            config={cycleConfig}
+                            onSave={(newConfig) => {
+                                setCycleConfig(newConfig);
+                                setShowConfigModal(false);
+                                showToast('Configuration enregistrée', 'success');
+                            }}
+                            onClose={() => setShowConfigModal(false)}
                         />
                     )}
+
+                    {/* Toast */}
+                    {toast && <Toast message={toast.message} type={toast.type} />}
                 </div>
             );
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<PlanningCyclique />);
+        root.render(<LunariumPlanner />);
     </script>
 </body>
 </html>

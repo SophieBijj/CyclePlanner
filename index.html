@@ -88,6 +88,20 @@
             </svg>
         );
 
+        const EditIcon = () => (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+        );
+
+        const TrashIcon = () => (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        );
+
         const SyncIcon = () => (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="23 4 23 10 17 10"></polyline>
@@ -987,6 +1001,283 @@
             );
         };
 
+        // ===== EDIT EVENT MODAL =====
+        const EditEventModal = ({ event, calendars, onClose, onUpdate, onDelete }) => {
+            const [title, setTitle] = useState(event.title);
+            const [selectedDate, setSelectedDate] = useState(event.date);
+            const [startTime, setStartTime] = useState(event.startTime);
+            const [duration, setDuration] = useState(event.duration);
+            const [selectedCalendar, setSelectedCalendar] = useState(event.calendarId);
+            const [isUpdating, setIsUpdating] = useState(false);
+
+            const handleUpdate = async () => {
+                if (!title.trim()) {
+                    alert('Le titre est obligatoire');
+                    return;
+                }
+
+                setIsUpdating(true);
+                try {
+                    await onUpdate({
+                        eventId: event.id,
+                        title,
+                        date: selectedDate,
+                        startTime,
+                        duration,
+                        calendarId: selectedCalendar
+                    });
+                    onClose();
+                } catch (err) {
+                    console.error('Error updating event:', err);
+                } finally {
+                    setIsUpdating(false);
+                }
+            };
+
+            const handleDelete = async () => {
+                try {
+                    await onDelete({
+                        eventId: event.id,
+                        calendarId: event.calendarId
+                    });
+                    onClose();
+                } catch (err) {
+                    console.error('Error deleting event:', err);
+                }
+            };
+
+            // Formater la date pour l'input type="date" (YYYY-MM-DD)
+            const formatDateForInput = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const handleDateChange = (e) => {
+                const newDate = new Date(e.target.value + 'T00:00:00');
+                setSelectedDate(newDate);
+            };
+
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Modifier l'événement</h2>
+                            <button onClick={onClose} style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
+                                <XIcon />
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Titre
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Nom de l'événement"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Date
+                            </label>
+                            <input
+                                type="date"
+                                value={formatDateForInput(selectedDate)}
+                                onChange={handleDateChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                    Heure de début
+                                </label>
+                                <input
+                                    type="time"
+                                    value={startTime}
+                                    onChange={(e) => setStartTime(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e7eb',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                    Durée (minutes)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="15"
+                                    step="15"
+                                    value={duration}
+                                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e7eb',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Calendrier
+                            </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {calendars.map(cal => (
+                                    <label
+                                        key={cal.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: selectedCalendar === cal.id ? '2px solid #ec4899' : '1px solid #e5e7eb',
+                                            cursor: 'pointer',
+                                            backgroundColor: selectedCalendar === cal.id ? '#fdf2f8' : 'white'
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="calendar"
+                                            checked={selectedCalendar === cal.id}
+                                            onChange={() => setSelectedCalendar(cal.id)}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                        <div
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                borderRadius: '50%',
+                                                backgroundColor: cal.backgroundColor || '#3b82f6'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                            {cal.summary}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
+                            <button
+                                onClick={handleDelete}
+                                disabled={isUpdating}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                <TrashIcon />
+                                Supprimer
+                            </button>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={onClose}
+                                    disabled={isUpdating}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e7eb',
+                                        background: 'white',
+                                        cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleUpdate}
+                                    disabled={isUpdating}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: isUpdating ? '#9ca3af' : '#ec4899',
+                                        color: 'white',
+                                        cursor: isUpdating ? 'not-allowed' : 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    {isUpdating ? (
+                                        <>
+                                            <div className="sync-spinner" />
+                                            Modification...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <EditIcon />
+                                            Modifier
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // ===== COMPOSANT PRINCIPAL =====
         function LunariumPlanner() {
             const [activities, setActivities] = useState({});
@@ -997,6 +1288,8 @@
             const [showCreateEventModal, setShowCreateEventModal] = useState(false);
             const [createEventDate, setCreateEventDate] = useState(null);
             const [googleCalendars, setGoogleCalendars] = useState([]);
+            const [showEditEventModal, setShowEditEventModal] = useState(false);
+            const [editingEvent, setEditingEvent] = useState(null);
 
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
@@ -1174,6 +1467,99 @@
                 }
             };
 
+            const updateEvent = async ({ eventId, title, date, startTime, duration, calendarId }) => {
+                if (typeof gapi === 'undefined' || !gapi.client) {
+                    showToast('Google API non disponible', 'error');
+                    return;
+                }
+
+                try {
+                    // Construire la date/heure de début
+                    const [hours, minutes] = startTime.split(':').map(Number);
+                    const startDateTime = new Date(date);
+                    startDateTime.setHours(hours, minutes, 0, 0);
+                    
+                    // Construire la date/heure de fin
+                    const endDateTime = new Date(startDateTime);
+                    endDateTime.setMinutes(endDateTime.getMinutes() + duration);
+
+                    // Mettre à jour l'événement dans Google Calendar
+                    const event = {
+                        summary: title,
+                        start: {
+                            dateTime: startDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        },
+                        end: {
+                            dateTime: endDateTime.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        }
+                    };
+
+                    console.log('Updating event:', eventId, event);
+                    
+                    const response = await gapi.client.calendar.events.patch({
+                        calendarId: calendarId,
+                        eventId: eventId,
+                        resource: event
+                    });
+
+                    console.log('Event updated:', response);
+                    showToast('Événement modifié avec succès ✓', 'success');
+                    
+                    // Resynchroniser pour afficher les modifications
+                    const savedCalendars = localStorage.getItem('selectedCalendars');
+                    if (savedCalendars) {
+                        const calendars = JSON.parse(savedCalendars);
+                        setTimeout(() => {
+                            console.log('Resyncing after event update...');
+                            resyncCalendars(calendars);
+                        }, 500);
+                    }
+                } catch (err) {
+                    console.error('Error updating event:', err);
+                    showToast('Erreur lors de la modification de l\'événement', 'error');
+                    throw err;
+                }
+            };
+
+            const deleteEvent = async ({ eventId, calendarId }) => {
+                if (typeof gapi === 'undefined' || !gapi.client) {
+                    showToast('Google API non disponible', 'error');
+                    return;
+                }
+
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cet événement ?')) {
+                    return;
+                }
+
+                try {
+                    console.log('Deleting event:', eventId, 'from calendar:', calendarId);
+                    
+                    await gapi.client.calendar.events.delete({
+                        calendarId: calendarId,
+                        eventId: eventId
+                    });
+
+                    console.log('Event deleted');
+                    showToast('Événement supprimé ✓', 'success');
+                    
+                    // Resynchroniser pour retirer l'événement de l'affichage
+                    const savedCalendars = localStorage.getItem('selectedCalendars');
+                    if (savedCalendars) {
+                        const calendars = JSON.parse(savedCalendars);
+                        setTimeout(() => {
+                            console.log('Resyncing after event deletion...');
+                            resyncCalendars(calendars);
+                        }, 500);
+                    }
+                } catch (err) {
+                    console.error('Error deleting event:', err);
+                    showToast('Erreur lors de la suppression de l\'événement', 'error');
+                    throw err;
+                }
+            };
+
             const resyncCalendars = async (calendarsToSync) => {
                 if (typeof gapi === 'undefined' || !gapi.client) {
                     showToast('Google API non disponible', 'error');
@@ -1222,7 +1608,9 @@
                             startTime: startDate.toTimeString().slice(0, 5),
                             duration: Math.round((endDate - startDate) / (1000 * 60)),
                             color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
-                            description: event.description || ''
+                            description: event.description || '',
+                            calendarId: event.calendarId,
+                            date: startDate
                         });
                     });
                     
@@ -1430,17 +1818,29 @@
                                                         {dayActivities.slice(0, 3).map(act => (
                                                             <div
                                                                 key={act.id}
+                                                                onClick={() => {
+                                                                    setEditingEvent(act);
+                                                                    setShowEditEventModal(true);
+                                                                }}
                                                                 style={{
-                                                                    padding: '6px',
+                                                                    padding: '6px 8px',
                                                                     backgroundColor: act.color,
                                                                     color: 'white',
                                                                     borderRadius: '6px',
                                                                     fontSize: '10px',
                                                                     fontWeight: '600',
-                                                                    marginBottom: '4px'
+                                                                    marginBottom: '4px',
+                                                                    cursor: 'pointer',
+                                                                    display: 'flex',
+                                                                    justifyContent: 'space-between',
+                                                                    alignItems: 'center',
+                                                                    transition: 'opacity 0.2s'
                                                                 }}
+                                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+                                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                                                             >
-                                                                {act.startTime} • {act.title}
+                                                                <span>{act.startTime} • {act.title}</span>
+                                                                <EditIcon />
                                                             </div>
                                                         ))}
                                                         {dayActivities.length > 3 && (
@@ -1544,7 +1944,9 @@
                                         startTime: startDate.toTimeString().slice(0, 5),
                                         duration: Math.round((endDate - startDate) / (1000 * 60)),
                                         color: event.colorId ? getGoogleColor(event.colorId) : '#3b82f6',
-                                        description: event.description || ''
+                                        description: event.description || '',
+                                        calendarId: event.calendarId,
+                                        date: startDate
                                     });
                                 });
                                 
@@ -1586,6 +1988,19 @@
                             onClose={() => {
                                 setShowCreateEventModal(false);
                                 setCreateEventDate(null);
+                            }}
+                        />
+                    )}
+
+                    {showEditEventModal && editingEvent && googleCalendars.length > 0 && (
+                        <EditEventModal
+                            event={editingEvent}
+                            calendars={googleCalendars}
+                            onUpdate={updateEvent}
+                            onDelete={deleteEvent}
+                            onClose={() => {
+                                setShowEditEventModal(false);
+                                setEditingEvent(null);
                             }}
                         />
                     )}

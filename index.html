@@ -661,10 +661,246 @@
             );
         };
 
+        // ===== MONTH VIEW =====
+        const MonthView = ({ 
+            currentMonth, 
+            onMonthChange, 
+            activities, 
+            getPhaseForDate, 
+            onDayClick,
+            googleCalendars 
+        }) => {
+            const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+            const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+            const startingDayOfWeek = firstDayOfMonth.getDay();
+            
+            const monthName = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            
+            const prevMonth = () => {
+                const newMonth = new Date(currentMonth);
+                newMonth.setMonth(newMonth.getMonth() - 1);
+                onMonthChange(newMonth);
+            };
+            
+            const nextMonth = () => {
+                const newMonth = new Date(currentMonth);
+                newMonth.setMonth(newMonth.getMonth() + 1);
+                onMonthChange(newMonth);
+            };
+            
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            
+            // Créer les jours du calendrier
+            const calendarDays = [];
+            
+            // Jours vides au début
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                calendarDays.push(null);
+            }
+            
+            // Jours du mois
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                calendarDays.push(date);
+            }
+            
+            return (
+                <div style={{ width: '100%' }}>
+                    {/* Navigation mois */}
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginBottom: '20px'
+                    }}>
+                        <button
+                            onClick={prevMonth}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+                            ← Mois précédent
+                        </button>
+                        <h2 style={{ 
+                            margin: 0, 
+                            fontSize: '18px', 
+                            fontWeight: '600',
+                            textTransform: 'capitalize'
+                        }}>
+                            {monthName}
+                        </h2>
+                        <button
+                            onClick={nextMonth}
+                            style={{
+                                padding: '8px 16px',
+                                backgroundColor: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}
+                        >
+                            Mois suivant →
+                        </button>
+                    </div>
+                    
+                    {/* Calendrier */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(7, 1fr)',
+                        gap: '4px'
+                    }}>
+                        {/* En-têtes des jours */}
+                        {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(day => (
+                            <div key={day} style={{
+                                padding: '12px',
+                                textAlign: 'center',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#6b7280'
+                            }}>
+                                {day}
+                            </div>
+                        ))}
+                        
+                        {/* Cellules du calendrier */}
+                        {calendarDays.map((date, index) => {
+                            if (!date) {
+                                return <div key={`empty-${index}`} style={{ padding: '8px' }} />;
+                            }
+                            
+                            const phaseInfo = getPhaseForDate(date);
+                            const dateKey = formatDate(date);
+                            const dayActivities = activities[dateKey] || [];
+                            const isToday = formatDate(date) === formatDate(new Date());
+                            
+                            return (
+                                <div
+                                    key={dateKey}
+                                    onClick={() => onDayClick(date)}
+                                    style={{
+                                        minHeight: '100px',
+                                        padding: '8px',
+                                        backgroundColor: phaseInfo.color + '15',
+                                        border: isToday ? `2px solid ${phaseInfo.color}` : '1px solid #e5e7eb',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        ':hover': {
+                                            transform: 'scale(1.02)',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1.02)';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'scale(1)';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        marginBottom: '4px'
+                                    }}>
+                                        <span style={{
+                                            fontSize: '14px',
+                                            fontWeight: isToday ? '700' : '500',
+                                            color: isToday ? phaseInfo.color : '#374151'
+                                        }}>
+                                            {date.getDate()}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '10px',
+                                            color: phaseInfo.text,
+                                            fontWeight: '600',
+                                            backgroundColor: phaseInfo.color + '30',
+                                            padding: '2px 6px',
+                                            borderRadius: '4px'
+                                        }}>
+                                            {phaseInfo.shortName}
+                                        </span>
+                                    </div>
+                                    
+                                    {/* Événements */}
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column', 
+                                        gap: '2px',
+                                        maxHeight: '70px',
+                                        overflow: 'hidden'
+                                    }}>
+                                        {dayActivities.slice(0, 3).map((activity, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    fontSize: '10px',
+                                                    padding: '2px 4px',
+                                                    backgroundColor: activity.color,
+                                                    color: 'white',
+                                                    borderRadius: '3px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                {activity.startTime} {activity.title}
+                                            </div>
+                                        ))}
+                                        {dayActivities.length > 3 && (
+                                            <div style={{
+                                                fontSize: '9px',
+                                                color: '#6b7280',
+                                                fontWeight: '500'
+                                            }}>
+                                                +{dayActivities.length - 3} autres
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
         // ===== CONFIG MODAL =====
-        const ConfigModal = ({ config, onSave, onClose }) => {
+        const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
             const [startDate, setStartDate] = useState(config.cycleStartDate.toISOString().split('T')[0]);
             const [cycleLength, setCycleLength] = useState(config.cycleLength);
+            const [history, setHistory] = useState(cycleHistory || []);
+
+            const addCycleToHistory = () => {
+                if (history.length < 12) {
+                    setHistory([...history, { startDate: '', length: 28 }]);
+                }
+            };
+
+            const removeCycleFromHistory = (index) => {
+                setHistory(history.filter((_, i) => i !== index));
+            };
+
+            const updateHistoryItem = (index, field, value) => {
+                const newHistory = [...history];
+                newHistory[index][field] = field === 'length' ? parseInt(value) : value;
+                setHistory(newHistory);
+            };
 
             return (
                 <div style={{
@@ -677,14 +913,18 @@
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000
+                    zIndex: 1000,
+                    overflow: 'auto',
+                    padding: '20px'
                 }}>
                     <div style={{
                         backgroundColor: 'white',
                         borderRadius: '12px',
                         padding: '24px',
-                        maxWidth: '500px',
-                        width: '90%',
+                        maxWidth: '600px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflow: 'auto',
                         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -714,7 +954,7 @@
 
                         <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Durée du cycle (jours)
+                                Durée du cycle actuel (jours)
                             </label>
                             <input
                                 type="number"
@@ -730,6 +970,86 @@
                                     fontSize: '14px'
                                 }}
                             />
+                        </div>
+
+                        {/* Historique des cycles */}
+                        <div style={{ marginBottom: '24px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <label style={{ fontSize: '14px', fontWeight: '500' }}>
+                                    Historique des cycles passés (optionnel)
+                                </label>
+                                <button
+                                    onClick={addCycleToHistory}
+                                    disabled={history.length >= 12}
+                                    style={{
+                                        padding: '6px 12px',
+                                        fontSize: '12px',
+                                        backgroundColor: history.length >= 12 ? '#e5e7eb' : '#ec4899',
+                                        color: history.length >= 12 ? '#9ca3af' : 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: history.length >= 12 ? 'not-allowed' : 'pointer',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    + Ajouter cycle
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+                                Pour une meilleure prédiction, ajoute les cycles passés (max 12)
+                            </p>
+                            
+                            {history.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflow: 'auto' }}>
+                                    {history.map((cycle, index) => (
+                                        <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <input
+                                                type="date"
+                                                value={cycle.startDate}
+                                                onChange={(e) => updateHistoryItem(index, 'startDate', e.target.value)}
+                                                style={{
+                                                    flex: 2,
+                                                    padding: '8px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #e5e7eb',
+                                                    fontSize: '13px'
+                                                }}
+                                                placeholder="Date de début"
+                                            />
+                                            <input
+                                                type="number"
+                                                min="21"
+                                                max="45"
+                                                value={cycle.length}
+                                                onChange={(e) => updateHistoryItem(index, 'length', e.target.value)}
+                                                style={{
+                                                    flex: 1,
+                                                    padding: '8px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #e5e7eb',
+                                                    fontSize: '13px'
+                                                }}
+                                                placeholder="Durée"
+                                            />
+                                            <span style={{ fontSize: '12px', color: '#6b7280' }}>j</span>
+                                            <button
+                                                onClick={() => removeCycleFromHistory(index)}
+                                                style={{
+                                                    padding: '6px',
+                                                    backgroundColor: '#fee2e2',
+                                                    color: '#ef4444',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '12px'
+                                                }}
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -748,7 +1068,11 @@
                                 Annuler
                             </button>
                             <button
-                                onClick={() => onSave({ cycleStartDate: new Date(startDate), cycleLength })}
+                                onClick={() => onSave({ 
+                                    cycleStartDate: new Date(startDate), 
+                                    cycleLength,
+                                    cycleHistory: history.filter(h => h.startDate && h.length)
+                                })}
                                 style={{
                                     padding: '10px 20px',
                                     borderRadius: '8px',
@@ -1306,6 +1630,20 @@
             const [editingEvent, setEditingEvent] = useState(null);
             const [sunDataLoaded, setSunDataLoaded] = useState(false);
             const [sunData, setSunData] = useState({});
+            const [currentView, setCurrentView] = useState('cycle'); // 'cycle' ou 'month'
+            const [currentMonth, setCurrentMonth] = useState(new Date());
+            
+            const [cycleHistory, setCycleHistory] = useState(() => {
+                const saved = localStorage.getItem('cycleHistory');
+                if (saved) {
+                    try {
+                        return JSON.parse(saved);
+                    } catch (e) {
+                        return [];
+                    }
+                }
+                return [];
+            });
 
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
@@ -1367,6 +1705,10 @@
                     }));
                 }
             }, [cycleConfig]);
+
+            useEffect(() => {
+                localStorage.setItem('cycleHistory', JSON.stringify(cycleHistory));
+            }, [cycleHistory]);
 
             // Auto-update à minuit - Force le re-render du cycle
             useEffect(() => {
@@ -1450,6 +1792,31 @@
             const showToast = (message, type = 'info') => {
                 setToast({ message, type });
                 setTimeout(() => setToast(null), 3000);
+            };
+
+            // Calculer la longueur moyenne du cycle basée sur l'historique
+            const getAverageCycleLength = () => {
+                if (cycleHistory.length === 0) {
+                    return cycleConfig.cycleLength;
+                }
+                const sum = cycleHistory.reduce((acc, cycle) => acc + cycle.length, cycleConfig.cycleLength);
+                return Math.round(sum / (cycleHistory.length + 1));
+            };
+
+            // Obtenir le jour du cycle pour une date donnée basé sur la moyenne
+            const getCycleDayForDate = (date) => {
+                const avgLength = getAverageCycleLength();
+                const diffTime = date - cycleConfig.cycleStartDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                const cycleDay = ((diffDays % avgLength) + avgLength) % avgLength;
+                return cycleDay === 0 ? avgLength : cycleDay;
+            };
+
+            // Obtenir les infos de phase pour une date donnée
+            const getPhaseForDate = (date) => {
+                const cycleDay = getCycleDayForDate(date);
+                const avgLength = getAverageCycleLength();
+                return getPhaseInfo(cycleDay, avgLength);
             };
 
             // Pré-charger les données du soleil pour tous les jours du cycle
@@ -2020,6 +2387,48 @@
                         </button>
                     </div>
 
+                    {/* Onglets */}
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderBottom: '1px solid #e5e7eb',
+                        padding: '0 24px',
+                        display: 'flex',
+                        gap: '8px'
+                    }}>
+                        <button
+                            onClick={() => setCurrentView('cycle')}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderBottom: currentView === 'cycle' ? '3px solid #ec4899' : '3px solid transparent',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: currentView === 'cycle' ? '#ec4899' : '#6b7280',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Vue Cyclique
+                        </button>
+                        <button
+                            onClick={() => setCurrentView('month')}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderBottom: currentView === 'month' ? '3px solid #ec4899' : '3px solid transparent',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: currentView === 'month' ? '#ec4899' : '#6b7280',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            Vue Mensuelle
+                        </button>
+                    </div>
+
                     {/* Contenu */}
                     <div style={{ padding: '24px' }}>
                         <GoogleCalendarSync
@@ -2085,7 +2494,21 @@
                             padding: '24px',
                             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                         }}>
-                            {renderCircleView()}
+                            {currentView === 'cycle' ? (
+                                renderCircleView()
+                            ) : (
+                                <MonthView
+                                    currentMonth={currentMonth}
+                                    onMonthChange={setCurrentMonth}
+                                    activities={activities}
+                                    getPhaseForDate={getPhaseForDate}
+                                    onDayClick={(date) => {
+                                        setCreateEventDate(date);
+                                        setShowCreateEventModal(true);
+                                    }}
+                                    googleCalendars={googleCalendars}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -2093,8 +2516,15 @@
                     {showConfigModal && (
                         <ConfigModal
                             config={cycleConfig}
+                            cycleHistory={cycleHistory}
                             onSave={(newConfig) => {
-                                setCycleConfig(newConfig);
+                                setCycleConfig({
+                                    cycleStartDate: newConfig.cycleStartDate,
+                                    cycleLength: newConfig.cycleLength
+                                });
+                                if (newConfig.cycleHistory) {
+                                    setCycleHistory(newConfig.cycleHistory);
+                                }
                                 setShowConfigModal(false);
                                 showToast('Configuration enregistrée ✓', 'success');
                             }}

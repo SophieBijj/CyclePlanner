@@ -141,31 +141,26 @@
 
         // ===== FONCTIONS UTILITAIRES =====
         
-        // Cache global pour les données du soleil
-        const sunDataCache = {};
-        
-        // Fonction pour obtenir les données du soleil via l'API sunrise-sunset.org
+        // Fonction pour obtenir les données du soleil via l'API Open-Meteo
         async function fetchSunTimes(date) {
             const lat = 45.5017; // Montréal
             const lng = -73.5673;
             
             const dateStr = date.toISOString().split('T')[0]; // Format YYYY-MM-DD
             
-            // Vérifier le cache
-            if (sunDataCache[dateStr]) {
-                return sunDataCache[dateStr];
-            }
-            
             try {
                 const response = await fetch(
-                    `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&date=${dateStr}&formatted=0`
+                    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&start_date=${dateStr}&end_date=${dateStr}&timezone=auto`
                 );
                 const data = await response.json();
                 
-                if (data.status === 'OK') {
-                    // Convertir les heures UTC en heures locales
-                    const sunriseUTC = new Date(data.results.sunrise);
-                    const sunsetUTC = new Date(data.results.sunset);
+                if (data.daily && data.daily.sunrise && data.daily.sunset) {
+                    // Les données sont déjà en heure locale grâce à timezone=auto
+                    const sunriseStr = data.daily.sunrise[0]; // Format: "2025-11-18T07:30"
+                    const sunsetStr = data.daily.sunset[0];
+                    
+                    const sunriseDate = new Date(sunriseStr);
+                    const sunsetDate = new Date(sunsetStr);
                     
                     const formatTime = (date) => {
                         const hours = date.getHours();
@@ -173,16 +168,12 @@
                         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
                     };
                     
-                    const result = {
-                        sunrise: formatTime(sunriseUTC),
-                        sunset: formatTime(sunsetUTC),
-                        sunriseDecimal: sunriseUTC.getHours() + sunriseUTC.getMinutes() / 60,
-                        sunsetDecimal: sunsetUTC.getHours() + sunsetUTC.getMinutes() / 60
+                    return {
+                        sunrise: formatTime(sunriseDate),
+                        sunset: formatTime(sunsetDate),
+                        sunriseDecimal: sunriseDate.getHours() + sunriseDate.getMinutes() / 60,
+                        sunsetDecimal: sunsetDate.getHours() + sunsetDate.getMinutes() / 60
                     };
-                    
-                    // Mettre en cache
-                    sunDataCache[dateStr] = result;
-                    return result;
                 }
             } catch (error) {
                 console.error('Erreur lors de la récupération des données du soleil:', error);
@@ -190,12 +181,6 @@
             
             // Fallback en cas d'erreur
             return { sunrise: '07:30', sunset: '17:00', sunriseDecimal: 7.5, sunsetDecimal: 17 };
-        }
-        
-        // Fonction synchrone qui retourne les données du cache ou des valeurs par défaut
-        function getSunTimes(date) {
-            const dateStr = date.toISOString().split('T')[0];
-            return sunDataCache[dateStr] || { sunrise: '...', sunset: '...', sunriseDecimal: 7.5, sunsetDecimal: 17 };
         }
 
         function getPhaseInfo(cycleDay, cycleLength) {
@@ -1320,6 +1305,7 @@
             const [showEditEventModal, setShowEditEventModal] = useState(false);
             const [editingEvent, setEditingEvent] = useState(null);
             const [sunDataLoaded, setSunDataLoaded] = useState(false);
+            const [sunData, setSunData] = useState({});
 
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
@@ -1469,17 +1455,33 @@
             // Pré-charger les données du soleil pour tous les jours du cycle
             useEffect(() => {
                 const loadSunData = async () => {
+                    const newSunData = {};
                     const promises = [];
+                    
                     for (let day = 1; day <= cycleConfig.cycleLength; day++) {
                         const date = getDateForCycleDay(day);
-                        promises.push(fetchSunTimes(date));
+                        const dateStr = date.toISOString().split('T')[0];
+                        
+                        promises.push(
+                            fetchSunTimes(date).then(data => {
+                                newSunData[dateStr] = data;
+                            })
+                        );
                     }
+                    
                     await Promise.all(promises);
+                    setSunData(newSunData);
                     setSunDataLoaded(true);
                 };
                 
                 loadSunData();
             }, [cycleConfig.cycleStartDate, cycleConfig.cycleLength]);
+            
+            // Fonction pour obtenir les données du soleil pour une date donnée
+            const getSunTimes = (date) => {
+                const dateStr = date.toISOString().split('T')[0];
+                return sunData[dateStr] || { sunrise: '...', sunset: '...', sunriseDecimal: 7.5, sunsetDecimal: 17 };
+            };
 
             const createEvent = async ({ title, date, startTime, duration, calendarId }) => {
                 if (typeof gapi === 'undefined' || !gapi.client) {

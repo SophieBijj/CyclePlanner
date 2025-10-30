@@ -84,7 +84,7 @@
         const GOOGLE_CLIENT_ID = '711219272291-i1je9vqn1b4p0asn4fov7bdohoa08q38.apps.googleusercontent.com';
         const GOOGLE_API_KEY = 'AIzaSyA81G3xJq6iTJitDv6GO_rvjaOucTpeDNA';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
         // ===== ICÔNES =====
         const GoogleIcon = () => (
@@ -2219,13 +2219,6 @@
                 setTimeout(() => setToast(null), 3000);
             };
 
-            // Gérer les tâches Google Tasks API (complémentaire au calendrier)
-            const handleTasksLoaded = (tasks) => {
-                // Ne rien faire - les tâches sont maintenant gérées via le calendrier Google
-                // On garde cette fonction pour compatibilité mais elle n'est plus utilisée
-                console.log('Tasks from API:', tasks.length);
-            };
-
             // Calculer la longueur moyenne du cycle basée sur l'historique
             const getAverageCycleLength = () => {
                 if (cycleHistory.length === 0) {
@@ -2880,12 +2873,7 @@
                             maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
                             order: window.innerWidth < 768 ? 2 : 1
                         }}>
-                            {/* GoogleTasks temporairement désactivé - erreur 403 API
-                            <GoogleTasks 
-                                isSignedIn={googleCalendars.length > 0}
-                                onTasksLoaded={handleTasksLoaded}
-                            />
-                            */}
+                            {/* Pas de widget Tasks séparé - tout est synchronisé avec Google Calendar */}
                             <GoogleCalendarSync
                                 onSync={(events, calendarMap) => {
                                     console.log('=== SYNC START ===');
@@ -2965,19 +2953,8 @@
                                         });
                                     });
                                     
-                                    console.log(`Total tasks found: ${taskCount}`);
+                                    console.log(`Total tasks found in calendar: ${taskCount}`);
                                     console.log('=== SYNC END ===');
-                                    
-                                    // Préserver les tâches de Google Tasks API (si différentes)
-                                    Object.keys(activities).forEach(dateKey => {
-                                        const existingTasksFromAPI = activities[dateKey].filter(a => a.isTask && !a.calendarId);
-                                        if (existingTasksFromAPI.length > 0) {
-                                            if (!newActivities[dateKey]) {
-                                                newActivities[dateKey] = [];
-                                            }
-                                            newActivities[dateKey] = [...existingTasksFromAPI, ...newActivities[dateKey]];
-                                        }
-                                    });
                                     
                                     // Trier tous les événements de chaque jour par ordre chronologique
                                     Object.keys(newActivities).forEach(dateKey => {

@@ -548,66 +548,71 @@
             };
 
             return (
-                <div style={{ padding: '20px', background: 'white', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ padding: '12px', background: 'white', borderRadius: '8px', marginBottom: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <GoogleIcon />
-                            Google Calendar
+                            Calendriers
                         </h3>
                         {!isSignedIn ? (
                             <button
                                 onClick={handleAuthClick}
                                 disabled={isLoading}
                                 style={{
-                                    padding: '8px 16px',
+                                    padding: '8px 12px',
                                     backgroundColor: isLoading ? '#9ca3af' : '#4285F4',
                                     color: 'white',
-                                    borderRadius: '8px',
+                                    borderRadius: '6px',
                                     fontWeight: '500',
                                     cursor: isLoading ? 'not-allowed' : 'pointer',
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '8px',
-                                    fontSize: '14px'
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    fontSize: '13px',
+                                    width: '100%'
                                 }}
                             >
                                 <GoogleIcon />
                                 {isLoading ? 'Chargement...' : 'Se connecter'}
                             </button>
                         ) : (
-                            <div style={{ display: 'flex', gap: '8px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <button
                                     onClick={handleSync}
                                     disabled={isSyncing || selectedCalendars.length === 0}
                                     style={{
-                                        padding: '8px 16px',
+                                        padding: '8px 12px',
                                         backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
                                         color: 'white',
-                                        borderRadius: '8px',
+                                        borderRadius: '6px',
                                         fontWeight: '500',
-                                        cursor: isSyncing ? 'not-allowed' : 'pointer',
+                                        cursor: isSyncing || selectedCalendars.length === 0 ? 'not-allowed' : 'pointer',
                                         border: 'none',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '8px',
-                                        fontSize: '14px'
+                                        justifyContent: 'center',
+                                        gap: '6px',
+                                        fontSize: '13px',
+                                        width: '100%'
                                     }}
                                 >
                                     <SyncIcon />
-                                    {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
+                                    {isSyncing ? 'Synchro...' : 'Synchroniser'}
                                 </button>
                                 <button
                                     onClick={handleSignoutClick}
                                     style={{
-                                        padding: '8px 16px',
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        borderRadius: '8px',
+                                        padding: '6px 12px',
+                                        backgroundColor: 'transparent',
+                                        color: '#ef4444',
+                                        borderRadius: '6px',
                                         fontWeight: '500',
                                         cursor: 'pointer',
-                                        border: 'none',
-                                        fontSize: '14px'
+                                        border: '1px solid #fecaca',
+                                        fontSize: '12px',
+                                        width: '100%'
                                     }}
                                 >
                                     Déconnecter
@@ -617,11 +622,11 @@
                     </div>
 
                     {isSignedIn && calendars.length > 0 && (
-                        <div>
-                            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
-                                Calendriers synchronisés :
+                        <div style={{ marginTop: '12px' }}>
+                            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: '500' }}>
+                                Mes calendriers :
                             </p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 {calendars.map(cal => (
                                     <label
                                         key={cal.id}
@@ -629,28 +634,40 @@
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '8px',
-                                            padding: '8px',
+                                            padding: '6px 8px',
                                             borderRadius: '6px',
                                             cursor: 'pointer',
-                                            background: selectedCalendars.includes(cal.id) ? '#f0fdf4' : 'transparent'
+                                            background: selectedCalendars.includes(cal.id) ? '#f0fdf4' : 'transparent',
+                                            transition: 'background 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            if (!selectedCalendars.includes(cal.id)) {
+                                                e.currentTarget.style.background = '#f9fafb';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!selectedCalendars.includes(cal.id)) {
+                                                e.currentTarget.style.background = 'transparent';
+                                            }
                                         }}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={selectedCalendars.includes(cal.id)}
                                             onChange={() => toggleCalendar(cal.id)}
-                                            style={{ cursor: 'pointer' }}
+                                            style={{ cursor: 'pointer', flexShrink: 0 }}
                                         />
                                         <div
                                             style={{
-                                                width: '12px',
-                                                height: '12px',
+                                                width: '10px',
+                                                height: '10px',
                                                 borderRadius: '50%',
-                                                backgroundColor: cal.backgroundColor || '#3b82f6'
+                                                backgroundColor: cal.backgroundColor || '#3b82f6',
+                                                flexShrink: 0
                                             }}
                                         />
-                                        <span style={{ fontSize: '14px' }}>
-                                            {cal.summary} {cal.primary && '(Principal)'}
+                                        <span style={{ fontSize: '13px', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {cal.summary}
                                         </span>
                                     </label>
                                 ))}
@@ -2486,86 +2503,100 @@
                         </button>
                     </div>
 
-                    {/* Contenu */}
-                    <div style={{ padding: '24px' }}>
-                        <GoogleCalendarSync
-                            onSync={(events, calendarMap) => {
-                                const newActivities = {};
-                                
-                                events.forEach(event => {
-                                    if (!event.start || !event.start.dateTime) return;
-                                    
-                                    const startDate = new Date(event.start.dateTime);
-                                    const endDate = new Date(event.end.dateTime);
-                                    
-                                    const year = startDate.getFullYear();
-                                    const month = String(startDate.getMonth() + 1).padStart(2, '0');
-                                    const day = String(startDate.getDate()).padStart(2, '0');
-                                    const dateKey = `${year}-${month}-${day}`;
-                                    
-                                    if (!newActivities[dateKey]) {
-                                        newActivities[dateKey] = [];
-                                    }
-                                    
-                                    // Déterminer la couleur: backgroundColor > colorId > calendar color
-                                    let eventColor = '#3b82f6'; // Couleur par défaut
-                                    if (event.backgroundColor) {
-                                        eventColor = event.backgroundColor;
-                                    } else if (event.colorId) {
-                                        eventColor = getGoogleColor(event.colorId);
-                                    } else if (calendarMap && calendarMap[event.calendarId]) {
-                                        eventColor = calendarMap[event.calendarId];
-                                    }
-                                    
-                                    newActivities[dateKey].push({
-                                        id: event.id,
-                                        title: event.summary || 'Sans titre',
-                                        startTime: startDate.toTimeString().slice(0, 5),
-                                        duration: Math.round((endDate - startDate) / (1000 * 60)),
-                                        color: eventColor,
-                                        description: event.description || '',
-                                        calendarId: event.calendarId,
-                                        date: startDate
-                                    });
-                                });
-                                
-                                // Trier tous les événements de chaque jour par ordre chronologique
-                                Object.keys(newActivities).forEach(dateKey => {
-                                    newActivities[dateKey].sort((a, b) => {
-                                        const timeA = a.startTime.split(':').map(Number);
-                                        const timeB = b.startTime.split(':').map(Number);
-                                        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-                                    });
-                                });
-                                
-                                setActivities(newActivities);
-                                showToast('Synchronisation réussie ✓', 'success');
-                            }}
-                            onError={(msg) => showToast(msg, 'error')}
-                            onCalendarsLoaded={(cals) => setGoogleCalendars(cals)}
-                        />
+                    {/* Layout principal avec sidebar */}
+                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 180px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
+                        {/* Contenu principal */}
+                        <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                            <div style={{
+                                background: 'white',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                {currentView === 'cycle' ? (
+                                    renderCircleView()
+                                ) : (
+                                    <MonthView
+                                        currentMonth={currentMonth}
+                                        onMonthChange={setCurrentMonth}
+                                        activities={activities}
+                                        getPhaseForDate={getPhaseForDate}
+                                        onDayClick={(date) => {
+                                            setCreateEventDate(date);
+                                            setShowCreateEventModal(true);
+                                        }}
+                                        googleCalendars={googleCalendars}
+                                    />
+                                )}
+                            </div>
+                        </div>
 
+                        {/* Sidebar calendriers */}
                         <div style={{
-                            background: 'white',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            width: window.innerWidth < 768 ? '100%' : '280px',
+                            backgroundColor: '#f9fafb',
+                            borderLeft: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
+                            borderTop: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
+                            overflowY: 'auto',
+                            padding: '16px',
+                            maxHeight: window.innerWidth < 768 ? '400px' : 'auto'
                         }}>
-                            {currentView === 'cycle' ? (
-                                renderCircleView()
-                            ) : (
-                                <MonthView
-                                    currentMonth={currentMonth}
-                                    onMonthChange={setCurrentMonth}
-                                    activities={activities}
-                                    getPhaseForDate={getPhaseForDate}
-                                    onDayClick={(date) => {
-                                        setCreateEventDate(date);
-                                        setShowCreateEventModal(true);
-                                    }}
-                                    googleCalendars={googleCalendars}
-                                />
-                            )}
+                            <GoogleCalendarSync
+                                onSync={(events, calendarMap) => {
+                                    const newActivities = {};
+                                    
+                                    events.forEach(event => {
+                                        if (!event.start || !event.start.dateTime) return;
+                                        
+                                        const startDate = new Date(event.start.dateTime);
+                                        const endDate = new Date(event.end.dateTime);
+                                        
+                                        const year = startDate.getFullYear();
+                                        const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                                        const day = String(startDate.getDate()).padStart(2, '0');
+                                        const dateKey = `${year}-${month}-${day}`;
+                                        
+                                        if (!newActivities[dateKey]) {
+                                            newActivities[dateKey] = [];
+                                        }
+                                        
+                                        // Déterminer la couleur: backgroundColor > colorId > calendar color
+                                        let eventColor = '#3b82f6'; // Couleur par défaut
+                                        if (event.backgroundColor) {
+                                            eventColor = event.backgroundColor;
+                                        } else if (event.colorId) {
+                                            eventColor = getGoogleColor(event.colorId);
+                                        } else if (calendarMap && calendarMap[event.calendarId]) {
+                                            eventColor = calendarMap[event.calendarId];
+                                        }
+                                        
+                                        newActivities[dateKey].push({
+                                            id: event.id,
+                                            title: event.summary || 'Sans titre',
+                                            startTime: startDate.toTimeString().slice(0, 5),
+                                            duration: Math.round((endDate - startDate) / (1000 * 60)),
+                                            color: eventColor,
+                                            description: event.description || '',
+                                            calendarId: event.calendarId,
+                                            date: startDate
+                                        });
+                                    });
+                                    
+                                    // Trier tous les événements de chaque jour par ordre chronologique
+                                    Object.keys(newActivities).forEach(dateKey => {
+                                        newActivities[dateKey].sort((a, b) => {
+                                            const timeA = a.startTime.split(':').map(Number);
+                                            const timeB = b.startTime.split(':').map(Number);
+                                            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+                                        });
+                                    });
+                                    
+                                    setActivities(newActivities);
+                                    showToast('Synchronisation réussie ✓', 'success');
+                                }}
+                                onError={(msg) => showToast(msg, 'error')}
+                                onCalendarsLoaded={(cals) => setGoogleCalendars(cals)}
+                            />
                         </div>
                     </div>
 

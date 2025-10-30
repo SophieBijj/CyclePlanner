@@ -888,7 +888,7 @@
 
             const addCycleToHistory = () => {
                 if (history.length < 12) {
-                    setHistory([...history, { startDate: '', length: 28 }]);
+                    setHistory([...history, { startDate: '' }]);
                 }
             };
 
@@ -896,11 +896,49 @@
                 setHistory(history.filter((_, i) => i !== index));
             };
 
-            const updateHistoryItem = (index, field, value) => {
+            const updateHistoryItem = (index, value) => {
                 const newHistory = [...history];
-                newHistory[index][field] = field === 'length' ? parseInt(value) : value;
+                newHistory[index].startDate = value;
                 setHistory(newHistory);
             };
+
+            // Calculer les durées des cycles automatiquement
+            const calculateCycleLengths = (historyDates, currentStart) => {
+                if (historyDates.length === 0) return [];
+                
+                // Trier les dates par ordre chronologique (plus anciennes en premier)
+                const sortedHistory = [...historyDates]
+                    .filter(h => h.startDate)
+                    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+                
+                const result = [];
+                
+                for (let i = 0; i < sortedHistory.length; i++) {
+                    const currentDate = new Date(sortedHistory[i].startDate);
+                    let nextDate;
+                    
+                    if (i < sortedHistory.length - 1) {
+                        // Pas le dernier : utiliser le prochain cycle de l'historique
+                        nextDate = new Date(sortedHistory[i + 1].startDate);
+                    } else {
+                        // Le dernier : utiliser le cycle actuel
+                        nextDate = new Date(currentStart);
+                    }
+                    
+                    const diffTime = nextDate - currentDate;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    result.push({
+                        startDate: sortedHistory[i].startDate,
+                        length: diffDays
+                    });
+                }
+                
+                return result;
+            };
+
+            // Afficher les durées calculées
+            const displayHistory = calculateCycleLengths(history, startDate);
 
             return (
                 <div style={{
@@ -936,7 +974,7 @@
 
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Premier jour des dernières règles
+                                Premier jour des dernières règles (J1 actuel)
                             </label>
                             <input
                                 type="date"
@@ -976,7 +1014,7 @@
                         <div style={{ marginBottom: '24px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <label style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Historique des cycles passés (optionnel)
+                                    Historique des cycles passés (J1 uniquement)
                                 </label>
                                 <button
                                     onClick={addCycleToHistory}
@@ -992,62 +1030,81 @@
                                         fontWeight: '500'
                                     }}
                                 >
-                                    + Ajouter cycle
+                                    + Ajouter J1
                                 </button>
                             </div>
                             <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
-                                Pour une meilleure prédiction, ajoute les cycles passés (max 12)
+                                Entre les dates de début (J1) de tes cycles passés. Les durées seront calculées automatiquement. (max 12)
                             </p>
                             
                             {history.length > 0 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflow: 'auto' }}>
-                                    {history.map((cycle, index) => (
-                                        <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                            <input
-                                                type="date"
-                                                value={cycle.startDate}
-                                                onChange={(e) => updateHistoryItem(index, 'startDate', e.target.value)}
-                                                style={{
-                                                    flex: 2,
-                                                    padding: '8px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #e5e7eb',
-                                                    fontSize: '13px'
-                                                }}
-                                                placeholder="Date de début"
-                                            />
-                                            <input
-                                                type="number"
-                                                min="21"
-                                                max="45"
-                                                value={cycle.length}
-                                                onChange={(e) => updateHistoryItem(index, 'length', e.target.value)}
-                                                style={{
-                                                    flex: 1,
-                                                    padding: '8px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #e5e7eb',
-                                                    fontSize: '13px'
-                                                }}
-                                                placeholder="Durée"
-                                            />
-                                            <span style={{ fontSize: '12px', color: '#6b7280' }}>j</span>
-                                            <button
-                                                onClick={() => removeCycleFromHistory(index)}
-                                                style={{
-                                                    padding: '6px',
-                                                    backgroundColor: '#fee2e2',
-                                                    color: '#ef4444',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontSize: '12px'
-                                                }}
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
-                                    ))}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflow: 'auto' }}>
+                                    {history.map((cycle, index) => {
+                                        const displayed = displayHistory.find(d => d.startDate === cycle.startDate);
+                                        return (
+                                            <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                <input
+                                                    type="date"
+                                                    value={cycle.startDate}
+                                                    onChange={(e) => updateHistoryItem(index, e.target.value)}
+                                                    style={{
+                                                        flex: 2,
+                                                        padding: '8px',
+                                                        borderRadius: '6px',
+                                                        border: '1px solid #e5e7eb',
+                                                        fontSize: '13px'
+                                                    }}
+                                                    placeholder="Date J1"
+                                                />
+                                                {displayed && (
+                                                    <div style={{
+                                                        flex: 1,
+                                                        padding: '8px',
+                                                        borderRadius: '6px',
+                                                        backgroundColor: '#f0fdf4',
+                                                        border: '1px solid #86efac',
+                                                        fontSize: '13px',
+                                                        fontWeight: '500',
+                                                        color: '#166534',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        {displayed.length} jours
+                                                    </div>
+                                                )}
+                                                <button
+                                                    onClick={() => removeCycleFromHistory(index)}
+                                                    style={{
+                                                        padding: '6px',
+                                                        backgroundColor: '#fee2e2',
+                                                        color: '#ef4444',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '12px'
+                                                    }}
+                                                >
+                                                    <TrashIcon />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            
+                            {displayHistory.length > 0 && (
+                                <div style={{ 
+                                    marginTop: '12px', 
+                                    padding: '12px', 
+                                    backgroundColor: '#f0f9ff',
+                                    borderRadius: '8px',
+                                    border: '1px solid #bae6fd'
+                                }}>
+                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '500', color: '#0369a1' }}>
+                                        📊 Durée moyenne des cycles : {Math.round(
+                                            displayHistory.reduce((sum, h) => sum + h.length, cycleLength) / 
+                                            (displayHistory.length + 1)
+                                        )} jours
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -1071,7 +1128,7 @@
                                 onClick={() => onSave({ 
                                     cycleStartDate: new Date(startDate), 
                                     cycleLength,
-                                    cycleHistory: history.filter(h => h.startDate && h.length)
+                                    cycleHistory: calculateCycleLengths(history.filter(h => h.startDate), startDate)
                                 })}
                                 style={{
                                     padding: '10px 20px',

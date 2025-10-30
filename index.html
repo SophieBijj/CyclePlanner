@@ -166,14 +166,19 @@
             
             const latRad = lat * Math.PI / 180;
             const decRad = dec * Math.PI / 180;
-            const cosH = -Math.tan(latRad) * Math.tan(decRad);
+            
+            // Correction pour la réfraction atmosphérique (-0.833°)
+            const zenith = 90.833;
+            const zenithRad = zenith * Math.PI / 180;
+            const cosH = (Math.cos(zenithRad) - Math.sin(latRad) * Math.sin(decRad)) / 
+                         (Math.cos(latRad) * Math.cos(decRad));
             
             if (cosH > 1 || cosH < -1) {
                 return { sunrise: '07:30', sunset: '17:00', sunriseDecimal: 7.5, sunsetDecimal: 17 };
             }
             
             const H = Math.acos(cosH) * 180 / Math.PI;
-            const eqTime = 4 * (L - lambda);
+            const eqTime = 4 * (lambda - L); // Correction: lambda - L et non L - lambda
             const sunriseUTC = 12 - H / 15 - eqTime / 60 - lng / 15;
             const sunsetUTC = 12 + H / 15 - eqTime / 60 - lng / 15;
             

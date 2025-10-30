@@ -2214,60 +2214,11 @@
                 setTimeout(() => setToast(null), 3000);
             };
 
-            // Gérer les tâches Google Tasks
+            // Gérer les tâches Google Tasks API (complémentaire au calendrier)
             const handleTasksLoaded = (tasks) => {
-                const newActivities = { ...activities };
-                
-                // D'abord, supprimer toutes les tâches existantes (pour éviter les doublons lors du refresh)
-                Object.keys(newActivities).forEach(dateKey => {
-                    newActivities[dateKey] = newActivities[dateKey].filter(a => !a.isTask);
-                    if (newActivities[dateKey].length === 0) {
-                        delete newActivities[dateKey];
-                    }
-                });
-                
-                tasks.forEach(task => {
-                    if (!task.due || task.status === 'completed') return;
-                    
-                    const dueDate = new Date(task.due);
-                    const year = dueDate.getFullYear();
-                    const month = String(dueDate.getMonth() + 1).padStart(2, '0');
-                    const day = String(dueDate.getDate()).padStart(2, '0');
-                    const dateKey = `${year}-${month}-${day}`;
-                    
-                    if (!newActivities[dateKey]) {
-                        newActivities[dateKey] = [];
-                    }
-                    
-                    newActivities[dateKey].push({
-                        id: task.id,
-                        title: task.title,
-                        startTime: '',
-                        duration: 0,
-                        color: '#f59e0b', // Orange pour les tâches
-                        description: task.notes || '',
-                        isTask: true,
-                        listTitle: task.listTitle,
-                        date: dueDate
-                    });
-                });
-                
-                // Trier les activités de chaque jour
-                Object.keys(newActivities).forEach(dateKey => {
-                    newActivities[dateKey].sort((a, b) => {
-                        // Tasks sans heure en premier
-                        if (a.isTask && !b.isTask) return -1;
-                        if (!a.isTask && b.isTask) return 1;
-                        if (a.isTask && b.isTask) return 0;
-                        // Puis trier par heure
-                        if (!a.startTime || !b.startTime) return 0;
-                        const timeA = a.startTime.split(':').map(Number);
-                        const timeB = b.startTime.split(':').map(Number);
-                        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-                    });
-                });
-                
-                setActivities(newActivities);
+                // Ne rien faire - les tâches sont maintenant gérées via le calendrier Google
+                // On garde cette fonction pour compatibilité mais elle n'est plus utilisée
+                console.log('Tasks from API:', tasks.length);
             };
 
             // Calculer la longueur moyenne du cycle basée sur l'historique
@@ -2932,11 +2883,28 @@
                                 onSync={(events, calendarMap) => {
                                     const newActivities = {};
                                     
+                                    // Trouver le calendrier Tasks
+                                    const tasksCalendar = googleCalendars.find(cal => 
+                                        cal.summary && (
+                                            cal.summary.toLowerCase().includes('task') || 
+                                            cal.summary.toLowerCase().includes('tâche') ||
+                                            cal.id.includes('#tasks@')
+                                        )
+                                    );
+                                    
                                     events.forEach(event => {
-                                        if (!event.start || !event.start.dateTime) return;
+                                        // Les tâches peuvent avoir soit dateTime soit date (all-day)
+                                        const hasDateTime = event.start && event.start.dateTime;
+                                        const hasDate = event.start && event.start.date;
                                         
-                                        const startDate = new Date(event.start.dateTime);
-                                        const endDate = new Date(event.end.dateTime);
+                                        if (!hasDateTime && !hasDate) return;
+                                        
+                                        const startDate = hasDateTime 
+                                            ? new Date(event.start.dateTime)
+                                            : new Date(event.start.date + 'T00:00:00');
+                                        const endDate = hasDateTime
+                                            ? new Date(event.end.dateTime)
+                                            : new Date(event.end.date + 'T23:59:59');
                                         
                                         const year = startDate.getFullYear();
                                         const month = String(startDate.getMonth() + 1).padStart(2, '0');
@@ -2946,6 +2914,9 @@
                                         if (!newActivities[dateKey]) {
                                             newActivities[dateKey] = [];
                                         }
+                                        
+                                        // Déterminer si c'est une tâche
+                                        const isTask = tasksCalendar && event.calendarId === tasksCalendar.id;
                                         
                                         // Déterminer la couleur: backgroundColor > colorId > calendar color
                                         let eventColor = '#3b82f6'; // Couleur par défaut
@@ -2960,23 +2931,24 @@
                                         newActivities[dateKey].push({
                                             id: event.id,
                                             title: event.summary || 'Sans titre',
-                                            startTime: startDate.toTimeString().slice(0, 5),
+                                            startTime: hasDateTime ? startDate.toTimeString().slice(0, 5) : '',
                                             duration: Math.round((endDate - startDate) / (1000 * 60)),
                                             color: eventColor,
                                             description: event.description || '',
                                             calendarId: event.calendarId,
-                                            date: startDate
+                                            date: startDate,
+                                            isTask: isTask
                                         });
                                     });
                                     
-                                    // Préserver les tâches existantes
+                                    // Préserver les tâches de Google Tasks API (si différentes)
                                     Object.keys(activities).forEach(dateKey => {
-                                        const existingTasks = activities[dateKey].filter(a => a.isTask);
-                                        if (existingTasks.length > 0) {
+                                        const existingTasksFromAPI = activities[dateKey].filter(a => a.isTask && !a.calendarId);
+                                        if (existingTasksFromAPI.length > 0) {
                                             if (!newActivities[dateKey]) {
                                                 newActivities[dateKey] = [];
                                             }
-                                            newActivities[dateKey] = [...existingTasks, ...newActivities[dateKey]];
+                                            newActivities[dateKey] = [...existingTasksFromAPI, ...newActivities[dateKey]];
                                         }
                                     });
                                     

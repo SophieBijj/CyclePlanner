@@ -84,7 +84,7 @@
         const GOOGLE_CLIENT_ID = '711219272291-i1je9vqn1b4p0asn4fov7bdohoa08q38.apps.googleusercontent.com';
         const GOOGLE_API_KEY = 'AIzaSyA81G3xJq6iTJitDv6GO_rvjaOucTpeDNA';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/calendar';
+        const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
 
         // ===== ICÔNES =====
         const GoogleIcon = () => (
@@ -258,6 +258,263 @@
                 age: Math.round(lunarAge * 10) / 10
             };
         }
+
+        // ===== GOOGLE TASKS =====
+        const GoogleTasks = ({ isSignedIn }) => {
+            const [taskLists, setTaskLists] = useState([]);
+            const [tasks, setTasks] = useState([]);
+            const [selectedListId, setSelectedListId] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+            const [newTaskTitle, setNewTaskTitle] = useState('');
+            const [showNewTask, setShowNewTask] = useState(false);
+
+            useEffect(() => {
+                if (isSignedIn && gapi.client) {
+                    loadTaskLists();
+                }
+            }, [isSignedIn]);
+
+            useEffect(() => {
+                if (selectedListId) {
+                    loadTasks(selectedListId);
+                }
+            }, [selectedListId]);
+
+            const loadTaskLists = async () => {
+                try {
+                    const response = await gapi.client.request({
+                        path: 'https://tasks.googleapis.com/tasks/v1/users/@me/lists'
+                    });
+                    const lists = response.result.items || [];
+                    setTaskLists(lists);
+                    if (lists.length > 0 && !selectedListId) {
+                        setSelectedListId(lists[0].id);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement des listes de tâches:', error);
+                }
+            };
+
+            const loadTasks = async (listId) => {
+                setIsLoading(true);
+                try {
+                    const response = await gapi.client.request({
+                        path: `https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks`,
+                        params: { showCompleted: true }
+                    });
+                    setTasks(response.result.items || []);
+                } catch (error) {
+                    console.error('Erreur lors du chargement des tâches:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const addTask = async () => {
+                if (!newTaskTitle.trim() || !selectedListId) return;
+
+                try {
+                    await gapi.client.request({
+                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks`,
+                        method: 'POST',
+                        body: {
+                            title: newTaskTitle
+                        }
+                    });
+                    setNewTaskTitle('');
+                    setShowNewTask(false);
+                    loadTasks(selectedListId);
+                } catch (error) {
+                    console.error('Erreur lors de l\'ajout de la tâche:', error);
+                }
+            };
+
+            const toggleTask = async (taskId, currentStatus) => {
+                try {
+                    await gapi.client.request({
+                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`,
+                        method: 'PATCH',
+                        body: {
+                            status: currentStatus === 'completed' ? 'needsAction' : 'completed'
+                        }
+                    });
+                    loadTasks(selectedListId);
+                } catch (error) {
+                    console.error('Erreur lors de la mise à jour de la tâche:', error);
+                }
+            };
+
+            const deleteTask = async (taskId) => {
+                try {
+                    await gapi.client.request({
+                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`,
+                        method: 'DELETE'
+                    });
+                    loadTasks(selectedListId);
+                } catch (error) {
+                    console.error('Erreur lors de la suppression de la tâche:', error);
+                }
+            };
+
+            if (!isSignedIn) {
+                return null;
+            }
+
+            return (
+                <div style={{ 
+                    padding: '12px', 
+                    background: 'white', 
+                    borderRadius: '8px', 
+                    marginBottom: '12px', 
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)' 
+                }}>
+                    <div style={{ marginBottom: '12px' }}>
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
+                            📝 Mes tâches
+                        </h3>
+                        
+                        {taskLists.length > 0 && (
+                            <select
+                                value={selectedListId || ''}
+                                onChange={(e) => setSelectedListId(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '6px 8px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '12px',
+                                    marginBottom: '8px'
+                                }}
+                            >
+                                {taskLists.map(list => (
+                                    <option key={list.id} value={list.id}>
+                                        {list.title}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
+                        <button
+                            onClick={() => setShowNewTask(!showNewTask)}
+                            style={{
+                                width: '100%',
+                                padding: '6px 12px',
+                                backgroundColor: '#f3f4f6',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                color: '#6b7280'
+                            }}
+                        >
+                            + Ajouter une tâche
+                        </button>
+
+                        {showNewTask && (
+                            <div style={{ marginTop: '8px', display: 'flex', gap: '4px' }}>
+                                <input
+                                    type="text"
+                                    value={newTaskTitle}
+                                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                                    onKeyPress={(e) => e.key === 'Enter' && addTask()}
+                                    placeholder="Titre de la tâche"
+                                    style={{
+                                        flex: 1,
+                                        padding: '6px 8px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e5e7eb',
+                                        fontSize: '12px'
+                                    }}
+                                    autoFocus
+                                />
+                                <button
+                                    onClick={addTask}
+                                    style={{
+                                        padding: '6px 12px',
+                                        backgroundColor: '#ec4899',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontSize: '12px',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    ✓
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {isLoading ? (
+                        <div style={{ textAlign: 'center', padding: '12px', color: '#9ca3af', fontSize: '12px' }}>
+                            Chargement...
+                        </div>
+                    ) : (
+                        <div style={{ 
+                            maxHeight: '300px', 
+                            overflowY: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}>
+                            {tasks.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '12px', color: '#9ca3af', fontSize: '12px' }}>
+                                    Aucune tâche
+                                </div>
+                            ) : (
+                                tasks.map(task => (
+                                    <div
+                                        key={task.id}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '6px 8px',
+                                            borderRadius: '6px',
+                                            background: task.status === 'completed' ? '#f9fafb' : 'white',
+                                            border: '1px solid #f3f4f6'
+                                        }}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={task.status === 'completed'}
+                                            onChange={() => toggleTask(task.id, task.status)}
+                                            style={{ cursor: 'pointer', flexShrink: 0 }}
+                                        />
+                                        <span style={{
+                                            flex: 1,
+                                            fontSize: '12px',
+                                            textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                                            color: task.status === 'completed' ? '#9ca3af' : '#374151',
+                                            lineHeight: '1.3'
+                                        }}>
+                                            {task.title}
+                                        </span>
+                                        <button
+                                            onClick={() => deleteTask(task.id)}
+                                            style={{
+                                                padding: '2px 6px',
+                                                backgroundColor: 'transparent',
+                                                color: '#ef4444',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer',
+                                                fontSize: '10px',
+                                                flexShrink: 0
+                                            }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        };
 
         // ===== GOOGLE CALENDAR SYNC =====
         const GoogleCalendarSync = ({ onSync, onError, onCalendarsLoaded }) => {
@@ -2505,42 +2762,18 @@
 
                     {/* Layout principal avec sidebar */}
                     <div style={{ display: 'flex', minHeight: 'calc(100vh - 180px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
-                        {/* Contenu principal */}
-                        <div style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-                            <div style={{
-                                background: 'white',
-                                borderRadius: '12px',
-                                padding: '24px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}>
-                                {currentView === 'cycle' ? (
-                                    renderCircleView()
-                                ) : (
-                                    <MonthView
-                                        currentMonth={currentMonth}
-                                        onMonthChange={setCurrentMonth}
-                                        activities={activities}
-                                        getPhaseForDate={getPhaseForDate}
-                                        onDayClick={(date) => {
-                                            setCreateEventDate(date);
-                                            setShowCreateEventModal(true);
-                                        }}
-                                        googleCalendars={googleCalendars}
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Sidebar calendriers */}
+                        {/* Sidebar calendriers à gauche */}
                         <div style={{
                             width: window.innerWidth < 768 ? '100%' : '280px',
                             backgroundColor: '#f9fafb',
-                            borderLeft: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
-                            borderTop: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
+                            borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
+                            borderBottom: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
                             overflowY: 'auto',
                             padding: '16px',
-                            maxHeight: window.innerWidth < 768 ? '400px' : 'auto'
+                            maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
+                            order: window.innerWidth < 768 ? 2 : 1
                         }}>
+                            <GoogleTasks isSignedIn={googleCalendars.length > 0} />
                             <GoogleCalendarSync
                                 onSync={(events, calendarMap) => {
                                     const newActivities = {};
@@ -2597,6 +2830,37 @@
                                 onError={(msg) => showToast(msg, 'error')}
                                 onCalendarsLoaded={(cals) => setGoogleCalendars(cals)}
                             />
+                        </div>
+
+                        {/* Contenu principal */}
+                        <div style={{ 
+                            flex: 1, 
+                            padding: '24px', 
+                            overflowY: 'auto',
+                            order: window.innerWidth < 768 ? 1 : 2
+                        }}>
+                            <div style={{
+                                background: 'white',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                            }}>
+                                {currentView === 'cycle' ? (
+                                    renderCircleView()
+                                ) : (
+                                    <MonthView
+                                        currentMonth={currentMonth}
+                                        onMonthChange={setCurrentMonth}
+                                        activities={activities}
+                                        getPhaseForDate={getPhaseForDate}
+                                        onDayClick={(date) => {
+                                            setCreateEventDate(date);
+                                            setShowCreateEventModal(true);
+                                        }}
+                                        googleCalendars={googleCalendars}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
 

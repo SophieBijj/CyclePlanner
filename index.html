@@ -260,12 +260,13 @@
         }
 
         // ===== GOOGLE TASKS =====
-        const GoogleTasks = ({ isSignedIn }) => {
+        const GoogleTasks = ({ isSignedIn, onTasksLoaded }) => {
             const [taskLists, setTaskLists] = useState([]);
             const [tasks, setTasks] = useState([]);
             const [selectedListId, setSelectedListId] = useState(null);
             const [isLoading, setIsLoading] = useState(false);
             const [newTaskTitle, setNewTaskTitle] = useState('');
+            const [newTaskDate, setNewTaskDate] = useState('');
             const [showNewTask, setShowNewTask] = useState(false);
 
             useEffect(() => {
@@ -295,14 +296,39 @@
                 }
             };
 
+            const loadAllTasks = async () => {
+                try {
+                    const allTasks = [];
+                    for (const list of taskLists) {
+                        const response = await gapi.client.request({
+                            path: `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks`,
+                            params: { showCompleted: false, showHidden: false }
+                        });
+                        const listTasks = (response.result.items || []).map(task => ({
+                            ...task,
+                            listId: list.id,
+                            listTitle: list.title
+                        }));
+                        allTasks.push(...listTasks);
+                    }
+                    if (onTasksLoaded) {
+                        onTasksLoaded(allTasks);
+                    }
+                } catch (error) {
+                    console.error('Erreur lors du chargement de toutes les tâches:', error);
+                }
+            };
+
             const loadTasks = async (listId) => {
                 setIsLoading(true);
                 try {
                     const response = await gapi.client.request({
                         path: `https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks`,
-                        params: { showCompleted: true }
+                        params: { showCompleted: true, showHidden: false }
                     });
                     setTasks(response.result.items || []);
+                    // Charger toutes les tâches pour le calendrier
+                    loadAllTasks();
                 } catch (error) {
                     console.error('Erreur lors du chargement des tâches:', error);
                 } finally {
@@ -314,14 +340,24 @@
                 if (!newTaskTitle.trim() || !selectedListId) return;
 
                 try {
+                    const taskData = {
+                        title: newTaskTitle
+                    };
+                    
+                    if (newTaskDate) {
+                        // Google Tasks attend la date au format RFC 3339 (ISO 8601)
+                        const dueDate = new Date(newTaskDate);
+                        dueDate.setHours(12, 0, 0, 0); // Midi par défaut
+                        taskData.due = dueDate.toISOString();
+                    }
+
                     await gapi.client.request({
                         path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks`,
                         method: 'POST',
-                        body: {
-                            title: newTaskTitle
-                        }
+                        body: taskData
                     });
                     setNewTaskTitle('');
+                    setNewTaskDate('');
                     setShowNewTask(false);
                     loadTasks(selectedListId);
                 } catch (error) {
@@ -356,6 +392,12 @@
                 }
             };
 
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+            };
+
             if (!isSignedIn) {
                 return null;
             }
@@ -370,7 +412,7 @@
                 }}>
                     <div style={{ marginBottom: '12px' }}>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
-                            📝 Mes tâches
+                            ✓ Mes tâches
                         </h3>
                         
                         {taskLists.length > 0 && (
@@ -412,7 +454,7 @@
                         </button>
 
                         {showNewTask && (
-                            <div style={{ marginTop: '8px', display: 'flex', gap: '4px' }}>
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <input
                                     type="text"
                                     value={newTaskTitle}
@@ -420,7 +462,6 @@
                                     onKeyPress={(e) => e.key === 'Enter' && addTask()}
                                     placeholder="Titre de la tâche"
                                     style={{
-                                        flex: 1,
                                         padding: '6px 8px',
                                         borderRadius: '6px',
                                         border: '1px solid #e5e7eb',
@@ -428,21 +469,55 @@
                                     }}
                                     autoFocus
                                 />
-                                <button
-                                    onClick={addTask}
+                                <input
+                                    type="date"
+                                    value={newTaskDate}
+                                    onChange={(e) => setNewTaskDate(e.target.value)}
                                     style={{
-                                        padding: '6px 12px',
-                                        backgroundColor: '#ec4899',
-                                        color: 'white',
-                                        border: 'none',
+                                        padding: '6px 8px',
                                         borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontSize: '12px',
-                                        fontWeight: '500'
+                                        border: '1px solid #e5e7eb',
+                                        fontSize: '12px'
                                     }}
-                                >
-                                    ✓
-                                </button>
+                                />
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                    <button
+                                        onClick={() => {
+                                            setShowNewTask(false);
+                                            setNewTaskTitle('');
+                                            setNewTaskDate('');
+                                        }}
+                                        style={{
+                                            flex: 1,
+                                            padding: '6px 12px',
+                                            backgroundColor: '#f3f4f6',
+                                            color: '#6b7280',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                        }}
+                                    >
+                                        Annuler
+                                    </button>
+                                    <button
+                                        onClick={addTask}
+                                        style={{
+                                            flex: 1,
+                                            padding: '6px 12px',
+                                            backgroundColor: '#ec4899',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px',
+                                            fontWeight: '500'
+                                        }}
+                                    >
+                                        Ajouter
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -469,7 +544,7 @@
                                         key={task.id}
                                         style={{
                                             display: 'flex',
-                                            alignItems: 'center',
+                                            alignItems: 'flex-start',
                                             gap: '8px',
                                             padding: '6px 8px',
                                             borderRadius: '6px',
@@ -481,17 +556,27 @@
                                             type="checkbox"
                                             checked={task.status === 'completed'}
                                             onChange={() => toggleTask(task.id, task.status)}
-                                            style={{ cursor: 'pointer', flexShrink: 0 }}
+                                            style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
                                         />
-                                        <span style={{
-                                            flex: 1,
-                                            fontSize: '12px',
-                                            textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                                            color: task.status === 'completed' ? '#9ca3af' : '#374151',
-                                            lineHeight: '1.3'
-                                        }}>
-                                            {task.title}
-                                        </span>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{
+                                                fontSize: '12px',
+                                                textDecoration: task.status === 'completed' ? 'line-through' : 'none',
+                                                color: task.status === 'completed' ? '#9ca3af' : '#374151',
+                                                lineHeight: '1.3',
+                                                marginBottom: task.due ? '2px' : '0'
+                                            }}>
+                                                {task.title}
+                                            </div>
+                                            {task.due && (
+                                                <div style={{
+                                                    fontSize: '10px',
+                                                    color: '#9ca3af'
+                                                }}>
+                                                    📅 {formatDate(task.due)}
+                                                </div>
+                                            )}
+                                        </div>
                                         <button
                                             onClick={() => deleteTask(task.id)}
                                             style={{
@@ -1130,10 +1215,14 @@
                                                     borderRadius: '3px',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
+                                                    whiteSpace: 'nowrap',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '3px'
                                                 }}
                                             >
-                                                {activity.startTime} {activity.title}
+                                                {activity.isTask ? '✓' : activity.startTime}
+                                                {activity.title}
                                             </div>
                                         ))}
                                         {dayActivities.length > 3 && (
@@ -2125,6 +2214,62 @@
                 setTimeout(() => setToast(null), 3000);
             };
 
+            // Gérer les tâches Google Tasks
+            const handleTasksLoaded = (tasks) => {
+                const newActivities = { ...activities };
+                
+                // D'abord, supprimer toutes les tâches existantes (pour éviter les doublons lors du refresh)
+                Object.keys(newActivities).forEach(dateKey => {
+                    newActivities[dateKey] = newActivities[dateKey].filter(a => !a.isTask);
+                    if (newActivities[dateKey].length === 0) {
+                        delete newActivities[dateKey];
+                    }
+                });
+                
+                tasks.forEach(task => {
+                    if (!task.due || task.status === 'completed') return;
+                    
+                    const dueDate = new Date(task.due);
+                    const year = dueDate.getFullYear();
+                    const month = String(dueDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(dueDate.getDate()).padStart(2, '0');
+                    const dateKey = `${year}-${month}-${day}`;
+                    
+                    if (!newActivities[dateKey]) {
+                        newActivities[dateKey] = [];
+                    }
+                    
+                    newActivities[dateKey].push({
+                        id: task.id,
+                        title: task.title,
+                        startTime: '',
+                        duration: 0,
+                        color: '#f59e0b', // Orange pour les tâches
+                        description: task.notes || '',
+                        isTask: true,
+                        listTitle: task.listTitle,
+                        date: dueDate
+                    });
+                });
+                
+                // Trier les activités de chaque jour
+                Object.keys(newActivities).forEach(dateKey => {
+                    newActivities[dateKey].sort((a, b) => {
+                        // Tasks sans heure en premier
+                        if (a.isTask && !b.isTask) return -1;
+                        if (!a.isTask && b.isTask) return 1;
+                        if (a.isTask && b.isTask) return 0;
+                        // Puis trier par heure
+                        if (!a.startTime || !b.startTime) return 0;
+                        const timeA = a.startTime.split(':').map(Number);
+                        const timeB = b.startTime.split(':').map(Number);
+                        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+                    });
+                });
+                
+                setActivities(newActivities);
+            };
+
             // Calculer la longueur moyenne du cycle basée sur l'historique
             const getAverageCycleLength = () => {
                 if (cycleHistory.length === 0) {
@@ -2625,8 +2770,10 @@
                                                             <div
                                                                 key={act.id}
                                                                 onClick={() => {
-                                                                    setEditingEvent(act);
-                                                                    setShowEditEventModal(true);
+                                                                    if (!act.isTask) {
+                                                                        setEditingEvent(act);
+                                                                        setShowEditEventModal(true);
+                                                                    }
                                                                 }}
                                                                 style={{
                                                                     padding: '6px 8px',
@@ -2636,17 +2783,21 @@
                                                                     fontSize: window.innerWidth < 768 ? '9px' : '10px',
                                                                     fontWeight: '600',
                                                                     marginBottom: '4px',
-                                                                    cursor: 'pointer',
+                                                                    cursor: act.isTask ? 'default' : 'pointer',
                                                                     display: 'flex',
                                                                     justifyContent: 'space-between',
                                                                     alignItems: 'center',
-                                                                    transition: 'opacity 0.2s'
+                                                                    transition: 'opacity 0.2s',
+                                                                    opacity: act.isTask ? '0.95' : '1'
                                                                 }}
-                                                                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                                                                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                                                                onMouseEnter={(e) => !act.isTask && (e.currentTarget.style.opacity = '0.9')}
+                                                                onMouseLeave={(e) => !act.isTask && (e.currentTarget.style.opacity = '1')}
                                                             >
-                                                                <span>{act.startTime} • {act.title}</span>
-                                                                <EditIcon />
+                                                                <span>
+                                                                    {act.isTask ? '✓ ' : `${act.startTime} • `}
+                                                                    {act.title}
+                                                                </span>
+                                                                {!act.isTask && <EditIcon />}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -2773,7 +2924,10 @@
                             maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
                             order: window.innerWidth < 768 ? 2 : 1
                         }}>
-                            <GoogleTasks isSignedIn={googleCalendars.length > 0} />
+                            <GoogleTasks 
+                                isSignedIn={googleCalendars.length > 0}
+                                onTasksLoaded={handleTasksLoaded}
+                            />
                             <GoogleCalendarSync
                                 onSync={(events, calendarMap) => {
                                     const newActivities = {};
@@ -2815,9 +2969,25 @@
                                         });
                                     });
                                     
+                                    // Préserver les tâches existantes
+                                    Object.keys(activities).forEach(dateKey => {
+                                        const existingTasks = activities[dateKey].filter(a => a.isTask);
+                                        if (existingTasks.length > 0) {
+                                            if (!newActivities[dateKey]) {
+                                                newActivities[dateKey] = [];
+                                            }
+                                            newActivities[dateKey] = [...existingTasks, ...newActivities[dateKey]];
+                                        }
+                                    });
+                                    
                                     // Trier tous les événements de chaque jour par ordre chronologique
                                     Object.keys(newActivities).forEach(dateKey => {
                                         newActivities[dateKey].sort((a, b) => {
+                                            // Tasks sans heure en premier
+                                            if (a.isTask && !b.isTask) return -1;
+                                            if (!a.isTask && b.isTask) return 1;
+                                            if (a.isTask && b.isTask) return 0;
+                                            // Puis trier par heure
                                             const timeA = a.startTime.split(':').map(Number);
                                             const timeB = b.startTime.split(':').map(Number);
                                             return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);

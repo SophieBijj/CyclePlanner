@@ -783,6 +783,11 @@
                 try {
                     const response = await gapi.client.calendar.calendarList.list();
                     const cals = response.result.items || [];
+                    console.log('=== ALL CALENDARS ===');
+                    cals.forEach(cal => {
+                        console.log(`Calendar: "${cal.summary}" | ID: ${cal.id} | Color: ${cal.backgroundColor}`);
+                    });
+                    console.log('===================');
                     setCalendars(cals);
                     onCalendarsLoaded?.(cals); // Exposer les calendriers au parent
                     
@@ -2875,23 +2880,38 @@
                             maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
                             order: window.innerWidth < 768 ? 2 : 1
                         }}>
+                            {/* GoogleTasks temporairement désactivé - erreur 403 API
                             <GoogleTasks 
                                 isSignedIn={googleCalendars.length > 0}
                                 onTasksLoaded={handleTasksLoaded}
                             />
+                            */}
                             <GoogleCalendarSync
                                 onSync={(events, calendarMap) => {
+                                    console.log('=== SYNC START ===');
+                                    console.log('Total events received:', events.length);
+                                    console.log('Available calendars for search:', googleCalendars.map(c => ({ id: c.id, summary: c.summary })));
+                                    
                                     const newActivities = {};
                                     
-                                    // Trouver le calendrier Tasks
-                                    const tasksCalendar = googleCalendars.find(cal => 
-                                        cal.summary && (
-                                            cal.summary.toLowerCase().includes('task') || 
-                                            cal.summary.toLowerCase().includes('tâche') ||
-                                            cal.id.includes('#tasks@')
-                                        )
-                                    );
+                                    // Trouver le calendrier Tasks - essayer plusieurs patterns
+                                    const tasksCalendar = googleCalendars.find(cal => {
+                                        const id = cal.id.toLowerCase();
+                                        const summary = (cal.summary || '').toLowerCase();
+                                        return summary.includes('task') || 
+                                               summary.includes('tâche') ||
+                                               summary.includes('tache') ||
+                                               id.includes('tasks@') ||
+                                               id.includes('#tasks@');
+                                    });
                                     
+                                    if (tasksCalendar) {
+                                        console.log('✓ Tasks calendar found:', tasksCalendar.summary, '(ID:', tasksCalendar.id + ')');
+                                    } else {
+                                        console.log('✗ No tasks calendar found. Available calendars:', googleCalendars.map(c => c.summary).join(', '));
+                                    }
+                                    
+                                    let taskCount = 0;
                                     events.forEach(event => {
                                         // Les tâches peuvent avoir soit dateTime soit date (all-day)
                                         const hasDateTime = event.start && event.start.dateTime;
@@ -2917,6 +2937,10 @@
                                         
                                         // Déterminer si c'est une tâche
                                         const isTask = tasksCalendar && event.calendarId === tasksCalendar.id;
+                                        if (isTask) {
+                                            taskCount++;
+                                            console.log(`  ✓ Task #${taskCount}: "${event.summary}" on ${dateKey}`);
+                                        }
                                         
                                         // Déterminer la couleur: backgroundColor > colorId > calendar color
                                         let eventColor = '#3b82f6'; // Couleur par défaut
@@ -2940,6 +2964,9 @@
                                             isTask: isTask
                                         });
                                     });
+                                    
+                                    console.log(`Total tasks found: ${taskCount}`);
+                                    console.log('=== SYNC END ===');
                                     
                                     // Préserver les tâches de Google Tasks API (si différentes)
                                     Object.keys(activities).forEach(dateKey => {

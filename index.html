@@ -327,20 +327,30 @@
 
             const initializeGapiClient = async () => {
                 try {
-                    // Initialiser avec Calendar d'abord (qui utilise l'API Key)
+                    // Initialiser uniquement Calendar avec API Key
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
                         discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                     });
-                    
-                    // Charger Tasks séparément sans API Key (OAuth uniquement)
-                    await gapi.client.load('tasks', 'v1');
                     
                     gapiInited.current = true;
                     maybeEnableButtons();
                 } catch (err) {
                     console.error('Error initializing GAPI:', err);
                     onError?.('Erreur d\'initialisation Google API');
+                }
+            };
+            
+            const loadTasksAPI = async () => {
+                try {
+                    // Charger Tasks API après authentification (sans API Key)
+                    if (!window.tasksApiLoaded) {
+                        await gapi.client.load('tasks', 'v1');
+                        window.tasksApiLoaded = true;
+                        console.log('Tasks API loaded successfully');
+                    }
+                } catch (err) {
+                    console.error('Error loading Tasks API:', err);
                 }
             };
 
@@ -368,6 +378,9 @@
                                 gapi.client.setToken({
                                     access_token: response.access_token
                                 });
+                                
+                                // Charger Tasks API maintenant qu'on est authentifié
+                                await loadTasksAPI();
                             }
                             
                             setIsSignedIn(true);
@@ -410,7 +423,11 @@
                     if (token !== null) {
                         console.log('Already signed in, loading calendars...');
                         setIsSignedIn(true);
-                        loadCalendars(); // loadCalendars s'occupe maintenant de l'auto-sync
+                        
+                        // Charger Tasks API avec le token restauré
+                        loadTasksAPI().then(() => {
+                            loadCalendars(); // loadCalendars s'occupe maintenant de l'auto-sync
+                        });
                     }
                 }
             };

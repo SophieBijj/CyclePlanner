@@ -83,8 +83,11 @@
         // CONFIGURATION GOOGLE CALENDAR API
         const GOOGLE_CLIENT_ID = '711219272291-i1je9vqn1b4p0asn4fov7bdohoa08q38.apps.googleusercontent.com';
         const GOOGLE_API_KEY = 'AIzaSyA81G3xJq6iTJitDv6GO_rvjaOucTpeDNA';
-        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
-        const SCOPES = 'https://www.googleapis.com/auth/calendar';
+        const DISCOVERY_DOCS = [
+            'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest',
+            'https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'
+        ];
+        const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/tasks';
 
         // ===== ICÔNES =====
         const GoogleIcon = () => (
@@ -259,350 +262,8 @@
             };
         }
 
-        // ===== GOOGLE TASKS =====
-        const GoogleTasks = ({ isSignedIn, onTasksLoaded }) => {
-            const [taskLists, setTaskLists] = useState([]);
-            const [tasks, setTasks] = useState([]);
-            const [selectedListId, setSelectedListId] = useState(null);
-            const [isLoading, setIsLoading] = useState(false);
-            const [newTaskTitle, setNewTaskTitle] = useState('');
-            const [newTaskDate, setNewTaskDate] = useState('');
-            const [showNewTask, setShowNewTask] = useState(false);
-
-            useEffect(() => {
-                if (isSignedIn && gapi.client) {
-                    loadTaskLists();
-                }
-            }, [isSignedIn]);
-
-            useEffect(() => {
-                if (selectedListId) {
-                    loadTasks(selectedListId);
-                }
-            }, [selectedListId]);
-
-            const loadTaskLists = async () => {
-                try {
-                    const response = await gapi.client.request({
-                        path: 'https://tasks.googleapis.com/tasks/v1/users/@me/lists'
-                    });
-                    const lists = response.result.items || [];
-                    setTaskLists(lists);
-                    if (lists.length > 0 && !selectedListId) {
-                        setSelectedListId(lists[0].id);
-                    }
-                } catch (error) {
-                    console.error('Erreur lors du chargement des listes de tâches:', error);
-                }
-            };
-
-            const loadAllTasks = async () => {
-                try {
-                    const allTasks = [];
-                    for (const list of taskLists) {
-                        const response = await gapi.client.request({
-                            path: `https://tasks.googleapis.com/tasks/v1/lists/${list.id}/tasks`,
-                            params: { showCompleted: false, showHidden: false }
-                        });
-                        const listTasks = (response.result.items || []).map(task => ({
-                            ...task,
-                            listId: list.id,
-                            listTitle: list.title
-                        }));
-                        allTasks.push(...listTasks);
-                    }
-                    if (onTasksLoaded) {
-                        onTasksLoaded(allTasks);
-                    }
-                } catch (error) {
-                    console.error('Erreur lors du chargement de toutes les tâches:', error);
-                }
-            };
-
-            const loadTasks = async (listId) => {
-                setIsLoading(true);
-                try {
-                    const response = await gapi.client.request({
-                        path: `https://tasks.googleapis.com/tasks/v1/lists/${listId}/tasks`,
-                        params: { showCompleted: true, showHidden: false }
-                    });
-                    setTasks(response.result.items || []);
-                    // Charger toutes les tâches pour le calendrier
-                    loadAllTasks();
-                } catch (error) {
-                    console.error('Erreur lors du chargement des tâches:', error);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-
-            const addTask = async () => {
-                if (!newTaskTitle.trim() || !selectedListId) return;
-
-                try {
-                    const taskData = {
-                        title: newTaskTitle
-                    };
-                    
-                    if (newTaskDate) {
-                        // Google Tasks attend la date au format RFC 3339 (ISO 8601)
-                        const dueDate = new Date(newTaskDate);
-                        dueDate.setHours(12, 0, 0, 0); // Midi par défaut
-                        taskData.due = dueDate.toISOString();
-                    }
-
-                    await gapi.client.request({
-                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks`,
-                        method: 'POST',
-                        body: taskData
-                    });
-                    setNewTaskTitle('');
-                    setNewTaskDate('');
-                    setShowNewTask(false);
-                    loadTasks(selectedListId);
-                } catch (error) {
-                    console.error('Erreur lors de l\'ajout de la tâche:', error);
-                }
-            };
-
-            const toggleTask = async (taskId, currentStatus) => {
-                try {
-                    await gapi.client.request({
-                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`,
-                        method: 'PATCH',
-                        body: {
-                            status: currentStatus === 'completed' ? 'needsAction' : 'completed'
-                        }
-                    });
-                    loadTasks(selectedListId);
-                } catch (error) {
-                    console.error('Erreur lors de la mise à jour de la tâche:', error);
-                }
-            };
-
-            const deleteTask = async (taskId) => {
-                try {
-                    await gapi.client.request({
-                        path: `https://tasks.googleapis.com/tasks/v1/lists/${selectedListId}/tasks/${taskId}`,
-                        method: 'DELETE'
-                    });
-                    loadTasks(selectedListId);
-                } catch (error) {
-                    console.error('Erreur lors de la suppression de la tâche:', error);
-                }
-            };
-
-            const formatDate = (dateString) => {
-                if (!dateString) return '';
-                const date = new Date(dateString);
-                return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-            };
-
-            if (!isSignedIn) {
-                return null;
-            }
-
-            return (
-                <div style={{ 
-                    padding: '12px', 
-                    background: 'white', 
-                    borderRadius: '8px', 
-                    marginBottom: '12px', 
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)' 
-                }}>
-                    <div style={{ marginBottom: '12px' }}>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '600' }}>
-                            ✓ Mes tâches
-                        </h3>
-                        
-                        {taskLists.length > 0 && (
-                            <select
-                                value={selectedListId || ''}
-                                onChange={(e) => setSelectedListId(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '6px 8px',
-                                    borderRadius: '6px',
-                                    border: '1px solid #e5e7eb',
-                                    fontSize: '12px',
-                                    marginBottom: '8px'
-                                }}
-                            >
-                                {taskLists.map(list => (
-                                    <option key={list.id} value={list.id}>
-                                        {list.title}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-
-                        <button
-                            onClick={() => setShowNewTask(!showNewTask)}
-                            style={{
-                                width: '100%',
-                                padding: '6px 12px',
-                                backgroundColor: '#f3f4f6',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                fontWeight: '500',
-                                color: '#6b7280'
-                            }}
-                        >
-                            + Ajouter une tâche
-                        </button>
-
-                        {showNewTask && (
-                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <input
-                                    type="text"
-                                    value={newTaskTitle}
-                                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && addTask()}
-                                    placeholder="Titre de la tâche"
-                                    style={{
-                                        padding: '6px 8px',
-                                        borderRadius: '6px',
-                                        border: '1px solid #e5e7eb',
-                                        fontSize: '12px'
-                                    }}
-                                    autoFocus
-                                />
-                                <input
-                                    type="date"
-                                    value={newTaskDate}
-                                    onChange={(e) => setNewTaskDate(e.target.value)}
-                                    style={{
-                                        padding: '6px 8px',
-                                        borderRadius: '6px',
-                                        border: '1px solid #e5e7eb',
-                                        fontSize: '12px'
-                                    }}
-                                />
-                                <div style={{ display: 'flex', gap: '4px' }}>
-                                    <button
-                                        onClick={() => {
-                                            setShowNewTask(false);
-                                            setNewTaskTitle('');
-                                            setNewTaskDate('');
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '6px 12px',
-                                            backgroundColor: '#f3f4f6',
-                                            color: '#6b7280',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        onClick={addTask}
-                                        style={{
-                                            flex: 1,
-                                            padding: '6px 12px',
-                                            backgroundColor: '#ec4899',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontSize: '12px',
-                                            fontWeight: '500'
-                                        }}
-                                    >
-                                        Ajouter
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {isLoading ? (
-                        <div style={{ textAlign: 'center', padding: '12px', color: '#9ca3af', fontSize: '12px' }}>
-                            Chargement...
-                        </div>
-                    ) : (
-                        <div style={{ 
-                            maxHeight: '300px', 
-                            overflowY: 'auto',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px'
-                        }}>
-                            {tasks.length === 0 ? (
-                                <div style={{ textAlign: 'center', padding: '12px', color: '#9ca3af', fontSize: '12px' }}>
-                                    Aucune tâche
-                                </div>
-                            ) : (
-                                tasks.map(task => (
-                                    <div
-                                        key={task.id}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'flex-start',
-                                            gap: '8px',
-                                            padding: '6px 8px',
-                                            borderRadius: '6px',
-                                            background: task.status === 'completed' ? '#f9fafb' : 'white',
-                                            border: '1px solid #f3f4f6'
-                                        }}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={task.status === 'completed'}
-                                            onChange={() => toggleTask(task.id, task.status)}
-                                            style={{ cursor: 'pointer', flexShrink: 0, marginTop: '2px' }}
-                                        />
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{
-                                                fontSize: '12px',
-                                                textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                                                color: task.status === 'completed' ? '#9ca3af' : '#374151',
-                                                lineHeight: '1.3',
-                                                marginBottom: task.due ? '2px' : '0'
-                                            }}>
-                                                {task.title}
-                                            </div>
-                                            {task.due && (
-                                                <div style={{
-                                                    fontSize: '10px',
-                                                    color: '#9ca3af'
-                                                }}>
-                                                    📅 {formatDate(task.due)}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <button
-                                            onClick={() => deleteTask(task.id)}
-                                            style={{
-                                                padding: '2px 6px',
-                                                backgroundColor: 'transparent',
-                                                color: '#ef4444',
-                                                border: 'none',
-                                                borderRadius: '4px',
-                                                cursor: 'pointer',
-                                                fontSize: '10px',
-                                                flexShrink: 0
-                                            }}
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
         // ===== GOOGLE CALENDAR SYNC =====
-        const GoogleCalendarSync = ({ onSync, onError, onCalendarsLoaded }) => {
+        const GoogleCalendarSync = ({ onSync, onError, onCalendarsLoaded, onSyncRequest }) => {
             const [isSignedIn, setIsSignedIn] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
             const [calendars, setCalendars] = useState([]);
@@ -611,6 +272,13 @@
             const gapiInited = useRef(false);
             const gisInited = useRef(false);
             const tokenClient = useRef(null);
+
+            // Exposer handleSync au parent via callback
+            useEffect(() => {
+                if (onSyncRequest && isSignedIn && selectedCalendars.length > 0) {
+                    onSyncRequest(() => handleSync);
+                }
+            }, [isSignedIn, selectedCalendars]);
 
             useEffect(() => {
                 let gapiTimeout, gisTimeout;
@@ -661,7 +329,7 @@
                 try {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: [DISCOVERY_DOC],
+                        discoveryDocs: DISCOVERY_DOCS,
                     });
                     gapiInited.current = true;
                     maybeEnableButtons();
@@ -783,13 +451,19 @@
                 try {
                     const response = await gapi.client.calendar.calendarList.list();
                     const cals = response.result.items || [];
-                    console.log('=== ALL CALENDARS ===');
-                    cals.forEach(cal => {
-                        console.log(`Calendar: "${cal.summary}" | ID: ${cal.id} | Color: ${cal.backgroundColor}`);
-                    });
-                    console.log('===================');
-                    setCalendars(cals);
-                    onCalendarsLoaded?.(cals); // Exposer les calendriers au parent
+                    
+                    // Ajouter un calendrier virtuel pour les tâches
+                    const tasksCalendar = {
+                        id: '__GOOGLE_TASKS__',
+                        summary: '✓ Tâches',
+                        backgroundColor: '#f59e0b',
+                        foregroundColor: '#ffffff',
+                        isTasksCalendar: true
+                    };
+                    
+                    const allCalendars = [tasksCalendar, ...cals];
+                    setCalendars(allCalendars);
+                    onCalendarsLoaded?.(allCalendars); // Exposer les calendriers au parent
                     
                     // Restaurer les calendriers sélectionnés depuis localStorage
                     const savedCalendars = localStorage.getItem('selectedCalendars');
@@ -797,7 +471,9 @@
                         try {
                             const saved = JSON.parse(savedCalendars);
                             // Vérifier que les calendriers sauvegardés existent toujours
-                            const validSaved = saved.filter(id => cals.some(cal => cal.id === id));
+                            const validSaved = saved.filter(id => 
+                                id === '__GOOGLE_TASKS__' || cals.some(cal => cal.id === id)
+                            );
                             if (validSaved.length > 0) {
                                 console.log('Restoring selected calendars:', validSaved);
                                 setSelectedCalendars(validSaved);
@@ -855,7 +531,12 @@
                     const allEvents = [];
                     const calendarMap = {};
                     
-                    for (const calendarId of calendarIds) {
+                    // Séparer les calendriers normaux du calendrier Tasks
+                    const regularCalendars = calendarIds.filter(id => id !== '__GOOGLE_TASKS__');
+                    const includesTasks = calendarIds.includes('__GOOGLE_TASKS__');
+                    
+                    // Charger les événements des calendriers normaux
+                    for (const calendarId of regularCalendars) {
                         console.log('Fetching events from calendar:', calendarId);
                         const calInfo = calendars.find(c => c.id === calendarId);
                         if (calInfo) {
@@ -873,6 +554,58 @@
                         const events = response.result.items || [];
                         console.log(`Found ${events.length} events in calendar ${calendarId}`);
                         allEvents.push(...events.map(e => ({ ...e, calendarId })));
+                    }
+                    
+                    // Charger les tâches si le calendrier Tasks est sélectionné
+                    if (includesTasks) {
+                        console.log('Fetching Google Tasks...');
+                        calendarMap['__GOOGLE_TASKS__'] = '#f59e0b';
+                        
+                        try {
+                            // Charger toutes les listes de tâches
+                            const taskListsResponse = await gapi.client.tasks.tasklists.list({
+                                maxResults: 100
+                            });
+                            
+                            const taskLists = taskListsResponse.result.items || [];
+                            console.log(`Found ${taskLists.length} task lists`);
+                            
+                            // Charger les tâches de chaque liste
+                            for (const taskList of taskLists) {
+                                const tasksResponse = await gapi.client.tasks.tasks.list({
+                                    tasklist: taskList.id,
+                                    showCompleted: true,
+                                    showHidden: true,
+                                    maxResults: 100
+                                });
+                                
+                                const tasks = tasksResponse.result.items || [];
+                                console.log(`Found ${tasks.length} tasks in list "${taskList.title}"`);
+                                
+                                // Convertir les tâches en format "événement" pour l'affichage
+                                tasks.forEach(task => {
+                                    // Utiliser la date d'échéance ou la date de création
+                                    const taskDate = task.due || task.updated;
+                                    if (taskDate) {
+                                        allEvents.push({
+                                            id: task.id,
+                                            summary: task.title || 'Tâche sans titre',
+                                            start: { dateTime: taskDate },
+                                            end: { dateTime: taskDate },
+                                            calendarId: '__GOOGLE_TASKS__',
+                                            isTask: true,
+                                            taskListId: taskList.id,
+                                            taskListName: taskList.title,
+                                            completed: task.status === 'completed',
+                                            notes: task.notes || '',
+                                            originalTask: task
+                                        });
+                                    }
+                                });
+                            }
+                        } catch (taskError) {
+                            console.error('Error loading tasks:', taskError);
+                        }
                     }
                     
                     console.log(`Total events found: ${allEvents.length}`);
@@ -895,71 +628,66 @@
             };
 
             return (
-                <div style={{ padding: '12px', background: 'white', borderRadius: '8px', marginBottom: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{ padding: '20px', background: 'white', borderRadius: '12px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <GoogleIcon />
-                            Calendriers
+                            Google Calendar
                         </h3>
                         {!isSignedIn ? (
                             <button
                                 onClick={handleAuthClick}
                                 disabled={isLoading}
                                 style={{
-                                    padding: '8px 12px',
+                                    padding: '8px 16px',
                                     backgroundColor: isLoading ? '#9ca3af' : '#4285F4',
                                     color: 'white',
-                                    borderRadius: '6px',
+                                    borderRadius: '8px',
                                     fontWeight: '500',
                                     cursor: isLoading ? 'not-allowed' : 'pointer',
                                     border: 'none',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                    fontSize: '13px',
-                                    width: '100%'
+                                    gap: '8px',
+                                    fontSize: '14px'
                                 }}
                             >
                                 <GoogleIcon />
                                 {isLoading ? 'Chargement...' : 'Se connecter'}
                             </button>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                     onClick={handleSync}
                                     disabled={isSyncing || selectedCalendars.length === 0}
                                     style={{
-                                        padding: '8px 12px',
+                                        padding: '8px 16px',
                                         backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
                                         color: 'white',
-                                        borderRadius: '6px',
+                                        borderRadius: '8px',
                                         fontWeight: '500',
-                                        cursor: isSyncing || selectedCalendars.length === 0 ? 'not-allowed' : 'pointer',
+                                        cursor: isSyncing ? 'not-allowed' : 'pointer',
                                         border: 'none',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '6px',
-                                        fontSize: '13px',
-                                        width: '100%'
+                                        gap: '8px',
+                                        fontSize: '14px'
                                     }}
                                 >
                                     <SyncIcon />
-                                    {isSyncing ? 'Synchro...' : 'Synchroniser'}
+                                    {isSyncing ? 'Synchronisation...' : 'Synchroniser'}
                                 </button>
                                 <button
                                     onClick={handleSignoutClick}
                                     style={{
-                                        padding: '6px 12px',
-                                        backgroundColor: 'transparent',
-                                        color: '#ef4444',
-                                        borderRadius: '6px',
+                                        padding: '8px 16px',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        borderRadius: '8px',
                                         fontWeight: '500',
                                         cursor: 'pointer',
-                                        border: '1px solid #fecaca',
-                                        fontSize: '12px',
-                                        width: '100%'
+                                        border: 'none',
+                                        fontSize: '14px'
                                     }}
                                 >
                                     Déconnecter
@@ -969,11 +697,11 @@
                     </div>
 
                     {isSignedIn && calendars.length > 0 && (
-                        <div style={{ marginTop: '12px' }}>
-                            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: '500' }}>
-                                Mes calendriers :
+                        <div>
+                            <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '12px' }}>
+                                Calendriers synchronisés :
                             </p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 {calendars.map(cal => (
                                     <label
                                         key={cal.id}
@@ -981,40 +709,28 @@
                                             display: 'flex',
                                             alignItems: 'center',
                                             gap: '8px',
-                                            padding: '6px 8px',
+                                            padding: '8px',
                                             borderRadius: '6px',
                                             cursor: 'pointer',
-                                            background: selectedCalendars.includes(cal.id) ? '#f0fdf4' : 'transparent',
-                                            transition: 'background 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            if (!selectedCalendars.includes(cal.id)) {
-                                                e.currentTarget.style.background = '#f9fafb';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!selectedCalendars.includes(cal.id)) {
-                                                e.currentTarget.style.background = 'transparent';
-                                            }
+                                            background: selectedCalendars.includes(cal.id) ? '#f0fdf4' : 'transparent'
                                         }}
                                     >
                                         <input
                                             type="checkbox"
                                             checked={selectedCalendars.includes(cal.id)}
                                             onChange={() => toggleCalendar(cal.id)}
-                                            style={{ cursor: 'pointer', flexShrink: 0 }}
+                                            style={{ cursor: 'pointer' }}
                                         />
                                         <div
                                             style={{
-                                                width: '10px',
-                                                height: '10px',
+                                                width: '12px',
+                                                height: '12px',
                                                 borderRadius: '50%',
-                                                backgroundColor: cal.backgroundColor || '#3b82f6',
-                                                flexShrink: 0
+                                                backgroundColor: cal.backgroundColor || '#3b82f6'
                                             }}
                                         />
-                                        <span style={{ fontSize: '13px', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {cal.summary}
+                                        <span style={{ fontSize: '14px' }}>
+                                            {cal.summary} {cal.primary && '(Principal)'}
                                         </span>
                                     </label>
                                 ))}
@@ -1025,288 +741,10 @@
             );
         };
 
-        // ===== MONTH VIEW =====
-        const MonthView = ({ 
-            currentMonth, 
-            onMonthChange, 
-            activities, 
-            getPhaseForDate, 
-            onDayClick,
-            googleCalendars 
-        }) => {
-            const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
-            const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-            const startingDayOfWeek = firstDayOfMonth.getDay();
-            
-            const monthName = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            
-            const prevMonth = () => {
-                const newMonth = new Date(currentMonth);
-                newMonth.setMonth(newMonth.getMonth() - 1);
-                onMonthChange(newMonth);
-            };
-            
-            const nextMonth = () => {
-                const newMonth = new Date(currentMonth);
-                newMonth.setMonth(newMonth.getMonth() + 1);
-                onMonthChange(newMonth);
-            };
-            
-            const formatDate = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-            
-            // Créer les jours du calendrier
-            const calendarDays = [];
-            
-            // Jours vides au début
-            for (let i = 0; i < startingDayOfWeek; i++) {
-                calendarDays.push(null);
-            }
-            
-            // Jours du mois
-            for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                calendarDays.push(date);
-            }
-            
-            return (
-                <div style={{ width: '100%' }}>
-                    {/* Navigation mois */}
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        marginBottom: '20px'
-                    }}>
-                        <button
-                            onClick={prevMonth}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            ← Mois précédent
-                        </button>
-                        <h2 style={{ 
-                            margin: 0, 
-                            fontSize: '18px', 
-                            fontWeight: '600',
-                            textTransform: 'capitalize'
-                        }}>
-                            {monthName}
-                        </h2>
-                        <button
-                            onClick={nextMonth}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            Mois suivant →
-                        </button>
-                    </div>
-                    
-                    {/* Calendrier */}
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(7, 1fr)',
-                        gap: '4px'
-                    }}>
-                        {/* En-têtes des jours */}
-                        {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(day => (
-                            <div key={day} style={{
-                                padding: '12px',
-                                textAlign: 'center',
-                                fontSize: '12px',
-                                fontWeight: '600',
-                                color: '#6b7280'
-                            }}>
-                                {day}
-                            </div>
-                        ))}
-                        
-                        {/* Cellules du calendrier */}
-                        {calendarDays.map((date, index) => {
-                            if (!date) {
-                                return <div key={`empty-${index}`} style={{ padding: '8px' }} />;
-                            }
-                            
-                            const phaseInfo = getPhaseForDate(date);
-                            const dateKey = formatDate(date);
-                            const dayActivities = activities[dateKey] || [];
-                            const isToday = formatDate(date) === formatDate(new Date());
-                            
-                            return (
-                                <div
-                                    key={dateKey}
-                                    onClick={() => onDayClick(date)}
-                                    style={{
-                                        minHeight: '100px',
-                                        padding: '8px',
-                                        backgroundColor: phaseInfo.color + '15',
-                                        border: isToday ? `2px solid ${phaseInfo.color}` : '1px solid #e5e7eb',
-                                        borderRadius: '8px',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        ':hover': {
-                                            transform: 'scale(1.02)',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                        }
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform = 'scale(1.02)';
-                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform = 'scale(1)';
-                                        e.currentTarget.style.boxShadow = 'none';
-                                    }}
-                                >
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        marginBottom: '4px'
-                                    }}>
-                                        <span style={{
-                                            fontSize: '14px',
-                                            fontWeight: isToday ? '700' : '500',
-                                            color: isToday ? phaseInfo.color : '#374151'
-                                        }}>
-                                            {date.getDate()}
-                                        </span>
-                                        <span style={{
-                                            fontSize: '10px',
-                                            color: phaseInfo.text,
-                                            fontWeight: '600',
-                                            backgroundColor: phaseInfo.color + '30',
-                                            padding: '2px 6px',
-                                            borderRadius: '4px'
-                                        }}>
-                                            {phaseInfo.shortName}
-                                        </span>
-                                    </div>
-                                    
-                                    {/* Événements */}
-                                    <div style={{ 
-                                        display: 'flex', 
-                                        flexDirection: 'column', 
-                                        gap: '2px',
-                                        maxHeight: '70px',
-                                        overflow: 'hidden'
-                                    }}>
-                                        {dayActivities.slice(0, 3).map((activity, idx) => (
-                                            <div
-                                                key={idx}
-                                                style={{
-                                                    fontSize: '10px',
-                                                    padding: '2px 4px',
-                                                    backgroundColor: activity.color,
-                                                    color: 'white',
-                                                    borderRadius: '3px',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '3px'
-                                                }}
-                                            >
-                                                {activity.isTask ? '✓' : activity.startTime}
-                                                {activity.title}
-                                            </div>
-                                        ))}
-                                        {dayActivities.length > 3 && (
-                                            <div style={{
-                                                fontSize: '9px',
-                                                color: '#6b7280',
-                                                fontWeight: '500'
-                                            }}>
-                                                +{dayActivities.length - 3} autres
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            );
-        };
-
         // ===== CONFIG MODAL =====
-        const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
+        const ConfigModal = ({ config, onSave, onClose }) => {
             const [startDate, setStartDate] = useState(config.cycleStartDate.toISOString().split('T')[0]);
             const [cycleLength, setCycleLength] = useState(config.cycleLength);
-            const [history, setHistory] = useState(cycleHistory || []);
-
-            const addCycleToHistory = () => {
-                if (history.length < 12) {
-                    setHistory([...history, { startDate: '' }]);
-                }
-            };
-
-            const removeCycleFromHistory = (index) => {
-                setHistory(history.filter((_, i) => i !== index));
-            };
-
-            const updateHistoryItem = (index, value) => {
-                const newHistory = [...history];
-                newHistory[index].startDate = value;
-                setHistory(newHistory);
-            };
-
-            // Calculer les durées des cycles automatiquement
-            const calculateCycleLengths = (historyDates, currentStart) => {
-                if (historyDates.length === 0) return [];
-                
-                // Trier les dates par ordre chronologique (plus anciennes en premier)
-                const sortedHistory = [...historyDates]
-                    .filter(h => h.startDate)
-                    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-                
-                const result = [];
-                
-                for (let i = 0; i < sortedHistory.length; i++) {
-                    const currentDate = new Date(sortedHistory[i].startDate);
-                    let nextDate;
-                    
-                    if (i < sortedHistory.length - 1) {
-                        // Pas le dernier : utiliser le prochain cycle de l'historique
-                        nextDate = new Date(sortedHistory[i + 1].startDate);
-                    } else {
-                        // Le dernier : utiliser le cycle actuel
-                        nextDate = new Date(currentStart);
-                    }
-                    
-                    const diffTime = nextDate - currentDate;
-                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    result.push({
-                        startDate: sortedHistory[i].startDate,
-                        length: diffDays
-                    });
-                }
-                
-                return result;
-            };
-
-            // Afficher les durées calculées
-            const displayHistory = calculateCycleLengths(history, startDate);
 
             return (
                 <div style={{
@@ -1319,18 +757,14 @@
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000,
-                    overflow: 'auto',
-                    padding: '20px'
+                    zIndex: 1000
                 }}>
                     <div style={{
                         backgroundColor: 'white',
                         borderRadius: '12px',
                         padding: '24px',
-                        maxWidth: '600px',
-                        width: '100%',
-                        maxHeight: '90vh',
-                        overflow: 'auto',
+                        maxWidth: '500px',
+                        width: '90%',
                         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -1342,7 +776,7 @@
 
                         <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Premier jour des dernières règles (J1 actuel)
+                                Premier jour des dernières règles
                             </label>
                             <input
                                 type="date"
@@ -1360,7 +794,7 @@
 
                         <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Durée du cycle actuel (jours)
+                                Durée du cycle (jours)
                             </label>
                             <input
                                 type="number"
@@ -1376,105 +810,6 @@
                                     fontSize: '14px'
                                 }}
                             />
-                        </div>
-
-                        {/* Historique des cycles */}
-                        <div style={{ marginBottom: '24px', borderTop: '1px solid #e5e7eb', paddingTop: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                                <label style={{ fontSize: '14px', fontWeight: '500' }}>
-                                    Historique des cycles passés (J1 uniquement)
-                                </label>
-                                <button
-                                    onClick={addCycleToHistory}
-                                    disabled={history.length >= 12}
-                                    style={{
-                                        padding: '6px 12px',
-                                        fontSize: '12px',
-                                        backgroundColor: history.length >= 12 ? '#e5e7eb' : '#ec4899',
-                                        color: history.length >= 12 ? '#9ca3af' : 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: history.length >= 12 ? 'not-allowed' : 'pointer',
-                                        fontWeight: '500'
-                                    }}
-                                >
-                                    + Ajouter J1
-                                </button>
-                            </div>
-                            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
-                                Entre les dates de début (J1) de tes cycles passés. Les durées seront calculées automatiquement. (max 12)
-                            </p>
-                            
-                            {history.length > 0 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '250px', overflow: 'auto' }}>
-                                    {history.map((cycle, index) => {
-                                        const displayed = displayHistory.find(d => d.startDate === cycle.startDate);
-                                        return (
-                                            <div key={index} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                <input
-                                                    type="date"
-                                                    value={cycle.startDate}
-                                                    onChange={(e) => updateHistoryItem(index, e.target.value)}
-                                                    style={{
-                                                        flex: 2,
-                                                        padding: '8px',
-                                                        borderRadius: '6px',
-                                                        border: '1px solid #e5e7eb',
-                                                        fontSize: '13px'
-                                                    }}
-                                                    placeholder="Date J1"
-                                                />
-                                                {displayed && (
-                                                    <div style={{
-                                                        flex: 1,
-                                                        padding: '8px',
-                                                        borderRadius: '6px',
-                                                        backgroundColor: '#f0fdf4',
-                                                        border: '1px solid #86efac',
-                                                        fontSize: '13px',
-                                                        fontWeight: '500',
-                                                        color: '#166534',
-                                                        textAlign: 'center'
-                                                    }}>
-                                                        {displayed.length} jours
-                                                    </div>
-                                                )}
-                                                <button
-                                                    onClick={() => removeCycleFromHistory(index)}
-                                                    style={{
-                                                        padding: '6px',
-                                                        backgroundColor: '#fee2e2',
-                                                        color: '#ef4444',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        cursor: 'pointer',
-                                                        fontSize: '12px'
-                                                    }}
-                                                >
-                                                    <TrashIcon />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                            
-                            {displayHistory.length > 0 && (
-                                <div style={{ 
-                                    marginTop: '12px', 
-                                    padding: '12px', 
-                                    backgroundColor: '#f0f9ff',
-                                    borderRadius: '8px',
-                                    border: '1px solid #bae6fd'
-                                }}>
-                                    <p style={{ margin: 0, fontSize: '13px', fontWeight: '500', color: '#0369a1' }}>
-                                        📊 Durée moyenne des cycles : {Math.round(
-                                            displayHistory.reduce((sum, h) => sum + h.length, cycleLength) / 
-                                            (displayHistory.length + 1)
-                                        )} jours
-                                    </p>
-                                </div>
-                            )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -1493,11 +828,7 @@
                                 Annuler
                             </button>
                             <button
-                                onClick={() => onSave({ 
-                                    cycleStartDate: new Date(startDate), 
-                                    cycleLength,
-                                    cycleHistory: calculateCycleLengths(history.filter(h => h.startDate), startDate)
-                                })}
+                                onClick={() => onSave({ cycleStartDate: new Date(startDate), cycleLength })}
                                 style={{
                                     padding: '10px 20px',
                                     borderRadius: '8px',
@@ -1765,6 +1096,297 @@
         };
 
         // ===== EDIT EVENT MODAL =====
+        // ===== EDIT TASK MODAL =====
+        const EditTaskModal = ({ task, onClose, onUpdate, onDelete, onSync }) => {
+            const [title, setTitle] = useState(task.title);
+            const [selectedDate, setSelectedDate] = useState(task.date);
+            const [selectedTaskList, setSelectedTaskList] = useState(task.taskListId);
+            const [taskLists, setTaskLists] = useState([]);
+            const [isUpdating, setIsUpdating] = useState(false);
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                loadTaskLists();
+            }, []);
+
+            const loadTaskLists = async () => {
+                try {
+                    const response = await gapi.client.tasks.tasklists.list();
+                    setTaskLists(response.result.items || []);
+                    setIsLoading(false);
+                } catch (err) {
+                    console.error('Error loading task lists:', err);
+                    setIsLoading(false);
+                }
+            };
+
+            const handleUpdate = async () => {
+                if (!title.trim()) {
+                    alert('Le titre est obligatoire');
+                    return;
+                }
+
+                setIsUpdating(true);
+                try {
+                    // Si la liste de tâches a changé, déplacer la tâche
+                    if (selectedTaskList !== task.taskListId) {
+                        // 1. Créer la tâche dans la nouvelle liste
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(selectedDate.getDate()).padStart(2, '0');
+                        const dueDate = `${year}-${month}-${day}T00:00:00.000Z`;
+
+                        await gapi.client.tasks.tasks.insert({
+                            tasklist: selectedTaskList,
+                            resource: {
+                                title: title,
+                                notes: task.description || '',
+                                due: dueDate,
+                                status: task.status
+                            }
+                        });
+
+                        // 2. Supprimer l'ancienne tâche
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: task.taskListId,
+                            task: task.id
+                        });
+                    } else {
+                        // Simplement mettre à jour la tâche
+                        const year = selectedDate.getFullYear();
+                        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(selectedDate.getDate()).padStart(2, '0');
+                        const dueDate = `${year}-${month}-${day}T00:00:00.000Z`;
+
+                        await gapi.client.tasks.tasks.patch({
+                            tasklist: task.taskListId,
+                            task: task.id,
+                            title: title,
+                            due: dueDate
+                        });
+                    }
+
+                    // Re-synchroniser pour rafraîchir l'affichage
+                    if (onSync) {
+                        await onSync();
+                    }
+                    
+                    onClose();
+                } catch (err) {
+                    console.error('Error updating task:', err);
+                    alert('Erreur lors de la mise à jour de la tâche');
+                } finally {
+                    setIsUpdating(false);
+                }
+            };
+
+            const handleDelete = async () => {
+                if (!confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+                    return;
+                }
+
+                try {
+                    await gapi.client.tasks.tasks.delete({
+                        tasklist: task.taskListId,
+                        task: task.id
+                    });
+
+                    // Re-synchroniser pour rafraîchir l'affichage
+                    if (onSync) {
+                        await onSync();
+                    }
+                    
+                    onClose();
+                } catch (err) {
+                    console.error('Error deleting task:', err);
+                    alert('Erreur lors de la suppression de la tâche');
+                }
+            };
+
+            const formatDateForInput = (d) => {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const handleDateChange = (e) => {
+                const newDate = new Date(e.target.value + 'T00:00:00');
+                setSelectedDate(newDate);
+            };
+
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Modifier la tâche</h2>
+                            <button onClick={onClose} style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
+                                <XIcon />
+                            </button>
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Titre
+                            </label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Nom de la tâche"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Date d'échéance
+                            </label>
+                            <input
+                                type="date"
+                                value={formatDateForInput(selectedDate)}
+                                onChange={handleDateChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Statut
+                            </label>
+                            <div style={{
+                                padding: '10px',
+                                borderRadius: '8px',
+                                backgroundColor: task.status === 'completed' ? '#dcfce7' : '#fef3c7',
+                                color: task.status === 'completed' ? '#166534' : '#854d0e',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                {task.status === 'completed' ? '✓ Complétée' : '○ À faire'}
+                            </div>
+                        </div>
+
+                        {!isLoading && taskLists.length > 0 && (
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                    Liste de tâches
+                                </label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {taskLists.map(list => (
+                                        <label
+                                            key={list.id}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '10px',
+                                                borderRadius: '8px',
+                                                border: selectedTaskList === list.id ? '2px solid #F59E0B' : '1px solid #e5e7eb',
+                                                cursor: 'pointer',
+                                                backgroundColor: selectedTaskList === list.id ? '#fffbeb' : 'white'
+                                            }}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="tasklist"
+                                                checked={selectedTaskList === list.id}
+                                                onChange={() => setSelectedTaskList(list.id)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                                                {list.title}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
+                            <button
+                                onClick={handleDelete}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: '#ef4444',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                🗑️ Supprimer
+                            </button>
+                            <div style={{ display: 'flex', gap: '12px' }}>
+                                <button
+                                    onClick={onClose}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #e5e7eb',
+                                        backgroundColor: 'white',
+                                        color: '#6b7280',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleUpdate}
+                                    disabled={isUpdating}
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        backgroundColor: isUpdating ? '#9ca3af' : '#F59E0B',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: isUpdating ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    {isUpdating ? 'Mise à jour...' : 'Enregistrer'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const EditEventModal = ({ event, calendars, onClose, onUpdate, onDelete }) => {
             const [title, setTitle] = useState(event.title);
             const [selectedDate, setSelectedDate] = useState(event.date);
@@ -2055,20 +1677,7 @@
             const [editingEvent, setEditingEvent] = useState(null);
             const [sunDataLoaded, setSunDataLoaded] = useState(false);
             const [sunData, setSunData] = useState({});
-            const [currentView, setCurrentView] = useState('cycle'); // 'cycle' ou 'month'
-            const [currentMonth, setCurrentMonth] = useState(new Date());
-            
-            const [cycleHistory, setCycleHistory] = useState(() => {
-                const saved = localStorage.getItem('cycleHistory');
-                if (saved) {
-                    try {
-                        return JSON.parse(saved);
-                    } catch (e) {
-                        return [];
-                    }
-                }
-                return [];
-            });
+            const [syncFunction, setSyncFunction] = useState(null);
 
             const [cycleConfig, setCycleConfig] = useState(() => {
                 const saved = localStorage.getItem('cycleConfig');
@@ -2130,10 +1739,6 @@
                     }));
                 }
             }, [cycleConfig]);
-
-            useEffect(() => {
-                localStorage.setItem('cycleHistory', JSON.stringify(cycleHistory));
-            }, [cycleHistory]);
 
             // Auto-update à minuit - Force le re-render du cycle
             useEffect(() => {
@@ -2217,31 +1822,6 @@
             const showToast = (message, type = 'info') => {
                 setToast({ message, type });
                 setTimeout(() => setToast(null), 3000);
-            };
-
-            // Calculer la longueur moyenne du cycle basée sur l'historique
-            const getAverageCycleLength = () => {
-                if (cycleHistory.length === 0) {
-                    return cycleConfig.cycleLength;
-                }
-                const sum = cycleHistory.reduce((acc, cycle) => acc + cycle.length, cycleConfig.cycleLength);
-                return Math.round(sum / (cycleHistory.length + 1));
-            };
-
-            // Obtenir le jour du cycle pour une date donnée basé sur la moyenne
-            const getCycleDayForDate = (date) => {
-                const avgLength = getAverageCycleLength();
-                const diffTime = date - cycleConfig.cycleStartDate;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                const cycleDay = ((diffDays % avgLength) + avgLength) % avgLength;
-                return cycleDay === 0 ? avgLength : cycleDay;
-            };
-
-            // Obtenir les infos de phase pour une date donnée
-            const getPhaseForDate = (date) => {
-                const cycleDay = getCycleDayForDate(date);
-                const avgLength = getAverageCycleLength();
-                return getPhaseInfo(cycleDay, avgLength);
             };
 
             // Pré-charger les données du soleil pour tous les jours du cycle
@@ -2726,7 +2306,7 @@
                                                                 }}
                                                                 style={{
                                                                     padding: '6px 8px',
-                                                                    backgroundColor: act.color,
+                                                                    backgroundColor: act.isTask ? (act.completed ? '#d1d5db' : act.color) : act.color,
                                                                     color: 'white',
                                                                     borderRadius: '6px',
                                                                     fontSize: window.innerWidth < 768 ? '9px' : '10px',
@@ -2737,16 +2317,64 @@
                                                                     justifyContent: 'space-between',
                                                                     alignItems: 'center',
                                                                     transition: 'opacity 0.2s',
-                                                                    opacity: act.isTask ? '0.95' : '1'
+                                                                    opacity: act.completed ? '0.6' : '1'
                                                                 }}
                                                                 onMouseEnter={(e) => !act.isTask && (e.currentTarget.style.opacity = '0.9')}
                                                                 onMouseLeave={(e) => !act.isTask && (e.currentTarget.style.opacity = '1')}
                                                             >
-                                                                <span>
-                                                                    {act.isTask ? '✓ ' : `${act.startTime} • `}
-                                                                    {act.title}
-                                                                </span>
-                                                                {!act.isTask && <EditIcon />}
+                                                                {act.isTask ? (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={act.completed}
+                                                                            onChange={async (e) => {
+                                                                                e.stopPropagation();
+                                                                                const newStatus = e.target.checked ? 'completed' : 'needsAction';
+                                                                                try {
+                                                                                    await gapi.client.tasks.tasks.patch({
+                                                                                        tasklist: act.taskListId,
+                                                                                        task: act.id,
+                                                                                        status: newStatus,
+                                                                                        completed: newStatus === 'completed' ? new Date().toISOString() : null
+                                                                                    });
+                                                                                    // Re-sync pour mettre à jour l'affichage
+                                                                                    const syncButton = document.querySelector('[data-sync-button]');
+                                                                                    if (syncButton) syncButton.click();
+                                                                                } catch (err) {
+                                                                                    console.error('Error updating task:', err);
+                                                                                    showToast('Erreur lors de la mise à jour', 'error');
+                                                                                }
+                                                                            }}
+                                                                            style={{
+                                                                                cursor: 'pointer',
+                                                                                width: '14px',
+                                                                                height: '14px',
+                                                                                flexShrink: 0
+                                                                            }}
+                                                                        />
+                                                                        <span style={{ 
+                                                                            textDecoration: act.completed ? 'line-through' : 'none',
+                                                                            flex: 1
+                                                                        }}>
+                                                                            {act.title} • {act.taskListName}
+                                                                        </span>
+                                                                        <span
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setEditingEvent(act);
+                                                                                setShowEditEventModal(true);
+                                                                            }}
+                                                                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                                        >
+                                                                            <EditIcon />
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <>
+                                                                        <span>{act.startTime} • {act.title}</span>
+                                                                        <EditIcon />
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -2818,195 +2446,116 @@
                         </button>
                     </div>
 
-                    {/* Onglets */}
-                    <div style={{
-                        backgroundColor: 'white',
-                        borderBottom: '1px solid #e5e7eb',
-                        padding: '0 24px',
-                        display: 'flex',
-                        gap: '8px'
-                    }}>
-                        <button
-                            onClick={() => setCurrentView('cycle')}
-                            style={{
-                                padding: '12px 24px',
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderBottom: currentView === 'cycle' ? '3px solid #ec4899' : '3px solid transparent',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: currentView === 'cycle' ? '#ec4899' : '#6b7280',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            Vue Cyclique
-                        </button>
-                        <button
-                            onClick={() => setCurrentView('month')}
-                            style={{
-                                padding: '12px 24px',
-                                backgroundColor: 'transparent',
-                                border: 'none',
-                                borderBottom: currentView === 'month' ? '3px solid #ec4899' : '3px solid transparent',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: currentView === 'month' ? '#ec4899' : '#6b7280',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            Vue Mensuelle
-                        </button>
-                    </div>
-
-                    {/* Layout principal avec sidebar */}
-                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 180px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
-                        {/* Sidebar calendriers à gauche */}
-                        <div style={{
-                            width: window.innerWidth < 768 ? '100%' : '280px',
-                            backgroundColor: '#f9fafb',
-                            borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
-                            borderBottom: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
-                            overflowY: 'auto',
-                            padding: '16px',
-                            maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
-                            order: window.innerWidth < 768 ? 2 : 1
-                        }}>
-                            {/* Pas de widget Tasks séparé - tout est synchronisé avec Google Calendar */}
-                            <GoogleCalendarSync
-                                onSync={(events, calendarMap) => {
-                                    console.log('=== SYNC START ===');
-                                    console.log('Total events received:', events.length);
-                                    console.log('Available calendars for search:', googleCalendars.map(c => ({ id: c.id, summary: c.summary })));
+                    {/* Contenu */}
+                    <div style={{ padding: '24px' }}>
+                        <GoogleCalendarSync
+                            onSyncRequest={(syncFn) => setSyncFunction(() => syncFn)}
+                            onSync={(events, calendarMap) => {
+                                const newActivities = {};
+                                
+                                events.forEach(event => {
+                                    // Gérer à la fois les événements (dateTime) et les tâches (date)
+                                    let startDate, endDate, dateKey;
                                     
-                                    const newActivities = {};
-                                    
-                                    // Trouver le calendrier Tasks - essayer plusieurs patterns
-                                    const tasksCalendar = googleCalendars.find(cal => {
-                                        const id = cal.id.toLowerCase();
-                                        const summary = (cal.summary || '').toLowerCase();
-                                        return summary.includes('task') || 
-                                               summary.includes('tâche') ||
-                                               summary.includes('tache') ||
-                                               id.includes('tasks@') ||
-                                               id.includes('#tasks@');
-                                    });
-                                    
-                                    if (tasksCalendar) {
-                                        console.log('✓ Tasks calendar found:', tasksCalendar.summary, '(ID:', tasksCalendar.id + ')');
+                                    if (event.isTask && event.start && event.start.date) {
+                                        // Tâche avec date d'échéance
+                                        startDate = new Date(event.start.date + 'T00:00:00');
+                                        endDate = startDate;
+                                    } else if (event.start && event.start.dateTime) {
+                                        // Événement avec heure
+                                        startDate = new Date(event.start.dateTime);
+                                        endDate = new Date(event.end.dateTime);
                                     } else {
-                                        console.log('✗ No tasks calendar found. Available calendars:', googleCalendars.map(c => c.summary).join(', '));
+                                        // Pas de date valide, ignorer
+                                        return;
                                     }
                                     
-                                    let taskCount = 0;
-                                    events.forEach(event => {
-                                        // Les tâches peuvent avoir soit dateTime soit date (all-day)
-                                        const hasDateTime = event.start && event.start.dateTime;
-                                        const hasDate = event.start && event.start.date;
-                                        
-                                        if (!hasDateTime && !hasDate) return;
-                                        
-                                        const startDate = hasDateTime 
-                                            ? new Date(event.start.dateTime)
-                                            : new Date(event.start.date + 'T00:00:00');
-                                        const endDate = hasDateTime
-                                            ? new Date(event.end.dateTime)
-                                            : new Date(event.end.date + 'T23:59:59');
-                                        
-                                        const year = startDate.getFullYear();
-                                        const month = String(startDate.getMonth() + 1).padStart(2, '0');
-                                        const day = String(startDate.getDate()).padStart(2, '0');
-                                        const dateKey = `${year}-${month}-${day}`;
-                                        
-                                        if (!newActivities[dateKey]) {
-                                            newActivities[dateKey] = [];
-                                        }
-                                        
-                                        // Déterminer si c'est une tâche
-                                        const isTask = tasksCalendar && event.calendarId === tasksCalendar.id;
-                                        if (isTask) {
-                                            taskCount++;
-                                            console.log(`  ✓ Task #${taskCount}: "${event.summary}" on ${dateKey}`);
-                                        }
-                                        
-                                        // Déterminer la couleur: backgroundColor > colorId > calendar color
-                                        let eventColor = '#3b82f6'; // Couleur par défaut
-                                        if (event.backgroundColor) {
-                                            eventColor = event.backgroundColor;
-                                        } else if (event.colorId) {
-                                            eventColor = getGoogleColor(event.colorId);
-                                        } else if (calendarMap && calendarMap[event.calendarId]) {
-                                            eventColor = calendarMap[event.calendarId];
-                                        }
-                                        
-                                        newActivities[dateKey].push({
-                                            id: event.id,
-                                            title: event.summary || 'Sans titre',
-                                            startTime: hasDateTime ? startDate.toTimeString().slice(0, 5) : '',
-                                            duration: Math.round((endDate - startDate) / (1000 * 60)),
-                                            color: eventColor,
-                                            description: event.description || '',
-                                            calendarId: event.calendarId,
-                                            date: startDate,
-                                            isTask: isTask
-                                        });
-                                    });
+                                    const year = startDate.getFullYear();
+                                    const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                                    const day = String(startDate.getDate()).padStart(2, '0');
+                                    dateKey = `${year}-${month}-${day}`;
                                     
-                                    console.log(`Total tasks found in calendar: ${taskCount}`);
-                                    console.log('=== SYNC END ===');
+                                    if (!newActivities[dateKey]) {
+                                        newActivities[dateKey] = [];
+                                    }
                                     
-                                    // Trier tous les événements de chaque jour par ordre chronologique
-                                    Object.keys(newActivities).forEach(dateKey => {
-                                        newActivities[dateKey].sort((a, b) => {
-                                            // Tasks sans heure en premier
-                                            if (a.isTask && !b.isTask) return -1;
-                                            if (!a.isTask && b.isTask) return 1;
-                                            if (a.isTask && b.isTask) return 0;
-                                            // Puis trier par heure
+                                    // Déterminer la couleur: backgroundColor > colorId > calendar color
+                                    let eventColor = '#3b82f6'; // Couleur par défaut
+                                    if (event.backgroundColor) {
+                                        eventColor = event.backgroundColor;
+                                    } else if (event.colorId) {
+                                        eventColor = getGoogleColor(event.colorId);
+                                    } else if (calendarMap && calendarMap[event.calendarId]) {
+                                        eventColor = calendarMap[event.calendarId];
+                                    }
+                                    
+                                    // Créer l'activité de base
+                                    const activity = {
+                                        id: event.id,
+                                        title: event.summary || (event.isTask ? 'Tâche sans titre' : 'Sans titre'),
+                                        color: eventColor,
+                                        description: event.description || '',
+                                        calendarId: event.calendarId,
+                                        date: startDate,
+                                        isTask: event.isTask || false
+                                    };
+                                    
+                                    // Ajouter les propriétés spécifiques selon le type
+                                    if (event.isTask) {
+                                        activity.taskListId = event.taskListId;
+                                        activity.taskListTitle = event.taskListTitle;
+                                        activity.status = event.status;
+                                        activity.completed = event.completed;
+                                        activity.startTime = '';
+                                        activity.duration = 0;
+                                    } else {
+                                        activity.startTime = startDate.toTimeString().slice(0, 5);
+                                        activity.duration = Math.round((endDate - startDate) / (1000 * 60));
+                                    }
+                                    
+                                    newActivities[dateKey].push(activity);
+                                });
+                                
+                                // Trier tous les événements de chaque jour par ordre chronologique
+                                // Les tâches complétées vont à la fin
+                                Object.keys(newActivities).forEach(dateKey => {
+                                    newActivities[dateKey].sort((a, b) => {
+                                        // Tâches complétées à la fin
+                                        if (a.isTask && b.isTask) {
+                                            const aCompleted = a.status === 'completed';
+                                            const bCompleted = b.status === 'completed';
+                                            if (aCompleted !== bCompleted) {
+                                                return aCompleted ? 1 : -1;
+                                            }
+                                        }
+                                        // Tâches après les événements
+                                        if (a.isTask !== b.isTask) {
+                                            return a.isTask ? 1 : -1;
+                                        }
+                                        // Sinon tri par heure
+                                        if (!a.isTask && !b.isTask) {
                                             const timeA = a.startTime.split(':').map(Number);
                                             const timeB = b.startTime.split(':').map(Number);
                                             return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
-                                        });
+                                        }
+                                        return 0;
                                     });
-                                    
-                                    setActivities(newActivities);
-                                    showToast('Synchronisation réussie ✓', 'success');
-                                }}
-                                onError={(msg) => showToast(msg, 'error')}
-                                onCalendarsLoaded={(cals) => setGoogleCalendars(cals)}
-                            />
-                        </div>
+                                });
+                                
+                                setActivities(newActivities);
+                                showToast('Synchronisation réussie ✓', 'success');
+                            }}
+                            onError={(msg) => showToast(msg, 'error')}
+                            onCalendarsLoaded={(cals) => setGoogleCalendars(cals)}
+                        />
 
-                        {/* Contenu principal */}
-                        <div style={{ 
-                            flex: 1, 
-                            padding: '24px', 
-                            overflowY: 'auto',
-                            order: window.innerWidth < 768 ? 1 : 2
+                        <div style={{
+                            background: 'white',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                         }}>
-                            <div style={{
-                                background: 'white',
-                                borderRadius: '12px',
-                                padding: '24px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                            }}>
-                                {currentView === 'cycle' ? (
-                                    renderCircleView()
-                                ) : (
-                                    <MonthView
-                                        currentMonth={currentMonth}
-                                        onMonthChange={setCurrentMonth}
-                                        activities={activities}
-                                        getPhaseForDate={getPhaseForDate}
-                                        onDayClick={(date) => {
-                                            setCreateEventDate(date);
-                                            setShowCreateEventModal(true);
-                                        }}
-                                        googleCalendars={googleCalendars}
-                                    />
-                                )}
-                            </div>
+                            {renderCircleView()}
                         </div>
                     </div>
 
@@ -3014,15 +2563,8 @@
                     {showConfigModal && (
                         <ConfigModal
                             config={cycleConfig}
-                            cycleHistory={cycleHistory}
                             onSave={(newConfig) => {
-                                setCycleConfig({
-                                    cycleStartDate: newConfig.cycleStartDate,
-                                    cycleLength: newConfig.cycleLength
-                                });
-                                if (newConfig.cycleHistory) {
-                                    setCycleHistory(newConfig.cycleHistory);
-                                }
+                                setCycleConfig(newConfig);
                                 setShowConfigModal(false);
                                 showToast('Configuration enregistrée ✓', 'success');
                             }}
@@ -3042,17 +2584,28 @@
                         />
                     )}
 
-                    {showEditEventModal && editingEvent && googleCalendars.length > 0 && (
-                        <EditEventModal
-                            event={editingEvent}
-                            calendars={googleCalendars}
-                            onUpdate={updateEvent}
-                            onDelete={deleteEvent}
-                            onClose={() => {
-                                setShowEditEventModal(false);
-                                setEditingEvent(null);
-                            }}
-                        />
+                    {showEditEventModal && editingEvent && (
+                        editingEvent.isTask ? (
+                            <EditTaskModal
+                                task={editingEvent}
+                                onSync={syncFunction}
+                                onClose={() => {
+                                    setShowEditEventModal(false);
+                                    setEditingEvent(null);
+                                }}
+                            />
+                        ) : googleCalendars.length > 0 ? (
+                            <EditEventModal
+                                event={editingEvent}
+                                calendars={googleCalendars}
+                                onUpdate={updateEvent}
+                                onDelete={deleteEvent}
+                                onClose={() => {
+                                    setShowEditEventModal(false);
+                                    setEditingEvent(null);
+                                }}
+                            />
+                        ) : null
                     )}
 
                     {/* Toast */}

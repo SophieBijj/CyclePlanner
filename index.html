@@ -57,6 +57,16 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
         /* Scrollbar visible sur mobile */
         .event-list-scroll::-webkit-scrollbar {
             width: 4px;
@@ -2456,6 +2466,7 @@
             const [currentView, setCurrentView] = useState('cycle'); // 'cycle' ou 'month'
             const [currentMonth, setCurrentMonth] = useState(new Date());
             const [syncFunction, setSyncFunction] = useState(null);
+            const [showTasksSidebar, setShowTasksSidebar] = useState(false);
             
             const [cycleHistory, setCycleHistory] = useState(() => {
                 const saved = localStorage.getItem('cycleHistory');
@@ -3208,6 +3219,290 @@
                 );
             };
 
+            // ===== TASKS SIDEBAR =====
+            const TasksSidebar = ({ activities, onTaskClick, onTaskToggle, isOpen, onClose }) => {
+                // Extraire toutes les tâches de activities
+                const allTasks = [];
+                Object.keys(activities).forEach(dateKey => {
+                    activities[dateKey].forEach(activity => {
+                        if (activity.isTask) {
+                            allTasks.push({
+                                ...activity,
+                                dateKey
+                            });
+                        }
+                    });
+                });
+
+                // Trier les tâches par date d'échéance
+                allTasks.sort((a, b) => {
+                    // Tâches complétées à la fin
+                    if (a.status === 'completed' && b.status !== 'completed') return 1;
+                    if (a.status !== 'completed' && b.status === 'completed') return -1;
+                    // Sinon par date
+                    return a.date - b.date;
+                });
+
+                // Grouper par statut
+                const activeTasks = allTasks.filter(t => t.status !== 'completed');
+                const completedTasks = allTasks.filter(t => t.status === 'completed');
+
+                if (!isOpen) return null;
+
+                return (
+                    <>
+                        {/* Overlay pour fermer sur mobile */}
+                        <div 
+                            style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0,0,0,0.3)',
+                                zIndex: 999,
+                                display: window.innerWidth < 768 ? 'block' : 'none'
+                            }}
+                            onClick={onClose}
+                        />
+                        
+                        {/* Sidebar */}
+                        <div style={{
+                            position: 'fixed',
+                            top: 0,
+                            right: 0,
+                            width: window.innerWidth < 768 ? '90%' : '400px',
+                            height: '100vh',
+                            backgroundColor: 'white',
+                            boxShadow: '-4px 0 12px rgba(0,0,0,0.1)',
+                            zIndex: 1000,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            animation: 'slideInRight 0.3s ease-out'
+                        }}>
+                            {/* Header */}
+                            <div style={{
+                                padding: '20px',
+                                borderBottom: '1px solid #e5e7eb',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                backgroundColor: '#F59E0B',
+                                color: 'white'
+                            }}>
+                                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>
+                                    ✓ Mes Tâches
+                                </h2>
+                                <button
+                                    onClick={onClose}
+                                    style={{
+                                        border: 'none',
+                                        background: 'none',
+                                        cursor: 'pointer',
+                                        color: 'white',
+                                        fontSize: '24px',
+                                        padding: '4px'
+                                    }}
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            {/* Contenu */}
+                            <div style={{
+                                flex: 1,
+                                overflowY: 'auto',
+                                padding: '16px'
+                            }}>
+                                {allTasks.length === 0 ? (
+                                    <div style={{
+                                        textAlign: 'center',
+                                        padding: '40px 20px',
+                                        color: '#9ca3af'
+                                    }}>
+                                        <div style={{ fontSize: '48px', marginBottom: '16px' }}>📝</div>
+                                        <p style={{ margin: 0, fontSize: '14px' }}>
+                                            Aucune tâche avec échéance.<br/>
+                                            Synchronisez pour voir vos tâches Google Tasks.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        {/* Tâches actives */}
+                                        {activeTasks.length > 0 && (
+                                            <div style={{ marginBottom: '24px' }}>
+                                                <h3 style={{
+                                                    margin: '0 0 12px 0',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#6b7280',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em'
+                                                }}>
+                                                    À faire ({activeTasks.length})
+                                                </h3>
+                                                {activeTasks.map(task => (
+                                                    <div
+                                                        key={task.id}
+                                                        onClick={(e) => {
+                                                            if (e.target.type !== 'checkbox') {
+                                                                onTaskClick(task);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            padding: '12px',
+                                                            marginBottom: '8px',
+                                                            backgroundColor: '#fef3c7',
+                                                            border: '1px solid #fbbf24',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#fde68a';
+                                                            e.currentTarget.style.transform = 'translateX(-2px)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = '#fef3c7';
+                                                            e.currentTarget.style.transform = 'translateX(0)';
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={false}
+                                                                onChange={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onTaskToggle(task, true);
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                style={{
+                                                                    marginTop: '2px',
+                                                                    cursor: 'pointer',
+                                                                    width: '18px',
+                                                                    height: '18px'
+                                                                }}
+                                                            />
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{
+                                                                    fontWeight: '600',
+                                                                    fontSize: '14px',
+                                                                    color: '#92400e',
+                                                                    marginBottom: '4px'
+                                                                }}>
+                                                                    {task.title}
+                                                                </div>
+                                                                <div style={{
+                                                                    fontSize: '12px',
+                                                                    color: '#78350f',
+                                                                    display: 'flex',
+                                                                    gap: '8px',
+                                                                    flexWrap: 'wrap'
+                                                                }}>
+                                                                    <span>📅 {task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                                                    {task.taskListTitle && (
+                                                                        <span>📋 {task.taskListTitle}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Tâches complétées */}
+                                        {completedTasks.length > 0 && (
+                                            <div>
+                                                <h3 style={{
+                                                    margin: '0 0 12px 0',
+                                                    fontSize: '14px',
+                                                    fontWeight: '600',
+                                                    color: '#6b7280',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em'
+                                                }}>
+                                                    Terminées ({completedTasks.length})
+                                                </h3>
+                                                {completedTasks.map(task => (
+                                                    <div
+                                                        key={task.id}
+                                                        onClick={(e) => {
+                                                            if (e.target.type !== 'checkbox') {
+                                                                onTaskClick(task);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            padding: '12px',
+                                                            marginBottom: '8px',
+                                                            backgroundColor: '#f3f4f6',
+                                                            border: '1px solid #d1d5db',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer',
+                                                            opacity: 0.7,
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.opacity = '0.85';
+                                                            e.currentTarget.style.transform = 'translateX(-2px)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.opacity = '0.7';
+                                                            e.currentTarget.style.transform = 'translateX(0)';
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={true}
+                                                                onChange={(e) => {
+                                                                    e.stopPropagation();
+                                                                    onTaskToggle(task, false);
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                style={{
+                                                                    marginTop: '2px',
+                                                                    cursor: 'pointer',
+                                                                    width: '18px',
+                                                                    height: '18px'
+                                                                }}
+                                                            />
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{
+                                                                    fontWeight: '600',
+                                                                    fontSize: '14px',
+                                                                    color: '#6b7280',
+                                                                    marginBottom: '4px',
+                                                                    textDecoration: 'line-through'
+                                                                }}>
+                                                                    {task.title}
+                                                                </div>
+                                                                <div style={{
+                                                                    fontSize: '12px',
+                                                                    color: '#9ca3af',
+                                                                    display: 'flex',
+                                                                    gap: '8px',
+                                                                    flexWrap: 'wrap'
+                                                                }}>
+                                                                    <span>📅 {task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                                                    {task.taskListTitle && (
+                                                                        <span>📋 {task.taskListTitle}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </>
+                );
+            };
+
             const Toast = ({ message, type }) => {
                 const colors = {
                     success: '#16a34a',
@@ -3244,15 +3539,37 @@
                             Lunarium 🌸
                         </h1>
 
-                        <button
-                            onClick={() => setShowConfigModal(true)}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'white',
-                                color: '#6b7280',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                border: '1px solid #e5e7eb',
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                onClick={() => setShowTasksSidebar(true)}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: '#F59E0B',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#D97706'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F59E0B'}
+                            >
+                                ✓ Tâches
+                            </button>
+                            <button
+                                onClick={() => setShowConfigModal(true)}
+                                style={{
+                                    padding: '8px 16px',
+                                    backgroundColor: 'white',
+                                    color: '#6b7280',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: '1px solid #e5e7eb',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '8px',
@@ -3263,6 +3580,7 @@
                             <SettingsIcon />
                             Configuration
                         </button>
+                        </div>
                     </div>
 
                     {/* Onglets */}
@@ -3462,6 +3780,42 @@
                             </div>
                         </div>
                     </div>
+
+                    {/* Tasks Sidebar */}
+                    <TasksSidebar
+                        activities={activities}
+                        isOpen={showTasksSidebar}
+                        onClose={() => setShowTasksSidebar(false)}
+                        onTaskClick={(task) => {
+                            setEditingEvent(task);
+                            setShowEditEventModal(true);
+                        }}
+                        onTaskToggle={async (task, completed) => {
+                            const newStatus = completed ? 'completed' : 'needsAction';
+                            try {
+                                await gapi.client.tasks.tasks.patch({
+                                    tasklist: task.taskListId,
+                                    task: task.id,
+                                    status: newStatus,
+                                    completed: completed ? new Date().toISOString() : null
+                                });
+                                
+                                // Mettre à jour localement
+                                const updatedActivities = { ...activities };
+                                const dateKey = `${task.date.getFullYear()}-${String(task.date.getMonth() + 1).padStart(2, '0')}-${String(task.date.getDate()).padStart(2, '0')}`;
+                                const actIndex = updatedActivities[dateKey].findIndex(a => a.id === task.id);
+                                if (actIndex !== -1) {
+                                    updatedActivities[dateKey][actIndex].status = newStatus;
+                                    updatedActivities[dateKey][actIndex].completed = completed ? new Date().toISOString() : null;
+                                    setActivities(updatedActivities);
+                                }
+                                showToast(completed ? 'Tâche complétée ✓' : 'Tâche réactivée', 'success');
+                            } catch (err) {
+                                console.error('Error updating task:', err);
+                                showToast('Erreur lors de la mise à jour', 'error');
+                            }
+                        }}
+                    />
 
                     {/* Modals */}
                     {showConfigModal && (

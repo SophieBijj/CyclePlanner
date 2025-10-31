@@ -327,10 +327,15 @@
 
             const initializeGapiClient = async () => {
                 try {
+                    // Initialiser avec Calendar d'abord (qui utilise l'API Key)
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: DISCOVERY_DOCS,
+                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
                     });
+                    
+                    // Charger Tasks séparément sans API Key (OAuth uniquement)
+                    await gapi.client.load('tasks', 'v1');
+                    
                     gapiInited.current = true;
                     maybeEnableButtons();
                 } catch (err) {
@@ -660,6 +665,7 @@
                                 <button
                                     onClick={handleSync}
                                     disabled={isSyncing || selectedCalendars.length === 0}
+                                    data-sync-button="true"
                                     style={{
                                         padding: '8px 16px',
                                         backgroundColor: isSyncing ? '#9ca3af' : '#16a34a',
@@ -1393,7 +1399,27 @@
             const [startTime, setStartTime] = useState(event.startTime);
             const [duration, setDuration] = useState(event.duration);
             const [selectedCalendar, setSelectedCalendar] = useState(event.calendarId);
+            const [notes, setNotes] = useState(event.notes || '');
             const [isUpdating, setIsUpdating] = useState(false);
+            const [taskLists, setTaskLists] = useState([]);
+
+            // Charger les listes de tâches si c'est une tâche
+            useEffect(() => {
+                if (event.isTask) {
+                    loadTaskLists();
+                }
+            }, [event.isTask]);
+
+            const loadTaskLists = async () => {
+                try {
+                    const response = await gapi.client.tasks.tasklists.list({
+                        maxResults: 100
+                    });
+                    setTaskLists(response.result.items || []);
+                } catch (err) {
+                    console.error('Error loading task lists:', err);
+                }
+            };
 
             const handleUpdate = async () => {
                 if (!title.trim()) {
@@ -1403,31 +1429,77 @@
 
                 setIsUpdating(true);
                 try {
-                    await onUpdate({
-                        eventId: event.id,
-                        title,
-                        date: selectedDate,
-                        startTime,
-                        duration,
-                        calendarId: selectedCalendar
-                    });
+                    if (event.isTask) {
+                        // Mise à jour d'une tâche
+                        const dueDate = new Date(selectedDate);
+                        dueDate.setHours(12, 0, 0, 0);
+                        
+                        await gapi.client.tasks.tasks.patch({
+                            tasklist: selectedCalendar,
+                            task: event.id,
+                            title: title,
+                            due: dueDate.toISOString(),
+                            notes: notes
+                        });
+                        
+                        // Si la liste a changé, déplacer la tâche
+                        if (selectedCalendar !== event.taskListId) {
+                            await gapi.client.tasks.tasks.move({
+                                tasklist: event.taskListId,
+                                task: event.id,
+                                destinationTasklist: selectedCalendar
+                            });
+                        }
+                    } else {
+                        // Mise à jour d'un événement normal
+                        await onUpdate({
+                            eventId: event.id,
+                            title,
+                            date: selectedDate,
+                            startTime,
+                            duration,
+                            calendarId: selectedCalendar
+                        });
+                    }
+                    
+                    // Re-sync pour mettre à jour l'affichage
+                    const syncButton = document.querySelector('[data-sync-button]');
+                    if (syncButton) syncButton.click();
+                    
                     onClose();
                 } catch (err) {
-                    console.error('Error updating event:', err);
+                    console.error('Error updating:', err);
+                    alert('Erreur lors de la modification');
                 } finally {
                     setIsUpdating(false);
                 }
             };
 
             const handleDelete = async () => {
+                if (!confirm(event.isTask ? 'Supprimer cette tâche ?' : 'Supprimer cet événement ?')) {
+                    return;
+                }
+                
                 try {
-                    await onDelete({
-                        eventId: event.id,
-                        calendarId: event.calendarId
-                    });
+                    if (event.isTask) {
+                        await gapi.client.tasks.tasks.delete({
+                            tasklist: event.taskListId,
+                            task: event.id
+                        });
+                        
+                        // Re-sync pour mettre à jour l'affichage
+                        const syncButton = document.querySelector('[data-sync-button]');
+                        if (syncButton) syncButton.click();
+                    } else {
+                        await onDelete({
+                            eventId: event.id,
+                            calendarId: event.calendarId
+                        });
+                    }
                     onClose();
                 } catch (err) {
-                    console.error('Error deleting event:', err);
+                    console.error('Error deleting:', err);
+                    alert('Erreur lors de la suppression');
                 }
             };
 
@@ -1463,10 +1535,14 @@
                         padding: '24px',
                         maxWidth: '500px',
                         width: '90%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
                         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>Modifier l'événement</h2>
+                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+                                {event.isTask ? 'Modifier la tâche' : 'Modifier l\'événement'}
+                            </h2>
                             <button onClick={onClose} style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
                                 <XIcon />
                             </button>
@@ -1480,7 +1556,7 @@
                                 type="text"
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Nom de l'événement"
+                                placeholder={event.isTask ? "Nom de la tâche" : "Nom de l'événement"}
                                 style={{
                                     width: '100%',
                                     padding: '10px',
@@ -1493,7 +1569,7 @@
 
                         <div style={{ marginBottom: '16px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Date
+                                {event.isTask ? 'Date d\'échéance' : 'Date'}
                             </label>
                             <input
                                 type="date"
@@ -1509,51 +1585,75 @@
                             />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                            <div>
+                        {!event.isTask && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                        Heure de début
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e5e7eb',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                        Durée (minutes)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="15"
+                                        step="15"
+                                        value={duration}
+                                        onChange={(e) => setDuration(parseInt(e.target.value))}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e5e7eb',
+                                            fontSize: '14px'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {event.isTask && (
+                            <div style={{ marginBottom: '16px' }}>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                    Heure de début
+                                    Notes
                                 </label>
-                                <input
-                                    type="time"
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Ajouter des notes..."
                                     style={{
                                         width: '100%',
                                         padding: '10px',
                                         borderRadius: '8px',
                                         border: '1px solid #e5e7eb',
-                                        fontSize: '14px'
+                                        fontSize: '14px',
+                                        minHeight: '80px',
+                                        resize: 'vertical'
                                     }}
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                    Durée (minutes)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="15"
-                                    step="15"
-                                    value={duration}
-                                    onChange={(e) => setDuration(parseInt(e.target.value))}
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #e5e7eb',
-                                        fontSize: '14px'
-                                    }}
-                                />
-                            </div>
-                        </div>
+                        )}
 
                         <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                Calendrier
+                                {event.isTask ? 'Liste de tâches' : 'Calendrier'}
                             </label>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {calendars.map(cal => (
+                                {(event.isTask ? taskLists : calendars.filter(c => !c.isTasksCalendar)).map(cal => (
                                     <label
                                         key={cal.id}
                                         style={{
@@ -1574,16 +1674,18 @@
                                             onChange={() => setSelectedCalendar(cal.id)}
                                             style={{ cursor: 'pointer' }}
                                         />
-                                        <div
-                                            style={{
-                                                width: '16px',
-                                                height: '16px',
-                                                borderRadius: '50%',
-                                                backgroundColor: cal.backgroundColor || '#3b82f6'
-                                            }}
-                                        />
+                                        {!event.isTask && (
+                                            <div
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: cal.backgroundColor || '#3b82f6'
+                                                }}
+                                            />
+                                        )}
                                         <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                                            {cal.summary}
+                                            {cal.summary || cal.title}
                                         </span>
                                     </label>
                                 ))}

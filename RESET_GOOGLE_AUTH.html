@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Google Authentication</title>
+</head>
+<body>
+    <h1>Réinitialiser l'authentification Google</h1>
+    <p>Cliquez sur le bouton ci-dessous pour effacer toutes les données d'authentification Google sauvegardées.</p>
+    <button onclick="resetAuth()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #ef4444; color: white; border: none; border-radius: 8px;">
+        Réinitialiser l'authentification
+    </button>
+    <div id="result" style="margin-top: 20px; padding: 10px; display: none;"></div>
+
+    <script>
+        function resetAuth() {
+            // Effacer toutes les données liées à l'authentification Google
+            localStorage.removeItem('googleAccessToken');
+            localStorage.removeItem('selectedCalendars');
+
+            // Afficher le résultat
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.display = 'block';
+            resultDiv.style.backgroundColor = '#16a34a';
+            resultDiv.style.color = 'white';
+            resultDiv.style.borderRadius = '8px';
+            resultDiv.innerHTML = `
+                <strong>✓ Authentification réinitialisée !</strong><br><br>
+                Étapes suivantes :<br>
+                1. Fermez cet onglet<br>
+                2. Retournez à votre application CyclePlanner<br>
+                3. Rafraîchissez la page (F5)<br>
+                4. Reconnectez-vous avec Google<br>
+                5. Assurez-vous d'autoriser l'accès aux Calendriers ET aux Tâches
+            `;
+
+            console.log('✓ Google auth data cleared');
+            console.log('✓ Selected calendars cleared');
+        }
+    </script>
+</body>
+</html>

@@ -1304,7 +1304,8 @@
                             
                             const phaseInfo = getPhaseForDate(date);
                             const dateKey = formatDate(date);
-                            const dayActivities = activities[dateKey] || [];
+                            // Filtrer les tâches sans échéance pour la vue calendrier
+                            const dayActivities = (activities[dateKey] || []).filter(act => !act.hasNoDueDate);
                             const isToday = formatDate(date) === formatDate(new Date());
                             
                             return (
@@ -3115,7 +3116,8 @@
                                         const phaseInfo = getPhaseInfo(displayDay, cycleConfig.cycleLength);
                                         const sunTimes = getSunTimes(date);
                                         const moonInfo = getMoonInfo(date);
-                                        const dayActivities = activities[formatDate(date)] || [];
+                                        // Filtrer les tâches sans échéance pour la vue calendrier
+                                        const dayActivities = (activities[formatDate(date)] || []).filter(act => !act.hasNoDueDate);
 
                                         return (
                                             <>

@@ -850,17 +850,25 @@
                         try {
                             const saved = JSON.parse(savedCalendars);
                             // Vérifier que les calendriers sauvegardés existent toujours
-                            const validSaved = saved.filter(id => allCalendars.some(cal => cal.id === id));
+                            let validSaved = saved.filter(id => allCalendars.some(cal => cal.id === id));
+
+                            // Migration : ajouter __TASKS__ s'il n'est pas déjà dans la liste
+                            if (validSaved.length > 0 && !validSaved.includes('__TASKS__')) {
+                                console.log('Migration: adding __TASKS__ to saved calendars');
+                                validSaved.push('__TASKS__');
+                                localStorage.setItem('selectedCalendars', JSON.stringify(validSaved));
+                            }
+
                             if (validSaved.length > 0) {
                                 console.log('Restoring selected calendars:', validSaved);
                                 setSelectedCalendars(validSaved);
-                                
+
                                 // Auto-sync en passant directement les calendriers pour éviter problème de timing React
                                 setTimeout(() => {
                                     console.log('Auto-syncing with restored calendars...');
                                     handleSync(validSaved); // Passer les calendriers directement
                                 }, 1000);
-                                
+
                                 return; // Ne pas sélectionner le principal par défaut
                             }
                         } catch (e) {
@@ -868,11 +876,18 @@
                         }
                     }
                     
-                    // Si pas de calendriers sauvegardés, sélectionner le principal
+                    // Si pas de calendriers sauvegardés, sélectionner le principal + les tâches
                     const primary = cals.find(cal => cal.primary);
                     if (primary) {
-                        setSelectedCalendars([primary.id]);
-                        localStorage.setItem('selectedCalendars', JSON.stringify([primary.id]));
+                        const defaultSelection = [primary.id, '__TASKS__'];
+                        setSelectedCalendars(defaultSelection);
+                        localStorage.setItem('selectedCalendars', JSON.stringify(defaultSelection));
+
+                        // Auto-sync avec la sélection par défaut
+                        setTimeout(() => {
+                            console.log('Auto-syncing with default calendars...');
+                            handleSync(defaultSelection);
+                        }, 1000);
                     }
                 } catch (err) {
                     console.error('Error loading calendars:', err);

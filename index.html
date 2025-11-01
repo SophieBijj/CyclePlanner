@@ -2923,7 +2923,13 @@
             };
 
             const renderCircleView = () => {
-                const svgSize = Math.min(window.innerWidth - 40, 800);
+                // Calculer la largeur disponible en tenant compte des sidebars
+                const isMobile = window.innerWidth < 768;
+                const leftSidebarWidth = isMobile ? 0 : 280;
+                const rightSidebarWidth = (showTasksSidebar && !isMobile) ? 350 : 0;
+                const totalSidebarWidth = leftSidebarWidth + rightSidebarWidth;
+                const availableWidth = window.innerWidth - totalSidebarWidth - 100;
+                const svgSize = Math.min(availableWidth, 800);
                 const centerX = svgSize / 2;
                 const centerY = svgSize / 2;
                 const outerRadius = svgSize * 0.38;
@@ -3250,36 +3256,17 @@
                 if (!isOpen) return null;
 
                 return (
-                    <>
-                        {/* Overlay pour fermer sur mobile */}
-                        <div 
-                            style={{
-                                position: 'fixed',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: 'rgba(0,0,0,0.3)',
-                                zIndex: 999,
-                                display: window.innerWidth < 768 ? 'block' : 'none'
-                            }}
-                            onClick={onClose}
-                        />
-                        
-                        {/* Sidebar */}
-                        <div style={{
-                            position: 'fixed',
-                            top: 0,
-                            right: 0,
-                            width: window.innerWidth < 768 ? '90%' : '400px',
-                            height: '100vh',
-                            backgroundColor: 'white',
-                            boxShadow: '-4px 0 12px rgba(0,0,0,0.1)',
-                            zIndex: 1000,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            animation: 'slideInRight 0.3s ease-out'
-                        }}>
+                    <div style={{
+                        width: window.innerWidth < 768 ? '100%' : '350px',
+                        minWidth: window.innerWidth < 768 ? '100%' : '350px',
+                        backgroundColor: 'white',
+                        borderLeft: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
+                        borderTop: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
+                        order: window.innerWidth < 768 ? 3 : 3
+                    }}>
                             {/* Header */}
                             <div style={{
                                 padding: '20px',
@@ -3498,8 +3485,7 @@
                                     </>
                                 )}
                             </div>
-                        </div>
-                    </>
+                    </div>
                 );
             };
 
@@ -3626,10 +3612,11 @@
                     </div>
 
                     {/* Layout principal avec sidebar */}
-                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 180px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row' }}>
+                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 180px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '0' : '0' }}>
                         {/* Sidebar calendriers à gauche */}
                         <div style={{
                             width: window.innerWidth < 768 ? '100%' : '280px',
+                            minWidth: window.innerWidth < 768 ? '100%' : '280px',
                             backgroundColor: '#f9fafb',
                             borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
                             borderBottom: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
@@ -3779,43 +3766,43 @@
                                 )}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Tasks Sidebar */}
-                    <TasksSidebar
-                        activities={activities}
-                        isOpen={showTasksSidebar}
-                        onClose={() => setShowTasksSidebar(false)}
-                        onTaskClick={(task) => {
-                            setEditingEvent(task);
-                            setShowEditEventModal(true);
-                        }}
-                        onTaskToggle={async (task, completed) => {
-                            const newStatus = completed ? 'completed' : 'needsAction';
-                            try {
-                                await gapi.client.tasks.tasks.patch({
-                                    tasklist: task.taskListId,
-                                    task: task.id,
-                                    status: newStatus,
-                                    completed: completed ? new Date().toISOString() : null
-                                });
-                                
-                                // Mettre à jour localement
-                                const updatedActivities = { ...activities };
-                                const dateKey = `${task.date.getFullYear()}-${String(task.date.getMonth() + 1).padStart(2, '0')}-${String(task.date.getDate()).padStart(2, '0')}`;
-                                const actIndex = updatedActivities[dateKey].findIndex(a => a.id === task.id);
-                                if (actIndex !== -1) {
-                                    updatedActivities[dateKey][actIndex].status = newStatus;
-                                    updatedActivities[dateKey][actIndex].completed = completed ? new Date().toISOString() : null;
-                                    setActivities(updatedActivities);
+                        {/* Tasks Sidebar */}
+                        <TasksSidebar
+                            activities={activities}
+                            isOpen={showTasksSidebar}
+                            onClose={() => setShowTasksSidebar(false)}
+                            onTaskClick={(task) => {
+                                setEditingEvent(task);
+                                setShowEditEventModal(true);
+                            }}
+                            onTaskToggle={async (task, completed) => {
+                                const newStatus = completed ? 'completed' : 'needsAction';
+                                try {
+                                    await gapi.client.tasks.tasks.patch({
+                                        tasklist: task.taskListId,
+                                        task: task.id,
+                                        status: newStatus,
+                                        completed: completed ? new Date().toISOString() : null
+                                    });
+
+                                    // Mettre à jour localement
+                                    const updatedActivities = { ...activities };
+                                    const dateKey = `${task.date.getFullYear()}-${String(task.date.getMonth() + 1).padStart(2, '0')}-${String(task.date.getDate()).padStart(2, '0')}`;
+                                    const actIndex = updatedActivities[dateKey].findIndex(a => a.id === task.id);
+                                    if (actIndex !== -1) {
+                                        updatedActivities[dateKey][actIndex].status = newStatus;
+                                        updatedActivities[dateKey][actIndex].completed = completed ? new Date().toISOString() : null;
+                                        setActivities(updatedActivities);
+                                    }
+                                    showToast(completed ? 'Tâche complétée ✓' : 'Tâche réactivée', 'success');
+                                } catch (err) {
+                                    console.error('Error updating task:', err);
+                                    showToast('Erreur lors de la mise à jour', 'error');
                                 }
-                                showToast(completed ? 'Tâche complétée ✓' : 'Tâche réactivée', 'success');
-                            } catch (err) {
-                                console.error('Error updating task:', err);
-                                showToast('Erreur lors de la mise à jour', 'error');
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                    </div>
 
                     {/* Modals */}
                     {showConfigModal && (

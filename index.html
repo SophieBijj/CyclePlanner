@@ -952,8 +952,19 @@
                     if (includesTasks) {
                         console.log('Fetching tasks...');
                         calendarMap['__TASKS__'] = '#F59E0B';
-                        
+
                         try {
+                            // Vérifier que l'API Tasks est chargée
+                            if (!gapi.client.tasks) {
+                                console.warn('Tasks API not loaded, attempting to load...');
+                                await loadTasksAPI();
+                            }
+
+                            // Vérifier à nouveau après le chargement
+                            if (!gapi.client.tasks) {
+                                throw new Error('Tasks API unavailable - please check API permissions');
+                            }
+
                             // Récupérer toutes les task lists
                             const taskListsResponse = await gapi.client.tasks.tasklists.list();
                             const taskLists = taskListsResponse.result.items || [];
@@ -1011,6 +1022,12 @@
                             }
                         } catch (taskErr) {
                             console.error('Error fetching tasks:', taskErr);
+                            // Afficher un message informatif à l'utilisateur
+                            if (taskErr.message && taskErr.message.includes('unavailable')) {
+                                onError?.('⚠️ API Tasks non disponible. Événements synchronisés, mais les tâches ne sont pas chargées.');
+                            } else {
+                                onError?.('⚠️ Erreur lors du chargement des tâches. Événements synchronisés.');
+                            }
                             // Ne pas bloquer la synchro complète si les tâches échouent
                         }
                     }
@@ -1067,7 +1084,7 @@
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <button
-                                    onClick={handleSync}
+                                    onClick={() => handleSync()}
                                     disabled={isSyncing || selectedCalendars.length === 0}
                                     style={{
                                         padding: '8px 12px',

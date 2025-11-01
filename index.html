@@ -1188,6 +1188,7 @@
             onMonthChange,
             activities,
             getPhaseForDate,
+            getCycleDayForDate,
             onDayClick,
             googleCalendars
         }) => {
@@ -1251,6 +1252,7 @@
                         if (now - lastScrollTime.current < 500) return; // Éviter les changements multiples
 
                         if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 30) {
+                            e.preventDefault(); // Empêcher le navigateur de faire "back"
                             lastScrollTime.current = now;
                             if (e.deltaX > 0) {
                                 nextMonth();
@@ -1336,18 +1338,8 @@
                             const dayActivities = (activities[dateKey] || []).filter(act => !act.hasNoDueDate);
                             const isToday = formatDate(date) === formatDate(new Date());
 
-                            // Calculer le jour du cycle avec getCycleDayForDate
-                            const cycleDay = (() => {
-                                try {
-                                    const avgLength = 28; // Fallback
-                                    const diffTime = date - cycleConfig.cycleStartDate;
-                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                                    const cd = ((diffDays % avgLength) + avgLength) % avgLength;
-                                    return cd === 0 ? avgLength : cd;
-                                } catch {
-                                    return 1;
-                                }
-                            })();
+                            // Calculer le jour du cycle avec la fonction fournie
+                            const cycleDay = getCycleDayForDate ? getCycleDayForDate(date) : 1;
 
                             return (
                                 <div
@@ -1967,6 +1959,206 @@
             );
         };
 
+        // ===== CREATE TASK MODAL =====
+        const CreateTaskModal = ({ onClose, onSync }) => {
+            const [title, setTitle] = useState('');
+            const [selectedDate, setSelectedDate] = useState(null);
+            const [selectedTaskList, setSelectedTaskList] = useState('');
+            const [taskLists, setTaskLists] = useState([]);
+            const [isCreating, setIsCreating] = useState(false);
+            const [isLoading, setIsLoading] = useState(true);
+
+            useEffect(() => {
+                loadTaskLists();
+            }, []);
+
+            const loadTaskLists = async () => {
+                try {
+                    const response = await gapi.client.tasks.tasklists.list();
+                    const lists = response.result.items || [];
+                    setTaskLists(lists);
+                    if (lists.length > 0) {
+                        setSelectedTaskList(lists[0].id);
+                    }
+                    setIsLoading(false);
+                } catch (err) {
+                    console.error('Error loading task lists:', err);
+                    setIsLoading(false);
+                }
+            };
+
+            const handleCreate = async () => {
+                if (!title.trim()) {
+                    alert('Le titre est obligatoire');
+                    return;
+                }
+
+                setIsCreating(true);
+                try {
+                    const taskData = {
+                        title: title,
+                        status: 'needsAction'
+                    };
+
+                    // Ajouter la date d'échéance si sélectionnée
+                    if (selectedDate) {
+                        taskData.due = new Date(selectedDate).toISOString();
+                    }
+
+                    await gapi.client.tasks.tasks.insert({
+                        tasklist: selectedTaskList,
+                        resource: taskData
+                    });
+
+                    // Resynchroniser
+                    if (onSync) {
+                        await onSync();
+                    }
+
+                    onClose();
+                } catch (err) {
+                    console.error('Error creating task:', err);
+                    alert('Erreur lors de la création de la tâche');
+                } finally {
+                    setIsCreating(false);
+                }
+            };
+
+            const formatDateForInput = (d) => {
+                if (!d) return '';
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            const handleDateChange = (e) => {
+                if (e.target.value) {
+                    const newDate = new Date(e.target.value + 'T00:00:00');
+                    setSelectedDate(newDate);
+                } else {
+                    setSelectedDate(null);
+                }
+            };
+
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '24px',
+                        maxWidth: '500px',
+                        width: '90%',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#F59E0B' }}>✓ Nouvelle tâche</h2>
+                            <button onClick={onClose} style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: '24px' }}>×</button>
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Titre</label>
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Nom de la tâche"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                                autoFocus
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
+                                Date d'échéance (optionnel)
+                            </label>
+                            <input
+                                type="date"
+                                value={selectedDate ? formatDateForInput(selectedDate) : ''}
+                                onChange={handleDateChange}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>Liste</label>
+                            <select
+                                value={selectedTaskList}
+                                onChange={(e) => setSelectedTaskList(e.target.value)}
+                                disabled={isLoading}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                {taskLists.map(list => (
+                                    <option key={list.id} value={list.id}>{list.title}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={onClose}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    backgroundColor: 'white',
+                                    cursor: 'pointer',
+                                    fontSize: '14px'
+                                }}
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                disabled={isCreating || isLoading}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: '#F59E0B',
+                                    color: 'white',
+                                    cursor: isCreating || isLoading ? 'not-allowed' : 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                {isCreating ? 'Création...' : 'Créer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         // ===== EDIT EVENT MODAL =====
         // ===== EDIT TASK MODAL =====
         const EditTaskModal = ({ task, onClose, onSync }) => {
@@ -2553,6 +2745,7 @@
             const [currentMonth, setCurrentMonth] = useState(new Date());
             const [syncFunction, setSyncFunction] = useState(null);
             const [showTasksSidebar, setShowTasksSidebar] = useState(false);
+            const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
             
             const [cycleHistory, setCycleHistory] = useState(() => {
                 const saved = localStorage.getItem('cycleHistory');
@@ -3313,7 +3506,7 @@
             };
 
             // ===== TASKS SIDEBAR =====
-            const TasksSidebar = ({ activities, onTaskClick, onTaskToggle, isOpen, onClose }) => {
+            const TasksSidebar = ({ activities, onTaskClick, onTaskToggle, isOpen, onClose, onCreateTask }) => {
                 const [selectedTaskList, setSelectedTaskList] = React.useState('all');
 
                 // Extraire toutes les tâches de activities
@@ -3381,19 +3574,37 @@
                                 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '700' }}>
                                     ✓ Mes Tâches
                                 </h2>
-                                <button
-                                    onClick={onClose}
-                                    style={{
-                                        border: 'none',
-                                        background: 'none',
-                                        cursor: 'pointer',
-                                        color: 'white',
-                                        fontSize: '24px',
-                                        padding: '4px'
-                                    }}
-                                >
-                                    ×
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={onCreateTask}
+                                        style={{
+                                            border: 'none',
+                                            background: 'rgba(255,255,255,0.2)',
+                                            cursor: 'pointer',
+                                            color: 'white',
+                                            fontSize: '20px',
+                                            padding: '4px 12px',
+                                            borderRadius: '6px',
+                                            fontWeight: '700'
+                                        }}
+                                        title="Créer une nouvelle tâche"
+                                    >
+                                        +
+                                    </button>
+                                    <button
+                                        onClick={onClose}
+                                        style={{
+                                            border: 'none',
+                                            background: 'none',
+                                            cursor: 'pointer',
+                                            color: 'white',
+                                            fontSize: '24px',
+                                            padding: '4px'
+                                        }}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Dropdown de sélection de liste */}
@@ -3874,6 +4085,7 @@
                                         onMonthChange={setCurrentMonth}
                                         activities={activities}
                                         getPhaseForDate={getPhaseForDate}
+                                        getCycleDayForDate={getCycleDayForDate}
                                         onDayClick={(date) => {
                                             setCreateEventDate(date);
                                             setShowCreateEventModal(true);
@@ -3889,6 +4101,7 @@
                             activities={activities}
                             isOpen={showTasksSidebar}
                             onClose={() => setShowTasksSidebar(false)}
+                            onCreateTask={() => setShowCreateTaskModal(true)}
                             onTaskClick={(task) => {
                                 setEditingEvent(task);
                                 setShowEditEventModal(true);
@@ -3975,6 +4188,13 @@
                                 }}
                             />
                         ) : null
+                    )}
+
+                    {showCreateTaskModal && (
+                        <CreateTaskModal
+                            onSync={syncFunction}
+                            onClose={() => setShowCreateTaskModal(false)}
+                        />
                     )}
 
                     {/* Toast */}

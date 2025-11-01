@@ -972,32 +972,40 @@
                                 
                                 // Convertir les tâches en format d'événement
                                 for (const task of tasks) {
-                                    // Créer un événement pour chaque tâche qui a une date d'échéance
+                                    // Déterminer la date d'affichage : date d'échéance ou date du jour
+                                    let displayDate;
                                     if (task.due) {
-                                        const dueDate = new Date(task.due);
-                                        
-                                        // Vérifier si la date est dans notre fenêtre temporelle
-                                        if (dueDate >= sixMonthsAgo && dueDate <= sixMonthsAhead) {
-                                            allEvents.push({
-                                                id: task.id,
-                                                summary: task.title || 'Sans titre',
-                                                description: task.notes || '',
-                                                start: {
-                                                    date: task.due.split('T')[0], // Format YYYY-MM-DD
-                                                    dateTime: null
-                                                },
-                                                end: {
-                                                    date: task.due.split('T')[0],
-                                                    dateTime: null
-                                                },
-                                                calendarId: '__TASKS__',
-                                                isTask: true,
-                                                taskListId: taskList.id,
-                                                taskListTitle: taskList.title,
-                                                status: task.status, // 'needsAction' ou 'completed'
-                                                completed: task.completed || null
-                                            });
-                                        }
+                                        displayDate = new Date(task.due);
+                                    } else {
+                                        // Tâches sans date d'échéance : afficher à la date du jour
+                                        displayDate = new Date(now);
+                                        displayDate.setHours(0, 0, 0, 0);
+                                    }
+
+                                    // Vérifier si la date est dans notre fenêtre temporelle
+                                    if (displayDate >= sixMonthsAgo && displayDate <= sixMonthsAhead) {
+                                        const dateString = displayDate.toISOString().split('T')[0];
+
+                                        allEvents.push({
+                                            id: task.id,
+                                            summary: task.title || 'Sans titre',
+                                            description: task.notes || '',
+                                            start: {
+                                                date: dateString,
+                                                dateTime: null
+                                            },
+                                            end: {
+                                                date: dateString,
+                                                dateTime: null
+                                            },
+                                            calendarId: '__TASKS__',
+                                            isTask: true,
+                                            taskListId: taskList.id,
+                                            taskListTitle: taskList.title,
+                                            status: task.status, // 'needsAction' ou 'completed'
+                                            hasNoDueDate: !task.due, // Indicateur pour les tâches sans échéance
+                                            completed: task.completed || null
+                                        });
                                     }
                                 }
                             }
@@ -3401,7 +3409,9 @@
                                                                     gap: '8px',
                                                                     flexWrap: 'wrap'
                                                                 }}>
-                                                                    <span>📅 {task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                                                    <span>
+                                                                        {task.hasNoDueDate ? '📌 Pas d\'échéance' : `📅 ${task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}`}
+                                                                    </span>
                                                                     {task.taskListTitle && (
                                                                         <span>📋 {task.taskListTitle}</span>
                                                                     )}
@@ -3486,7 +3496,9 @@
                                                                     gap: '8px',
                                                                     flexWrap: 'wrap'
                                                                 }}>
-                                                                    <span>📅 {task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                                                    <span>
+                                                                        {task.hasNoDueDate ? '📌 Pas d\'échéance' : `📅 ${task.date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}`}
+                                                                    </span>
                                                                     {task.taskListTitle && (
                                                                         <span>📋 {task.taskListTitle}</span>
                                                                     )}
@@ -3705,6 +3717,7 @@
                                             activity.taskListTitle = event.taskListTitle;
                                             activity.status = event.status;
                                             activity.completed = event.completed;
+                                            activity.hasNoDueDate = event.hasNoDueDate || false;
                                             activity.startTime = '';
                                             activity.duration = 0;
                                         } else {

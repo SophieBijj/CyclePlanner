@@ -1183,14 +1183,16 @@
         };
 
         // ===== MONTH VIEW =====
-        const MonthView = ({ 
-            currentMonth, 
-            onMonthChange, 
-            activities, 
-            getPhaseForDate, 
+        const MonthView = ({
+            currentMonth,
+            onMonthChange,
+            activities,
+            getPhaseForDate,
             onDayClick,
-            googleCalendars 
+            googleCalendars
         }) => {
+            const lastScrollTime = React.useRef(0);
+
             const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
             const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
             const startingDayOfWeek = firstDayOfMonth.getDay();
@@ -1216,29 +1218,43 @@
                 return `${year}-${month}-${day}`;
             };
             
-            // Créer les jours du calendrier
+            // Créer les jours du calendrier avec les jours du mois précédent/suivant
             const calendarDays = [];
-            
-            // Jours vides au début
-            for (let i = 0; i < startingDayOfWeek; i++) {
-                calendarDays.push(null);
+
+            // Jours du mois précédent
+            const prevMonthLastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0);
+            const prevMonthDays = prevMonthLastDay.getDate();
+            for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, prevMonthDays - i);
+                calendarDays.push({ date, isCurrentMonth: false });
             }
-            
-            // Jours du mois
+
+            // Jours du mois actuel
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-                calendarDays.push(date);
+                calendarDays.push({ date, isCurrentMonth: true });
+            }
+
+            // Jours du mois suivant pour compléter la grille
+            const remainingCells = 42 - calendarDays.length; // 6 semaines * 7 jours
+            for (let day = 1; day <= remainingCells; day++) {
+                const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, day);
+                calendarDays.push({ date, isCurrentMonth: false });
             }
             
             return (
                 <div
                     style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}
                     onWheel={(e) => {
-                        // Navigation horizontale avec la molette/trackpad
-                        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-                            if (e.deltaX > 20) {
+                        // Navigation horizontale avec la molette/trackpad - 1 scroll = 1 mois
+                        const now = Date.now();
+                        if (now - lastScrollTime.current < 500) return; // Éviter les changements multiples
+
+                        if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 30) {
+                            lastScrollTime.current = now;
+                            if (e.deltaX > 0) {
                                 nextMonth();
-                            } else if (e.deltaX < -20) {
+                            } else {
                                 prevMonth();
                             }
                         }
@@ -1312,24 +1328,34 @@
                         ))}
                         
                         {/* Cellules du calendrier */}
-                        {calendarDays.map((date, index) => {
-                            if (!date) {
-                                return <div key={`empty-${index}`} style={{ padding: '8px' }} />;
-                            }
-                            
+                        {calendarDays.map((dayInfo, index) => {
+                            const { date, isCurrentMonth } = dayInfo;
                             const phaseInfo = getPhaseForDate(date);
                             const dateKey = formatDate(date);
                             // Filtrer les tâches sans échéance pour la vue calendrier
                             const dayActivities = (activities[dateKey] || []).filter(act => !act.hasNoDueDate);
                             const isToday = formatDate(date) === formatDate(new Date());
-                            
+
+                            // Calculer le jour du cycle avec getCycleDayForDate
+                            const cycleDay = (() => {
+                                try {
+                                    const avgLength = 28; // Fallback
+                                    const diffTime = date - cycleConfig.cycleStartDate;
+                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                    const cd = ((diffDays % avgLength) + avgLength) % avgLength;
+                                    return cd === 0 ? avgLength : cd;
+                                } catch {
+                                    return 1;
+                                }
+                            })();
+
                             return (
                                 <div
                                     key={dateKey}
                                     onClick={() => onDayClick(date)}
                                     style={{
                                         padding: '8px',
-                                        backgroundColor: phaseInfo.color + '15',
+                                        backgroundColor: phaseInfo.color + (isCurrentMonth ? '15' : '08'),
                                         border: isToday ? `2px solid ${phaseInfo.color}` : '1px solid #e5e7eb',
                                         borderRadius: '8px',
                                         cursor: 'pointer',
@@ -1337,6 +1363,7 @@
                                         overflow: 'hidden',
                                         display: 'flex',
                                         flexDirection: 'column',
+                                        opacity: isCurrentMonth ? 1 : 0.4,
                                         ':hover': {
                                             transform: 'scale(1.02)',
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
@@ -1360,7 +1387,7 @@
                                         <span style={{
                                             fontSize: '14px',
                                             fontWeight: isToday ? '700' : '500',
-                                            color: isToday ? phaseInfo.color : '#374151'
+                                            color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
                                         }}>
                                             {date.getDate()}
                                         </span>
@@ -1372,7 +1399,7 @@
                                             padding: '2px 6px',
                                             borderRadius: '4px'
                                         }}>
-                                            {phaseInfo.shortName}
+                                            J{cycleDay}
                                         </span>
                                     </div>
                                     
@@ -3287,8 +3314,11 @@
 
             // ===== TASKS SIDEBAR =====
             const TasksSidebar = ({ activities, onTaskClick, onTaskToggle, isOpen, onClose }) => {
+                const [selectedTaskList, setSelectedTaskList] = React.useState('all');
+
                 // Extraire toutes les tâches de activities
                 const allTasks = [];
+                const taskLists = new Set();
                 Object.keys(activities).forEach(dateKey => {
                     activities[dateKey].forEach(activity => {
                         if (activity.isTask) {
@@ -3296,12 +3326,23 @@
                                 ...activity,
                                 dateKey
                             });
+                            if (activity.taskListTitle) {
+                                taskLists.add(JSON.stringify({ id: activity.taskListId, title: activity.taskListTitle }));
+                            }
                         }
                     });
                 });
 
-                // Trier les tâches par date d'échéance
-                allTasks.sort((a, b) => {
+                // Convertir le Set en tableau d'objets
+                const taskListsArray = Array.from(taskLists).map(str => JSON.parse(str));
+
+                // Filtrer les tâches par liste sélectionnée
+                const filteredTasks = selectedTaskList === 'all'
+                    ? allTasks
+                    : allTasks.filter(task => task.taskListId === selectedTaskList);
+
+                // Trier les tâches filtrées par date d'échéance
+                filteredTasks.sort((a, b) => {
                     // Tâches complétées à la fin
                     if (a.status === 'completed' && b.status !== 'completed') return 1;
                     if (a.status !== 'completed' && b.status === 'completed') return -1;
@@ -3310,8 +3351,8 @@
                 });
 
                 // Grouper par statut
-                const activeTasks = allTasks.filter(t => t.status !== 'completed');
-                const completedTasks = allTasks.filter(t => t.status === 'completed');
+                const activeTasks = filteredTasks.filter(t => t.status !== 'completed');
+                const completedTasks = filteredTasks.filter(t => t.status === 'completed');
 
                 if (!isOpen) return null;
 
@@ -3355,13 +3396,44 @@
                                 </button>
                             </div>
 
+                            {/* Dropdown de sélection de liste */}
+                            <div style={{
+                                padding: '12px 16px',
+                                borderBottom: '1px solid #e5e7eb',
+                                backgroundColor: '#fef3c7'
+                            }}>
+                                <select
+                                    value={selectedTaskList}
+                                    onChange={(e) => setSelectedTaskList(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        borderRadius: '6px',
+                                        border: '1px solid #d97706',
+                                        backgroundColor: 'white',
+                                        color: '#92400e',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        outline: 'none'
+                                    }}
+                                >
+                                    <option value="all">📋 Toutes les listes ({allTasks.length})</option>
+                                    {taskListsArray.map(list => (
+                                        <option key={list.id} value={list.id}>
+                                            {list.title} ({allTasks.filter(t => t.taskListId === list.id).length})
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
                             {/* Contenu */}
                             <div style={{
                                 flex: 1,
                                 overflowY: 'auto',
                                 padding: '16px'
                             }}>
-                                {allTasks.length === 0 ? (
+                                {filteredTasks.length === 0 ? (
                                     <div style={{
                                         textAlign: 'center',
                                         padding: '40px 20px',

@@ -3951,59 +3951,61 @@
 
                             {/* Navigation du mois */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <button
-                                    onClick={() => {
-                                        const newMonth = new Date(currentMonth);
-                                        newMonth.setMonth(newMonth.getMonth() - 1);
-                                        setCurrentMonth(newMonth);
-                                    }}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        fontSize: '18px',
-                                        cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        color: '#6b7280'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    ‹
-                                </button>
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                    <button
+                                        onClick={() => {
+                                            const newMonth = new Date(currentMonth);
+                                            newMonth.setMonth(newMonth.getMonth() - 1);
+                                            setCurrentMonth(newMonth);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            fontSize: '18px',
+                                            cursor: 'pointer',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: '#6b7280'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        ‹
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const newMonth = new Date(currentMonth);
+                                            newMonth.setMonth(newMonth.getMonth() + 1);
+                                            setCurrentMonth(newMonth);
+                                        }}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            fontSize: '18px',
+                                            cursor: 'pointer',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            color: '#6b7280'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    >
+                                        ›
+                                    </button>
+                                </div>
                                 <span style={{
                                     fontSize: '16px',
                                     fontWeight: '600',
                                     color: '#1f2937',
                                     minWidth: '140px',
-                                    textAlign: 'center'
+                                    textAlign: 'left'
                                 }}>
                                     {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                                 </span>
-                                <button
-                                    onClick={() => {
-                                        const newMonth = new Date(currentMonth);
-                                        newMonth.setMonth(newMonth.getMonth() + 1);
-                                        setCurrentMonth(newMonth);
-                                    }}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        fontSize: '18px',
-                                        cursor: 'pointer',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        color: '#6b7280'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                >
-                                    ›
-                                </button>
                             </div>
                         </div>
 

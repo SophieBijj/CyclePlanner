@@ -1421,35 +1421,49 @@
                                                     }
                                                 }}
                                                 onMouseEnter={(e) => {
-                                                    e.currentTarget.style.transform = 'scale(1.05)';
-                                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-                                                    e.currentTarget.style.zIndex = '10';
+                                                    e.currentTarget.style.backgroundColor = '#f3f4f6';
                                                 }}
                                                 onMouseLeave={(e) => {
-                                                    e.currentTarget.style.transform = 'scale(1)';
-                                                    e.currentTarget.style.boxShadow = 'none';
-                                                    e.currentTarget.style.zIndex = '1';
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
                                                 }}
                                                 style={{
-                                                    fontSize: '10px',
-                                                    padding: '2px 4px',
-                                                    backgroundColor: activity.color,
-                                                    color: 'white',
-                                                    borderRadius: '3px',
+                                                    fontSize: '11px',
+                                                    padding: '1px 2px',
+                                                    borderRadius: '2px',
                                                     overflow: 'hidden',
                                                     textOverflow: 'ellipsis',
                                                     whiteSpace: 'nowrap',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '3px',
+                                                    gap: '4px',
                                                     cursor: 'pointer',
-                                                    transition: 'all 0.2s ease',
+                                                    transition: 'background-color 0.15s ease',
                                                     position: 'relative',
-                                                    zIndex: 1
+                                                    color: '#1f2937'
                                                 }}
                                             >
-                                                {activity.isTask ? '✓' : activity.startTime}
-                                                {activity.title}
+                                                {/* Point de couleur */}
+                                                <div style={{
+                                                    width: '6px',
+                                                    height: '6px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: activity.color,
+                                                    flexShrink: 0
+                                                }} />
+
+                                                {/* Heure formatée + Titre */}
+                                                <span style={{
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                    fontWeight: '400'
+                                                }}>
+                                                    {activity.isTask ? (
+                                                        <>✓ {activity.title}</>
+                                                    ) : (
+                                                        <>{formatTimeGoogle(activity.startTime)} {activity.title}</>
+                                                    )}
+                                                </span>
                                             </div>
                                         ))}
                                         {dayActivities.length > 3 && (
@@ -2966,6 +2980,35 @@
                 return colors[colorId] || '#3b82f6';
             };
 
+            // Calculer la luminosité d'une couleur et retourner noir ou blanc pour le texte
+            const getTextColorForBackground = (hexColor) => {
+                // Convertir hex en RGB
+                const hex = hexColor.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+
+                // Calculer la luminosité relative (formule W3C)
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+                // Si la couleur est claire, texte noir, sinon texte blanc
+                return luminance > 0.5 ? '#000000' : '#ffffff';
+            };
+
+            // Formater l'heure au format Google Calendar (9am, 8:30pm)
+            const formatTimeGoogle = (time24) => {
+                if (!time24) return '';
+                const [hours, minutes] = time24.split(':').map(Number);
+                const period = hours >= 12 ? 'pm' : 'am';
+                const hours12 = hours % 12 || 12;
+
+                // Si les minutes sont 00, on ne les affiche pas
+                if (minutes === 0) {
+                    return `${hours12}${period}`;
+                }
+                return `${hours12}:${String(minutes).padStart(2, '0')}${period}`;
+            };
+
             const showToast = (message, type = 'info') => {
                 setToast({ message, type });
                 setTimeout(() => setToast(null), 3000);
@@ -3500,7 +3543,7 @@
                                                                 style={{
                                                                     padding: '6px 8px',
                                                                     backgroundColor: act.color,
-                                                                    color: 'white',
+                                                                    color: getTextColorForBackground(act.color),
                                                                     borderRadius: '6px',
                                                                     fontSize: window.innerWidth < 768 ? '9px' : '10px',
                                                                     fontWeight: '600',
@@ -3557,7 +3600,7 @@
                                                                         />
                                                                     )}
                                                                     <span style={{ flex: 1 }}>
-                                                                        {act.isTask ? act.title : `${act.startTime} • ${act.title}`}
+                                                                        {act.isTask ? act.title : `${formatTimeGoogle(act.startTime)} • ${act.title}`}
                                                                         {act.isTask && act.taskListTitle && (
                                                                             <span style={{ opacity: 0.8, fontSize: '8px', marginLeft: '4px' }}>
                                                                                 ({act.taskListTitle})

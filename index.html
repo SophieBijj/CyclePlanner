@@ -933,6 +933,10 @@
                         const calInfo = calendars.find(c => c.id === calendarId);
                         if (calInfo) {
                             calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';
+                            console.log(`Calendar ${calendarId} color: ${calendarMap[calendarId]}`);
+                        } else {
+                            console.warn(`Calendar ${calendarId} not found in calendars list!`);
+                            calendarMap[calendarId] = '#3b82f6';
                         }
                         
                         const response = await gapi.client.calendar.events.list({
@@ -1032,8 +1036,9 @@
                             // Ne pas bloquer la synchro complète si les tâches échouent
                         }
                     }
-                    
+
                     console.log(`Total events found: ${allEvents.length}`);
+                    console.log('CalendarMap:', calendarMap);
                     onSync?.(allEvents, calendarMap);
                 } catch (err) {
                     console.error('Error syncing:', err);
@@ -3186,11 +3191,14 @@
                     
                     // Récupérer les infos complètes des calendriers pour les couleurs
                     const calendarMap = {};
+                    console.log('Building calendarMap from googleCalendars:', googleCalendars);
                     for (const cal of googleCalendars) {
                         if (calendarsToSync.includes(cal.id)) {
                             calendarMap[cal.id] = cal.backgroundColor || '#3b82f6';
+                            console.log(`Calendar ${cal.id} (${cal.summary}) color: ${calendarMap[cal.id]}`);
                         }
                     }
+                    console.log('Final calendarMap:', calendarMap);
                     
                     const allEvents = [];
                     for (const calendarId of calendarsToSync) {
@@ -3229,10 +3237,10 @@
                         let eventColor;
                         if (calendarMap && calendarMap[event.calendarId]) {
                             eventColor = calendarMap[event.calendarId];
-                            console.log(`Event "${event.summary}" uses calendar color -> ${eventColor}`);
+                            console.log(`Event "${event.summary}" (calId: ${event.calendarId}) uses calendar color -> ${eventColor}`);
                         } else {
                             eventColor = '#3b82f6'; // Couleur par défaut en dernier recours
-                            console.log(`Event "${event.summary}" uses default color -> ${eventColor}`);
+                            console.log(`Event "${event.summary}" (calId: ${event.calendarId}) uses default color. CalendarMap:`, calendarMap);
                         }
                         
                         newActivities[dateKey].push({
@@ -4016,6 +4024,7 @@
                                 onSync={(events, calendarMap) => {
                                     console.log('=== SYNC START ===');
                                     console.log('Total events received:', events.length);
+                                    console.log('CalendarMap received:', calendarMap);
                                     
                                     const newActivities = {};
                                     
@@ -4054,10 +4063,10 @@
                                         let eventColor;
                                         if (calendarMap && calendarMap[event.calendarId]) {
                                             eventColor = calendarMap[event.calendarId];
-                                            console.log(`Event "${event.summary}" uses calendar color -> ${eventColor}`);
+                                            console.log(`Event "${event.summary}" (calId: ${event.calendarId}) uses calendar color -> ${eventColor}`);
                                         } else {
                                             eventColor = '#3b82f6'; // Couleur par défaut en dernier recours
-                                            console.log(`Event "${event.summary}" uses default color -> ${eventColor}`);
+                                            console.log(`Event "${event.summary}" (calId: ${event.calendarId}) uses default color. CalendarMap:`, calendarMap);
                                         }
                                         
                                         // Créer l'activité de base

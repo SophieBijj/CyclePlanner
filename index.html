@@ -1352,31 +1352,30 @@
                                         e.currentTarget.style.boxShadow = 'none';
                                     }}
                                 >
+                                    {showWeekdayHeader && (
+                                        <div style={{
+                                            textAlign: 'center',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            color: '#6b7280',
+                                            marginBottom: '4px'
+                                        }}>
+                                            {weekdayNames[index]}
+                                        </div>
+                                    )}
                                     <div style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
                                         marginBottom: '4px'
                                     }}>
-                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                                            {showWeekdayHeader && (
-                                                <span style={{
-                                                    fontSize: '13px',
-                                                    fontWeight: '600',
-                                                    color: '#6b7280',
-                                                    marginRight: '2px'
-                                                }}>
-                                                    {weekdayNames[index]}
-                                                </span>
-                                            )}
-                                            <span style={{
-                                                fontSize: '16px',
-                                                fontWeight: isToday ? '700' : '500',
-                                                color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
-                                            }}>
-                                                {date.getDate()}
-                                            </span>
-                                        </div>
+                                        <span style={{
+                                            fontSize: '16px',
+                                            fontWeight: isToday ? '700' : '500',
+                                            color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
+                                        }}>
+                                            {date.getDate()}
+                                        </span>
                                         <span style={{
                                             fontSize: '11px',
                                             color: phaseInfo.text,
@@ -1414,7 +1413,7 @@
                                                     e.currentTarget.style.backgroundColor = 'transparent';
                                                 }}
                                                 style={{
-                                                    fontSize: '14px',
+                                                    fontSize: '15px',
                                                     padding: '2px 3px',
                                                     borderRadius: '2px',
                                                     overflow: 'hidden',
@@ -1431,8 +1430,8 @@
                                             >
                                                 {/* Point de couleur */}
                                                 <div style={{
-                                                    width: '6px',
-                                                    height: '6px',
+                                                    width: '8px',
+                                                    height: '8px',
                                                     borderRadius: '50%',
                                                     backgroundColor: activity.color,
                                                     flexShrink: 0
@@ -3937,7 +3936,7 @@
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '48px' }}>
                             <h1 style={{
                                 margin: 0,
                                 fontSize: '24px',
@@ -3950,7 +3949,7 @@
                             </h1>
 
                             {/* Navigation du mois */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                     <button
                                         onClick={() => {
@@ -3961,7 +3960,7 @@
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            fontSize: '18px',
+                                            fontSize: '22px',
                                             cursor: 'pointer',
                                             padding: '4px 8px',
                                             borderRadius: '4px',
@@ -3983,7 +3982,7 @@
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            fontSize: '18px',
+                                            fontSize: '22px',
                                             cursor: 'pointer',
                                             padding: '4px 8px',
                                             borderRadius: '4px',
@@ -3998,10 +3997,10 @@
                                     </button>
                                 </div>
                                 <span style={{
-                                    fontSize: '16px',
+                                    fontSize: '18px',
                                     fontWeight: '600',
                                     color: '#1f2937',
-                                    minWidth: '140px',
+                                    minWidth: '160px',
                                     textAlign: 'left'
                                 }}>
                                     {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}

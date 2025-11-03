@@ -3224,14 +3224,10 @@
                             newActivities[dateKey] = [];
                         }
                         
-                        // Déterminer la couleur comme Google Calendar:
-                        // 1. Si l'événement a un colorId spécifique, utiliser cette couleur
-                        // 2. Sinon, utiliser la couleur du calendrier
+                        // Déterminer la couleur: toujours utiliser la couleur du calendrier
+                        // pour que tous les événements d'un même calendrier aient la même couleur
                         let eventColor;
-                        if (event.colorId) {
-                            eventColor = getGoogleColor(event.colorId);
-                            console.log(`Event "${event.summary}" has colorId ${event.colorId} -> ${eventColor}`);
-                        } else if (calendarMap && calendarMap[event.calendarId]) {
+                        if (calendarMap && calendarMap[event.calendarId]) {
                             eventColor = calendarMap[event.calendarId];
                             console.log(`Event "${event.summary}" uses calendar color -> ${eventColor}`);
                         } else {
@@ -4053,16 +4049,15 @@
                                             newActivities[dateKey] = [];
                                         }
                                         
-                                        // Déterminer la couleur comme Google Calendar:
-                                        // 1. Si l'événement a un colorId spécifique, utiliser cette couleur
-                                        // 2. Sinon, utiliser la couleur du calendrier
+                                        // Déterminer la couleur: toujours utiliser la couleur du calendrier
+                                        // pour que tous les événements d'un même calendrier aient la même couleur
                                         let eventColor;
-                                        if (event.colorId) {
-                                            eventColor = getGoogleColor(event.colorId);
-                                        } else if (calendarMap && calendarMap[event.calendarId]) {
+                                        if (calendarMap && calendarMap[event.calendarId]) {
                                             eventColor = calendarMap[event.calendarId];
+                                            console.log(`Event "${event.summary}" uses calendar color -> ${eventColor}`);
                                         } else {
                                             eventColor = '#3b82f6'; // Couleur par défaut en dernier recours
+                                            console.log(`Event "${event.summary}" uses default color -> ${eventColor}`);
                                         }
                                         
                                         // Créer l'activité de base

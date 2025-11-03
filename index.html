@@ -1190,6 +1190,7 @@
             getPhaseForDate,
             getCycleDayForDate,
             onDayClick,
+            onEventClick,
             googleCalendars
         }) => {
             const lastScrollTime = React.useRef(0);
@@ -1407,6 +1408,22 @@
                                         {dayActivities.slice(0, 3).map((activity, idx) => (
                                             <div
                                                 key={idx}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (onEventClick) {
+                                                        onEventClick(activity);
+                                                    }
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform = 'scale(1.05)';
+                                                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+                                                    e.currentTarget.style.zIndex = '10';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform = 'scale(1)';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                    e.currentTarget.style.zIndex = '1';
+                                                }}
                                                 style={{
                                                     fontSize: '10px',
                                                     padding: '2px 4px',
@@ -1418,7 +1435,11 @@
                                                     whiteSpace: 'nowrap',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    gap: '3px'
+                                                    gap: '3px',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s ease',
+                                                    position: 'relative',
+                                                    zIndex: 1
                                                 }}
                                             >
                                                 {activity.isTask ? '✓' : activity.startTime}
@@ -4089,6 +4110,10 @@
                                         onDayClick={(date) => {
                                             setCreateEventDate(date);
                                             setShowCreateEventModal(true);
+                                        }}
+                                        onEventClick={(event) => {
+                                            setEditingEvent(event);
+                                            setShowEditEventModal(true);
                                         }}
                                         googleCalendars={googleCalendars}
                                     />

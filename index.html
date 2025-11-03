@@ -1304,26 +1304,15 @@
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(7, 1fr)',
-                        gridTemplateRows: `auto repeat(${weeksNeeded}, 1fr)`,
+                        gridTemplateRows: `repeat(${weeksNeeded}, 1fr)`,
                         gap: '2px',
                         flex: 1,
                         overflow: 'hidden'
                     }}>
-                        {/* En-têtes des jours */}
-                        {['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'].map(day => (
-                            <div key={day} style={{
-                                padding: '4px',
-                                textAlign: 'center',
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                color: '#6b7280'
-                            }}>
-                                {day}
-                            </div>
-                        ))}
-                        
                         {/* Cellules du calendrier */}
                         {calendarDays.map((dayInfo, index) => {
+                            const weekdayNames = ['DIM', 'LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM'];
+                            const showWeekdayHeader = index < 7;
                             const { date, isCurrentMonth } = dayInfo;
                             const phaseInfo = getPhaseForDate(date);
                             const dateKey = formatDate(date);
@@ -1369,13 +1358,25 @@
                                         alignItems: 'center',
                                         marginBottom: '4px'
                                     }}>
-                                        <span style={{
-                                            fontSize: '16px',
-                                            fontWeight: isToday ? '700' : '500',
-                                            color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
-                                        }}>
-                                            {date.getDate()}
-                                        </span>
+                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                                            {showWeekdayHeader && (
+                                                <span style={{
+                                                    fontSize: '13px',
+                                                    fontWeight: '600',
+                                                    color: '#6b7280',
+                                                    marginRight: '2px'
+                                                }}>
+                                                    {weekdayNames[index]}
+                                                </span>
+                                            )}
+                                            <span style={{
+                                                fontSize: '16px',
+                                                fontWeight: isToday ? '700' : '500',
+                                                color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
+                                            }}>
+                                                {date.getDate()}
+                                            </span>
+                                        </div>
                                         <span style={{
                                             fontSize: '11px',
                                             color: phaseInfo.text,
@@ -1413,7 +1414,7 @@
                                                     e.currentTarget.style.backgroundColor = 'transparent';
                                                 }}
                                                 style={{
-                                                    fontSize: '12px',
+                                                    fontSize: '14px',
                                                     padding: '2px 3px',
                                                     borderRadius: '2px',
                                                     overflow: 'hidden',
@@ -4204,41 +4205,34 @@
                         {/* Contenu principal */}
                         <div style={{
                             flex: 1,
-                            padding: '8px',
-                            overflowY: 'auto',
+                            overflow: 'hidden',
                             order: window.innerWidth < 768 ? 1 : 2
                         }}>
-                            <div style={{
-                                background: 'white',
-                                borderRadius: '8px',
-                                padding: '12px',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                                overflow: 'hidden',
-                                height: 'calc(100vh - 100px)',
-                                display: 'flex',
-                                flexDirection: 'column'
-                            }}>
-                                {currentView === 'cycle' ? (
-                                    renderCircleView()
-                                ) : (
-                                    <MonthView
-                                        currentMonth={currentMonth}
-                                        onMonthChange={setCurrentMonth}
-                                        activities={activities}
-                                        getPhaseForDate={getPhaseForDate}
-                                        getCycleDayForDate={getCycleDayForDate}
-                                        onDayClick={(date) => {
-                                            setCreateEventDate(date);
-                                            setShowCreateEventModal(true);
-                                        }}
-                                        onEventClick={(event) => {
-                                            setEditingEvent(event);
-                                            setShowEditEventModal(true);
-                                        }}
-                                        googleCalendars={googleCalendars}
-                                    />
-                                )}
-                            </div>
+                            {currentView === 'cycle' ? (
+                                <div style={{
+                                    padding: '12px',
+                                    height: '100%'
+                                }}>
+                                    {renderCircleView()}
+                                </div>
+                            ) : (
+                                <MonthView
+                                    currentMonth={currentMonth}
+                                    onMonthChange={setCurrentMonth}
+                                    activities={activities}
+                                    getPhaseForDate={getPhaseForDate}
+                                    getCycleDayForDate={getCycleDayForDate}
+                                    onDayClick={(date) => {
+                                        setCreateEventDate(date);
+                                        setShowCreateEventModal(true);
+                                    }}
+                                    onEventClick={(event) => {
+                                        setEditingEvent(event);
+                                        setShowEditEventModal(true);
+                                    }}
+                                    googleCalendars={googleCalendars}
+                                />
+                            )}
                         </div>
 
                         {/* Tasks Sidebar */}

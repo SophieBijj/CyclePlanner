@@ -941,6 +941,7 @@
                             timeMax: sixMonthsAhead.toISOString(),
                             singleEvents: true,
                             orderBy: 'startTime',
+                            maxResults: 2500
                         });
                         
                         const events = response.result.items || [];
@@ -1738,7 +1739,7 @@
             const [title, setTitle] = useState('');
             const [selectedDate, setSelectedDate] = useState(date);
             const [startTime, setStartTime] = useState('09:00');
-            const [duration, setDuration] = useState(60);
+            const [endTime, setEndTime] = useState('10:00');
             const [selectedCalendar, setSelectedCalendar] = useState(calendars[0]?.id || '');
             const [isCreating, setIsCreating] = useState(false);
 
@@ -1748,13 +1749,24 @@
                     return;
                 }
 
+                // Valider que l'heure de fin est après l'heure de début
+                const [startHours, startMinutes] = startTime.split(':').map(Number);
+                const [endHours, endMinutes] = endTime.split(':').map(Number);
+                const startTotalMinutes = startHours * 60 + startMinutes;
+                const endTotalMinutes = endHours * 60 + endMinutes;
+
+                if (endTotalMinutes <= startTotalMinutes) {
+                    alert('L\'heure de fin doit être après l\'heure de début');
+                    return;
+                }
+
                 setIsCreating(true);
                 try {
                     await onCreate({
                         title,
                         date: selectedDate,
                         startTime,
-                        duration,
+                        endTime,
                         calendarId: selectedCalendar
                     });
                     onClose();
@@ -1868,14 +1880,12 @@
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                    Durée (minutes)
+                                    Heure de fin
                                 </label>
                                 <input
-                                    type="number"
-                                    min="15"
-                                    step="15"
-                                    value={duration}
-                                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                                    type="time"
+                                    value={endTime}
+                                    onChange={(e) => setEndTime(e.target.value)}
                                     style={{
                                         width: '100%',
                                         padding: '10px',
@@ -2473,16 +2483,36 @@
         };
 
         const EditEventModal = ({ event, calendars, onClose, onUpdate, onDelete }) => {
+            // Calculer l'heure de fin à partir de la durée
+            const calculateEndTime = (startTime, duration) => {
+                const [hours, minutes] = startTime.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes + duration;
+                const endHours = Math.floor(totalMinutes / 60) % 24;
+                const endMinutes = totalMinutes % 60;
+                return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}`;
+            };
+
             const [title, setTitle] = useState(event.title);
             const [selectedDate, setSelectedDate] = useState(event.date);
             const [startTime, setStartTime] = useState(event.startTime);
-            const [duration, setDuration] = useState(event.duration);
+            const [endTime, setEndTime] = useState(event.endTime || calculateEndTime(event.startTime, event.duration || 60));
             const [selectedCalendar, setSelectedCalendar] = useState(event.calendarId);
             const [isUpdating, setIsUpdating] = useState(false);
 
             const handleUpdate = async () => {
                 if (!title.trim()) {
                     alert('Le titre est obligatoire');
+                    return;
+                }
+
+                // Valider que l'heure de fin est après l'heure de début
+                const [startHours, startMinutes] = startTime.split(':').map(Number);
+                const [endHours, endMinutes] = endTime.split(':').map(Number);
+                const startTotalMinutes = startHours * 60 + startMinutes;
+                const endTotalMinutes = endHours * 60 + endMinutes;
+
+                if (endTotalMinutes <= startTotalMinutes) {
+                    alert('L\'heure de fin doit être après l\'heure de début');
                     return;
                 }
 
@@ -2493,7 +2523,7 @@
                         title,
                         date: selectedDate,
                         startTime,
-                        duration,
+                        endTime,
                         calendarId: selectedCalendar
                     });
                     onClose();
@@ -2614,14 +2644,12 @@
                             </div>
                             <div>
                                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '500' }}>
-                                    Durée (minutes)
+                                    Heure de fin
                                 </label>
                                 <input
-                                    type="number"
-                                    min="15"
-                                    step="15"
-                                    value={duration}
-                                    onChange={(e) => setDuration(parseInt(e.target.value))}
+                                    type="time"
+                                    value={endTime}
+                                    onChange={(e) => setEndTime(e.target.value)}
                                     style={{
                                         width: '100%',
                                         padding: '10px',
@@ -2916,10 +2944,19 @@
             };
 
             const getGoogleColor = (colorId) => {
+                // Couleurs officielles de Google Calendar (event colors)
                 const colors = {
-                    '1': '#7986cb', '2': '#33b679', '3': '#8e24aa', '4': '#e67c73',
-                    '5': '#f6c026', '6': '#f5511d', '7': '#039be5', '8': '#616161',
-                    '9': '#3f51b5', '10': '#0b8043', '11': '#d60000'
+                    '1': '#a4bdfc', // Lavender
+                    '2': '#7ae7bf', // Sage
+                    '3': '#dbadff', // Grape
+                    '4': '#ff887c', // Flamingo
+                    '5': '#fbd75b', // Banana
+                    '6': '#ffb878', // Tangerine
+                    '7': '#46d6db', // Peacock
+                    '8': '#e1e1e1', // Graphite
+                    '9': '#5484ed', // Blueberry
+                    '10': '#51b749', // Basil
+                    '11': '#dc2127'  // Tomato
                 };
                 return colors[colorId] || '#3b82f6';
             };
@@ -2985,7 +3022,7 @@
                 return sunData[dateStr] || { sunrise: '...', sunset: '...', sunriseDecimal: 7.5, sunsetDecimal: 17 };
             };
 
-            const createEvent = async ({ title, date, startTime, duration, calendarId }) => {
+            const createEvent = async ({ title, date, startTime, endTime, calendarId }) => {
                 if (typeof gapi === 'undefined' || !gapi.client) {
                     showToast('Google API non disponible', 'error');
                     return;
@@ -2993,13 +3030,14 @@
 
                 try {
                     // Construire la date/heure de début
-                    const [hours, minutes] = startTime.split(':').map(Number);
+                    const [startHours, startMinutes] = startTime.split(':').map(Number);
                     const startDateTime = new Date(date);
-                    startDateTime.setHours(hours, minutes, 0, 0);
-                    
+                    startDateTime.setHours(startHours, startMinutes, 0, 0);
+
                     // Construire la date/heure de fin
-                    const endDateTime = new Date(startDateTime);
-                    endDateTime.setMinutes(endDateTime.getMinutes() + duration);
+                    const [endHours, endMinutes] = endTime.split(':').map(Number);
+                    const endDateTime = new Date(date);
+                    endDateTime.setHours(endHours, endMinutes, 0, 0);
 
                     // Créer l'événement dans Google Calendar
                     const event = {
@@ -3041,7 +3079,7 @@
                 }
             };
 
-            const updateEvent = async ({ eventId, title, date, startTime, duration, calendarId }) => {
+            const updateEvent = async ({ eventId, title, date, startTime, endTime, calendarId }) => {
                 if (typeof gapi === 'undefined' || !gapi.client) {
                     showToast('Google API non disponible', 'error');
                     return;
@@ -3049,13 +3087,14 @@
 
                 try {
                     // Construire la date/heure de début
-                    const [hours, minutes] = startTime.split(':').map(Number);
+                    const [startHours, startMinutes] = startTime.split(':').map(Number);
                     const startDateTime = new Date(date);
-                    startDateTime.setHours(hours, minutes, 0, 0);
-                    
+                    startDateTime.setHours(startHours, startMinutes, 0, 0);
+
                     // Construire la date/heure de fin
-                    const endDateTime = new Date(startDateTime);
-                    endDateTime.setMinutes(endDateTime.getMinutes() + duration);
+                    const [endHours, endMinutes] = endTime.split(':').map(Number);
+                    const endDateTime = new Date(date);
+                    endDateTime.setHours(endHours, endMinutes, 0, 0);
 
                     // Mettre à jour l'événement dans Google Calendar
                     const event = {
@@ -3161,6 +3200,7 @@
                             timeMax: sixMonthsAhead.toISOString(),
                             singleEvents: true,
                             orderBy: 'startTime',
+                            maxResults: 2500
                         });
                         
                         const events = response.result.items || [];
@@ -3184,21 +3224,27 @@
                             newActivities[dateKey] = [];
                         }
                         
-                        // Déterminer la couleur: backgroundColor > colorId > calendar color
-                        let eventColor = '#3b82f6'; // Couleur par défaut
-                        if (event.backgroundColor) {
-                            eventColor = event.backgroundColor;
-                        } else if (event.colorId) {
+                        // Déterminer la couleur comme Google Calendar:
+                        // 1. Si l'événement a un colorId spécifique, utiliser cette couleur
+                        // 2. Sinon, utiliser la couleur du calendrier
+                        let eventColor;
+                        if (event.colorId) {
                             eventColor = getGoogleColor(event.colorId);
+                            console.log(`Event "${event.summary}" has colorId ${event.colorId} -> ${eventColor}`);
                         } else if (calendarMap && calendarMap[event.calendarId]) {
                             eventColor = calendarMap[event.calendarId];
+                            console.log(`Event "${event.summary}" uses calendar color -> ${eventColor}`);
+                        } else {
+                            eventColor = '#3b82f6'; // Couleur par défaut en dernier recours
+                            console.log(`Event "${event.summary}" uses default color -> ${eventColor}`);
                         }
                         
                         newActivities[dateKey].push({
                             id: event.id,
                             title: event.summary || 'Sans titre',
                             startTime: startDate.toTimeString().slice(0, 5),
-                            duration: Math.round((endDate - startDate) / (1000 * 60)),
+                            endTime: endDate.toTimeString().slice(0, 5),
+                            duration: Math.round((endDate - startDate) / (1000 * 60)), // Garder pour compatibilité
                             color: eventColor,
                             description: event.description || '',
                             calendarId: event.calendarId,
@@ -4007,14 +4053,16 @@
                                             newActivities[dateKey] = [];
                                         }
                                         
-                                        // Déterminer la couleur: backgroundColor > colorId > calendar color
-                                        let eventColor = '#3b82f6'; // Couleur par défaut
-                                        if (event.backgroundColor) {
-                                            eventColor = event.backgroundColor;
-                                        } else if (event.colorId) {
+                                        // Déterminer la couleur comme Google Calendar:
+                                        // 1. Si l'événement a un colorId spécifique, utiliser cette couleur
+                                        // 2. Sinon, utiliser la couleur du calendrier
+                                        let eventColor;
+                                        if (event.colorId) {
                                             eventColor = getGoogleColor(event.colorId);
                                         } else if (calendarMap && calendarMap[event.calendarId]) {
                                             eventColor = calendarMap[event.calendarId];
+                                        } else {
+                                            eventColor = '#3b82f6'; // Couleur par défaut en dernier recours
                                         }
                                         
                                         // Créer l'activité de base
@@ -4039,7 +4087,8 @@
                                             activity.duration = 0;
                                         } else {
                                             activity.startTime = event.start.dateTime ? startDate.toTimeString().slice(0, 5) : '';
-                                            activity.duration = Math.round((endDate - startDate) / (1000 * 60));
+                                            activity.endTime = event.end.dateTime ? endDate.toTimeString().slice(0, 5) : '';
+                                            activity.duration = Math.round((endDate - startDate) / (1000 * 60)); // Garder pour compatibilité
                                         }
                                         
                                         newActivities[dateKey].push(activity);

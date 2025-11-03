@@ -1323,6 +1323,9 @@
                             // Calculer le jour du cycle avec la fonction fournie
                             const cycleDay = getCycleDayForDate ? getCycleDayForDate(date) : 1;
 
+                            // Calculer le nombre max d'événements selon le nombre de rows
+                            const maxEvents = weeksNeeded === 6 ? 3 : (weeksNeeded === 5 ? 4 : 6);
+
                             return (
                                 <div
                                     key={dateKey}
@@ -1397,7 +1400,7 @@
                                         overflow: 'hidden',
                                         minHeight: 0
                                     }}>
-                                        {dayActivities.slice(0, 3).map((activity, idx) => (
+                                        {dayActivities.slice(0, maxEvents).map((activity, idx) => (
                                             <div
                                                 key={idx}
                                                 onClick={(e) => {
@@ -1452,13 +1455,13 @@
                                                 </span>
                                             </div>
                                         ))}
-                                        {dayActivities.length > 3 && (
+                                        {dayActivities.length > maxEvents && (
                                             <div style={{
                                                 fontSize: '9px',
                                                 color: '#6b7280',
                                                 fontWeight: '500'
                                             }}>
-                                                +{dayActivities.length - 3} autres
+                                                +{dayActivities.length - maxEvents} autres
                                             </div>
                                         )}
                                     </div>
@@ -3960,7 +3963,7 @@
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            fontSize: '44px',
+                                            fontSize: '32px',
                                             cursor: 'pointer',
                                             padding: '4px 8px',
                                             borderRadius: '4px',
@@ -3982,7 +3985,7 @@
                                         style={{
                                             background: 'none',
                                             border: 'none',
-                                            fontSize: '44px',
+                                            fontSize: '32px',
                                             cursor: 'pointer',
                                             padding: '4px 8px',
                                             borderRadius: '4px',
@@ -3997,11 +4000,12 @@
                                     </button>
                                 </div>
                                 <span style={{
-                                    fontSize: '36px',
+                                    fontSize: '28px',
                                     fontWeight: '600',
                                     color: '#1f2937',
-                                    minWidth: '240px',
-                                    textAlign: 'left'
+                                    minWidth: '220px',
+                                    textAlign: 'left',
+                                    textTransform: 'capitalize'
                                 }}>
                                     {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                                 </span>

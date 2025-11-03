@@ -1188,6 +1188,36 @@
             );
         };
 
+        // ===== UTILITY FUNCTIONS =====
+        // Calculer la luminosité d'une couleur et retourner noir ou blanc pour le texte
+        const getTextColorForBackground = (hexColor) => {
+            // Convertir hex en RGB
+            const hex = hexColor.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+
+            // Calculer la luminosité relative (formule W3C)
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+            // Si la couleur est claire, texte noir, sinon texte blanc
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        };
+
+        // Formater l'heure au format Google Calendar (9am, 8:30pm)
+        const formatTimeGoogle = (time24) => {
+            if (!time24) return '';
+            const [hours, minutes] = time24.split(':').map(Number);
+            const period = hours >= 12 ? 'pm' : 'am';
+            const hours12 = hours % 12 || 12;
+
+            // Si les minutes sont 00, on ne les affiche pas
+            if (minutes === 0) {
+                return `${hours12}${period}`;
+            }
+            return `${hours12}:${String(minutes).padStart(2, '0')}${period}`;
+        };
+
         // ===== MONTH VIEW =====
         const MonthView = ({
             currentMonth,
@@ -1204,9 +1234,7 @@
             const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
             const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
             const startingDayOfWeek = firstDayOfMonth.getDay();
-            
-            const monthName = currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            
+
             const prevMonth = () => {
                 const newMonth = new Date(currentMonth);
                 newMonth.setMonth(newMonth.getMonth() - 1);
@@ -1269,51 +1297,6 @@
                         }
                     }}
                 >
-                    {/* Navigation mois */}
-                    <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center',
-                        marginBottom: '20px'
-                    }}>
-                        <button
-                            onClick={prevMonth}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            ← Mois précédent
-                        </button>
-                        <h2 style={{ 
-                            margin: 0, 
-                            fontSize: '18px', 
-                            fontWeight: '600',
-                            textTransform: 'capitalize'
-                        }}>
-                            {monthName}
-                        </h2>
-                        <button
-                            onClick={nextMonth}
-                            style={{
-                                padding: '8px 16px',
-                                backgroundColor: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: '500'
-                            }}
-                        >
-                            Mois suivant →
-                        </button>
-                    </div>
-                    
                     {/* Calendrier */}
                     <div style={{
                         display: 'grid',
@@ -2980,35 +2963,6 @@
                 return colors[colorId] || '#3b82f6';
             };
 
-            // Calculer la luminosité d'une couleur et retourner noir ou blanc pour le texte
-            const getTextColorForBackground = (hexColor) => {
-                // Convertir hex en RGB
-                const hex = hexColor.replace('#', '');
-                const r = parseInt(hex.substr(0, 2), 16);
-                const g = parseInt(hex.substr(2, 2), 16);
-                const b = parseInt(hex.substr(4, 2), 16);
-
-                // Calculer la luminosité relative (formule W3C)
-                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-                // Si la couleur est claire, texte noir, sinon texte blanc
-                return luminance > 0.5 ? '#000000' : '#ffffff';
-            };
-
-            // Formater l'heure au format Google Calendar (9am, 8:30pm)
-            const formatTimeGoogle = (time24) => {
-                if (!time24) return '';
-                const [hours, minutes] = time24.split(':').map(Number);
-                const period = hours >= 12 ? 'pm' : 'am';
-                const hours12 = hours % 12 || 12;
-
-                // Si les minutes sont 00, on ne les affiche pas
-                if (minutes === 0) {
-                    return `${hours12}${period}`;
-                }
-                return `${hours12}:${String(minutes).padStart(2, '0')}${period}`;
-            };
-
             const showToast = (message, type = 'info') => {
                 setToast({ message, type });
                 setTimeout(() => setToast(null), 3000);
@@ -3979,16 +3933,75 @@
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <h1 style={{
-                            margin: 0,
-                            fontSize: '24px',
-                            fontWeight: '700',
-                            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent'
-                        }}>
-                            Lunarium 🌸
-                        </h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                            <h1 style={{
+                                margin: 0,
+                                fontSize: '24px',
+                                fontWeight: '700',
+                                background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent'
+                            }}>
+                                Lunarium 🌸
+                            </h1>
+
+                            {/* Navigation du mois */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <button
+                                    onClick={() => {
+                                        const newMonth = new Date(currentMonth);
+                                        newMonth.setMonth(newMonth.getMonth() - 1);
+                                        setCurrentMonth(newMonth);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        fontSize: '18px',
+                                        cursor: 'pointer',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: '#6b7280'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    ‹
+                                </button>
+                                <span style={{
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    color: '#1f2937',
+                                    minWidth: '140px',
+                                    textAlign: 'center'
+                                }}>
+                                    {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        const newMonth = new Date(currentMonth);
+                                        newMonth.setMonth(newMonth.getMonth() + 1);
+                                        setCurrentMonth(newMonth);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        fontSize: '18px',
+                                        cursor: 'pointer',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        color: '#6b7280'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    ›
+                                </button>
+                            </div>
+                        </div>
 
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <select
@@ -4033,7 +4046,7 @@
                             <button
                                 onClick={() => setShowConfigModal(true)}
                                 style={{
-                                    padding: '8px 16px',
+                                    padding: '8px 12px',
                                     backgroundColor: 'white',
                                     color: '#6b7280',
                                     borderRadius: '8px',
@@ -4041,13 +4054,13 @@
                                     border: '1px solid #e5e7eb',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '14px',
-                                fontWeight: '500'
+                                gap: '4px',
+                                fontSize: '20px',
+                                fontWeight: '400'
                             }}
+                            title="Configuration du cycle"
                         >
-                            <SettingsIcon />
-                            Configuration
+                            🩸
                         </button>
                         </div>
                     </div>

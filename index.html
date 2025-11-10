@@ -3310,7 +3310,7 @@
                 const rotationDegrees = rotationOffset * 180 / Math.PI;
 
                 return (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
                         <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                             {/* Flèche fixe en haut */}
                             <polygon
@@ -4082,7 +4082,7 @@
                     </div>
 
                     {/* Layout principal avec sidebar */}
-                    <div style={{ display: 'flex', minHeight: 'calc(100vh - 120px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '0' : '0' }}>
+                    <div style={{ display: 'flex', height: 'calc(100vh - 120px)', flexDirection: window.innerWidth < 768 ? 'column' : 'row', gap: window.innerWidth < 768 ? '0' : '0' }}>
                         {/* Sidebar calendriers à gauche */}
                         <div style={{
                             width: window.innerWidth < 768 ? '100%' : '280px',
@@ -4228,22 +4228,27 @@
                                     {renderCircleView()}
                                 </div>
                             ) : (
-                                <MonthView
-                                    currentMonth={currentMonth}
-                                    onMonthChange={setCurrentMonth}
-                                    activities={activities}
-                                    getPhaseForDate={getPhaseForDate}
-                                    getCycleDayForDate={getCycleDayForDate}
-                                    onDayClick={(date) => {
-                                        setCreateEventDate(date);
-                                        setShowCreateEventModal(true);
-                                    }}
-                                    onEventClick={(event) => {
-                                        setEditingEvent(event);
-                                        setShowEditEventModal(true);
-                                    }}
-                                    googleCalendars={googleCalendars}
-                                />
+                                <div style={{
+                                    padding: '12px',
+                                    height: '100%'
+                                }}>
+                                    <MonthView
+                                        currentMonth={currentMonth}
+                                        onMonthChange={setCurrentMonth}
+                                        activities={activities}
+                                        getPhaseForDate={getPhaseForDate}
+                                        getCycleDayForDate={getCycleDayForDate}
+                                        onDayClick={(date) => {
+                                            setCreateEventDate(date);
+                                            setShowCreateEventModal(true);
+                                        }}
+                                        onEventClick={(event) => {
+                                            setEditingEvent(event);
+                                            setShowEditEventModal(true);
+                                        }}
+                                        googleCalendars={googleCalendars}
+                                    />
+                                </div>
                             )}
                         </div>
 

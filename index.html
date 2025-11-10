@@ -4087,12 +4087,13 @@
                         <div style={{
                             width: window.innerWidth < 768 ? '100%' : '280px',
                             minWidth: window.innerWidth < 768 ? '100%' : '280px',
+                            maxWidth: window.innerWidth < 768 ? '100%' : '280px',
+                            flexShrink: 0,
                             backgroundColor: '#f9fafb',
                             borderRight: window.innerWidth < 768 ? 'none' : '1px solid #e5e7eb',
                             borderBottom: window.innerWidth < 768 ? '1px solid #e5e7eb' : 'none',
                             overflowY: 'auto',
                             padding: '16px',
-                            maxHeight: window.innerWidth < 768 ? '500px' : 'calc(100vh - 180px)',
                             order: window.innerWidth < 768 ? 2 : 1
                         }}>
                             {/* Pas de widget Tasks séparé - tout est synchronisé avec Google Calendar */}
@@ -4217,6 +4218,7 @@
                         {/* Contenu principal */}
                         <div style={{
                             flex: 1,
+                            minWidth: 0,
                             overflow: 'hidden',
                             order: window.innerWidth < 768 ? 1 : 2
                         }}>

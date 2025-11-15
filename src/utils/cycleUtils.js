@@ -37,13 +37,13 @@ export function getPhaseInfo(cycleDay, cycleLength) {
   } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
     // Période de fertilité de 7 jours avec dégradés de transition
     const fertilityColors = [
-      { color: 'url(#gradient-fertility-start)', border: '#AACBE0', text: '#164e63', isGradient: true }, // J-5: dégradé jaune → bleu (inversé)
+      { color: 'url(#gradient-fertility-start)', border: '#AACBE0', text: '#164e63', isGradient: true }, // J-5: dégradé bleu → jaune
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-4: jaune fertilité
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-3: jaune fertilité
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-2: jaune fertilité
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-1: jaune fertilité
-      { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J ovulation: jaune fertilité
-      { color: 'url(#gradient-fertility-end)', border: '#CF90C1', text: '#78350f', isGradient: true } // J+1: dégradé rose → jaune (inversé)
+      { color: '#f9f505', border: '#e8e404', text: '#713f12' }, // J ovulation: jaune SATURÉ (plus vif)
+      { color: 'url(#gradient-fertility-end)', border: '#CF90C1', text: '#78350f', isGradient: true } // J+1: dégradé jaune → rose
     ];
 
     // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 6 pour J+1)
@@ -59,13 +59,36 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       isGradient: colorInfo.isGradient,
       description: 'Communication, collaboration, être présente'
     };
-  } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
+  } else if (cycleDay === cycleLength - 3) {
+    // Dégradé lutéale → SPM
+    return {
+      name: 'Lutéale',
+      shortName: 'Transition',
+      color: 'url(#gradient-luteal-spm)',
+      border: '#a855f7',
+      text: '#701a75',
+      isGradient: true,
+      description: 'Intuition, focus, nettoyage'
+    };
+  } else if (cycleDay === cycleLength - 2) {
+    // SPM normal
     return {
       name: 'SPM',
       shortName: 'SPM',
       color: '#93417A',
       border: '#6d2f5a',
       text: '#fff',
+      description: 'Détails, finition, laisser passer la vague'
+    };
+  } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
+    // Dégradé SPM → menstruation (2 derniers jours)
+    return {
+      name: 'SPM',
+      shortName: 'Transition',
+      color: 'url(#gradient-spm-menstruation)',
+      border: '#6d2f5a',
+      text: '#fff',
+      isGradient: true,
       description: 'Détails, finition, laisser passer la vague'
     };
   } else {

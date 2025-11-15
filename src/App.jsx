@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import MonthView from './views/MonthView';
 import CycleView from './views/CycleView';
 import GoogleCalendarSync from './components/sidebar/GoogleCalendarSync';
@@ -79,12 +79,12 @@ export default function App() {
     loadSunData();
   }, []);
 
-  const showToast = (message, type = 'success') => {
+  const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
+  }, []);
 
-  const handleSync = (events, calendarMap) => {
+  const handleSync = useCallback((events, calendarMap) => {
     const newActivities = {};
 
     events.forEach(event => {
@@ -130,8 +130,17 @@ export default function App() {
     });
 
     setActivities(newActivities);
-    showToast('Synchronisation réussie !', 'success');
-  };
+    setToast({ message: 'Synchronisation réussie !', type: 'success' });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  const handleError = useCallback((msg) => {
+    showToast(msg, 'error');
+  }, [showToast]);
+
+  const handleSyncRequest = useCallback((func) => {
+    setSyncFunc(() => func);
+  }, []);
 
   const handleCreateEvent = async ({ title, date, startTime, endTime, calendarId }) => {
     try {
@@ -282,9 +291,9 @@ export default function App() {
         <div className="w-[280px] bg-white border-r border-gray-200 p-4 overflow-y-auto">
           <GoogleCalendarSync
             onSync={handleSync}
-            onError={(msg) => showToast(msg, 'error')}
+            onError={handleError}
             onCalendarsLoaded={setGoogleCalendars}
-            onSyncRequest={(func) => setSyncFunc(() => func)}
+            onSyncRequest={handleSyncRequest}
           />
           <GoogleTasks isSignedIn={true} onTasksLoaded={() => {}} />
         </div>

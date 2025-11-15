@@ -98,7 +98,18 @@ export default function MonthView({
           const phaseInfo = getPhaseForDate(date);
           const dateKey = formatDate(date);
           // Filtrer les tâches sans échéance pour la vue calendrier
-          const dayActivities = (activities[dateKey] || []).filter(act => !act.hasNoDueDate);
+          const dayActivities = (activities[dateKey] || [])
+            .filter(act => !act.hasNoDueDate)
+            .sort((a, b) => {
+              // Tâches à la fin
+              if (a.isTask && !b.isTask) return 1;
+              if (!a.isTask && b.isTask) return -1;
+              // Trier les événements par heure de début
+              if (!a.isTask && !b.isTask) {
+                return (a.startTime || '').localeCompare(b.startTime || '');
+              }
+              return 0;
+            });
           const isToday = formatDate(date) === formatDate(new Date());
 
           // Calculer le jour du cycle avec la fonction fournie

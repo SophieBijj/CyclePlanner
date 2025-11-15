@@ -69,9 +69,9 @@ export default function App() {
     const loadSunData = async () => {
       const today = new Date();
       const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 30);
+      startDate.setDate(startDate.getDate() - 7); // Seulement 7 jours dans le passé
       const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + 30);
+      endDate.setDate(endDate.getDate() + 16); // API forecast limite à ~16 jours
 
       const data = await fetchSunTimesRange(startDate, endDate);
       setSunData(data);
@@ -85,6 +85,7 @@ export default function App() {
   }, []);
 
   const handleSync = useCallback((events, calendarMap) => {
+    console.log('handleSync received calendarMap:', calendarMap);
     const newActivities = {};
 
     events.forEach(event => {
@@ -112,6 +113,9 @@ export default function App() {
       }
 
       const color = calendarMap[event.calendarId] || '#3b82f6';
+      if (event.summary) {
+        console.log(`Event "${event.summary}" (${event.calendarId}) -> color: ${color}`);
+      }
 
       newActivities[dateKey].push({
         id: event.id,

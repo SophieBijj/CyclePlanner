@@ -294,6 +294,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         const calInfo = calendars.find(c => c.id === calendarId);
         if (calInfo) {
           calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';
+          console.log(`Calendar ${calendarId} color: ${calendarMap[calendarId]}`);
         } else {
           calendarMap[calendarId] = '#3b82f6';
         }
@@ -380,6 +381,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         }
       }
 
+      console.log('CalendarMap:', calendarMap);
       onSync?.(allEvents, calendarMap);
     } catch (err) {
       console.error('Error syncing:', err);

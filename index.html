@@ -200,13 +200,13 @@
             const ovulationDay = cycleLength - 14;
 
             if (cycleDay >= 1 && cycleDay <= 5) {
-                // Dégradé pour les règles : J1 et J2 plus foncés
+                // Dégradé pour les règles : J1 très foncé, progression vers rose clair
                 let menstruationColors = {
-                    1: { color: '#ef4444', border: '#dc2626', text: '#7f1d1d' }, // J1: rouge foncé
-                    2: { color: '#f87171', border: '#ef4444', text: '#7f1d1d' }, // J2: rouge moyen-foncé
-                    3: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' }, // J3-J5: rouge clair
-                    4: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' },
-                    5: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' }
+                    1: { color: '#882c45', border: '#6b2336', text: '#fff' }, // J1: bordeaux très foncé
+                    2: { color: '#b3495a', border: '#882c45', text: '#fff' }, // J2: bordeaux moyen
+                    3: { color: '#df6268', border: '#b3495a', text: '#7f1d1d' }, // J3: rose-rouge
+                    4: { color: '#fa8a8e', border: '#df6268', text: '#7f1d1d' }, // J4: rose moyen
+                    5: { color: '#f4abb4', border: '#fa8a8e', text: '#7f1d1d' }  // J5: rose clair
                 };
 
                 return {
@@ -221,21 +221,21 @@
                 return {
                     name: 'Folliculaire',
                     shortName: 'Jeune Fille',
-                    color: '#67e8f9',
-                    border: '#06b6d4',
+                    color: '#DDE9EF',
+                    border: '#AACBE0',
                     text: '#164e63',
                     description: 'Créativité, nouveaux projets, brainstorming'
                 };
             } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
                 // Période de fertilité de 7 jours avec dégradés de transition
                 const fertilityColors = [
-                    { color: 'url(#gradient-fertility-start)', border: '#67e8f9', text: '#164e63', isGradient: true }, // J-5: dégradé bleu → jaune
-                    { color: '#fef08a', border: '#fde047', text: '#854d0e' }, // J-4: jaune clair
-                    { color: '#fde047', border: '#facc15', text: '#78350f' }, // J-3: jaune moyen
-                    { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }, // J-2: jaune
-                    { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J-1: jaune vif
-                    { color: '#fcd34d', border: '#f59e0b', text: '#78350f' }, // J ovulation: jaune d'origine (pas trop orangé)
-                    { color: 'url(#gradient-fertility-end)', border: '#d946ef', text: '#78350f', isGradient: true }  // J+1: dégradé jaune → rose
+                    { color: 'url(#gradient-fertility-start)', border: '#AACBE0', text: '#164e63', isGradient: true }, // J-5: dégradé jaune → bleu (inversé)
+                    { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-4: jaune fertilité
+                    { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-3: jaune fertilité
+                    { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-2: jaune fertilité
+                    { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-1: jaune fertilité
+                    { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J ovulation: jaune fertilité
+                    { color: 'url(#gradient-fertility-end)', border: '#CF90C1', text: '#78350f', isGradient: true }  // J+1: dégradé rose → jaune (inversé)
                 ];
 
                 // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 6 pour J+1)
@@ -255,17 +255,17 @@
                 return {
                     name: 'SPM',
                     shortName: 'SPM',
-                    color: '#e879f9',
-                    border: '#a855f7',
-                    text: '#581c87',
+                    color: '#93417A',
+                    border: '#6d2f5a',
+                    text: '#fff',
                     description: 'Détails, finition, laisser passer la vague'
                 };
             } else {
                 return {
                     name: 'Lutéale',
                     shortName: 'Enchanteresse',
-                    color: '#f0abfc',
-                    border: '#d946ef',
+                    color: '#CF90C1',
+                    border: '#a855f7',
                     text: '#701a75',
                     description: 'Intuition, focus, nettoyage'
                 };
@@ -3355,17 +3355,17 @@
                         <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                             {/* Définitions des gradients pour les transitions */}
                             <defs>
-                                {/* Gradient pour le premier jour de fertilité: bleu → jaune */}
+                                {/* Gradient pour le premier jour de fertilité: jaune → bleu (inversé) */}
                                 <linearGradient id="gradient-fertility-start" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style={{ stopColor: '#67e8f9', stopOpacity: 1 }} />
-                                    <stop offset="50%" style={{ stopColor: '#a5f3fc', stopOpacity: 1 }} />
-                                    <stop offset="100%" style={{ stopColor: '#fef9c3', stopOpacity: 1 }} />
+                                    <stop offset="0%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
+                                    <stop offset="50%" style={{ stopColor: '#c4e5e8', stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: '#AACBE0', stopOpacity: 1 }} />
                                 </linearGradient>
-                                {/* Gradient pour le dernier jour de fertilité: jaune → rose */}
+                                {/* Gradient pour le dernier jour de fertilité: rose → jaune (inversé) */}
                                 <linearGradient id="gradient-fertility-end" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style={{ stopColor: '#fde68a', stopOpacity: 1 }} />
-                                    <stop offset="50%" style={{ stopColor: '#fce7f3', stopOpacity: 1 }} />
-                                    <stop offset="100%" style={{ stopColor: '#f0abfc', stopOpacity: 1 }} />
+                                    <stop offset="0%" style={{ stopColor: '#CF90C1', stopOpacity: 1 }} />
+                                    <stop offset="50%" style={{ stopColor: '#e6c5aa', stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
                                 </linearGradient>
                             </defs>
 

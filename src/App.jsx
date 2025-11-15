@@ -239,67 +239,84 @@ export default function App() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-pink-500">Lunarium 🌸</h1>
-          <div className="flex gap-3">
-            <button
-              onClick={() => syncFunc && syncFunc()}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600 transition-colors"
+          {/* Left side: Lunarium + Month navigation */}
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold" style={{
+              background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Lunarium 🌸
+            </h1>
+
+            {/* Month navigation */}
+            <div className="flex items-center gap-4">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    const newMonth = new Date(currentMonth);
+                    newMonth.setMonth(newMonth.getMonth() - 1);
+                    setCurrentMonth(newMonth);
+                  }}
+                  className="text-3xl text-gray-500 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={() => {
+                    const newMonth = new Date(currentMonth);
+                    newMonth.setMonth(newMonth.getMonth() + 1);
+                    setCurrentMonth(newMonth);
+                  }}
+                  className="text-3xl text-gray-500 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                >
+                  ›
+                </button>
+              </div>
+              <span className="text-2xl font-semibold text-gray-800 min-w-[220px] capitalize">
+                {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          </div>
+
+          {/* Right side: View selector + Buttons */}
+          <div className="flex gap-2 items-center">
+            <select
+              value={currentView}
+              onChange={(e) => setCurrentView(e.target.value)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 cursor-pointer outline-none"
             >
-              <SyncIcon />
-              Sync
-            </button>
-            <button
-              onClick={() => setShowConfigModal(true)}
-              className="px-4 py-2 bg-gray-200 rounded-lg flex items-center gap-2 hover:bg-gray-300 transition-colors"
-            >
-              <SettingsIcon />
-              Config
-            </button>
+              <option value="month">📅 Mois</option>
+              <option value="cycle">🔄 Cycle</option>
+            </select>
             <button
               onClick={() => setShowTasksSidebar(!showTasksSidebar)}
-              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+              className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2 text-sm font-medium"
             >
               ✓ Tâches
             </button>
+            <button
+              onClick={() => setShowConfigModal(true)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors flex items-center gap-1 text-xl"
+              title="Configuration du cycle"
+            >
+              <SettingsIcon />
+            </button>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => setCurrentView('cycle')}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-              currentView === 'cycle'
-                ? 'bg-pink-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Vue Cycle
-          </button>
-          <button
-            onClick={() => setCurrentView('month')}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-              currentView === 'month'
-                ? 'bg-pink-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            Vue Mensuelle
-          </button>
         </div>
       </div>
 
       {/* Main Layout */}
-      <div className="flex" style={{ height: 'calc(100vh - 180px)' }}>
+      <div className="flex" style={{ height: 'calc(100vh - 120px)' }}>
         {/* Left Sidebar */}
-        <div className="w-[280px] bg-white border-r border-gray-200 p-4 overflow-y-auto">
+        <div className="w-[280px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
           <GoogleCalendarSync
             onSync={handleSync}
             onError={handleError}
             onCalendarsLoaded={setGoogleCalendars}
             onSyncRequest={handleSyncRequest}
           />
-          <GoogleTasks isSignedIn={true} onTasksLoaded={() => {}} />
         </div>
 
         {/* Main Content */}
@@ -340,31 +357,6 @@ export default function App() {
             />
           ) : (
             <div className="p-4">
-              <div className="flex justify-between items-center mb-4">
-                <button
-                  onClick={() => {
-                    const newMonth = new Date(currentMonth);
-                    newMonth.setMonth(newMonth.getMonth() - 1);
-                    setCurrentMonth(newMonth);
-                  }}
-                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                >
-                  ← Mois précédent
-                </button>
-                <h2 className="text-xl font-bold">
-                  {currentMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                </h2>
-                <button
-                  onClick={() => {
-                    const newMonth = new Date(currentMonth);
-                    newMonth.setMonth(newMonth.getMonth() + 1);
-                    setCurrentMonth(newMonth);
-                  }}
-                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
-                >
-                  Mois suivant →
-                </button>
-              </div>
               <MonthView
                 currentMonth={currentMonth}
                 onMonthChange={setCurrentMonth}

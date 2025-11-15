@@ -92,6 +92,12 @@ const CycleView = ({
             <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                 {/* Définitions des gradients pour les transitions */}
                 <defs>
+                    {/* Gradient pour menstruation → folliculaire (J6) */}
+                    <linearGradient id="gradient-menstruation-follicular" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style={{ stopColor: '#f4abb4', stopOpacity: 1 }} />
+                        <stop offset="50%" style={{ stopColor: '#e9cad2', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
+                    </linearGradient>
                     {/* Gradient pour le premier jour de fertilité: bleu → jaune */}
                     <linearGradient id="gradient-fertility-start" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />

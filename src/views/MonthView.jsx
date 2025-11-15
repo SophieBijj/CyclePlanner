@@ -169,16 +169,46 @@ export default function MonthView({
                         onEventClick(activity);
                       }
                     }}
-                    className="text-xs px-0.5 py-px rounded overflow-hidden overflow-ellipsis whitespace-nowrap flex items-center gap-0.5 cursor-pointer transition-colors hover:bg-gray-100 relative text-gray-800 leading-tight flex-1"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    style={{
+                      fontSize: '13px',
+                      padding: '1px 3px',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                      position: 'relative',
+                      color: '#1f2937',
+                      lineHeight: '1.2',
+                      flex: 1
+                    }}
                   >
                     {/* Point de couleur */}
-                    <div
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: activity.color }}
-                    />
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: activity.color,
+                      flexShrink: 0
+                    }} />
 
                     {/* Heure formatée + Titre */}
-                    <span className="overflow-hidden overflow-ellipsis whitespace-nowrap font-normal">
+                    <span style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: '400'
+                    }}>
                       {activity.isTask ? (
                         <>✓ {activity.title}</>
                       ) : (

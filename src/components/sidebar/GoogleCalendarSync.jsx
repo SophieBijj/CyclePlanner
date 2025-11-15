@@ -292,11 +292,13 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
 
       for (const calendarId of regularCalendars) {
         const calInfo = calendars.find(c => c.id === calendarId);
+        console.log(`Looking for calendar ${calendarId}:`, calInfo);
         if (calInfo) {
           calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';
           console.log(`Calendar ${calendarId} color: ${calendarMap[calendarId]}`);
         } else {
           calendarMap[calendarId] = '#3b82f6';
+          console.log(`Calendar ${calendarId} not found, using default color`);
         }
 
         const response = await window.gapi.client.calendar.events.list({

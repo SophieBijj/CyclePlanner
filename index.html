@@ -208,21 +208,21 @@
                     text: '#7f1d1d',
                     description: 'Repos, introspection, détoxification'
                 };
-            } else if (cycleDay >= 6 && cycleDay < ovulationDay - 1) {
-                return { 
+            } else if (cycleDay >= 6 && cycleDay < ovulationDay - 5) {
+                return {
                     name: 'Folliculaire',
                     shortName: 'Jeune Fille',
-                    color: '#67e8f9', 
-                    border: '#06b6d4', 
+                    color: '#67e8f9',
+                    border: '#06b6d4',
                     text: '#164e63',
                     description: 'Créativité, nouveaux projets, brainstorming'
                 };
-            } else if (cycleDay >= ovulationDay - 1 && cycleDay <= ovulationDay + 1) {
-                return { 
+            } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
+                return {
                     name: 'Ovulation',
                     shortName: 'Mère',
-                    color: '#fcd34d', 
-                    border: '#f59e0b', 
+                    color: '#fcd34d',
+                    border: '#f59e0b',
                     text: '#78350f',
                     description: 'Communication, collaboration, être présente'
                 };

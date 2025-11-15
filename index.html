@@ -227,15 +227,15 @@
                     description: 'Créativité, nouveaux projets, brainstorming'
                 };
             } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
-                // Période de fertilité de 7 jours avec dégradé bleu-cyan → jaune → rose
+                // Période de fertilité de 7 jours avec dégradés de transition
                 const fertilityColors = [
-                    { color: '#a5f3fc', border: '#67e8f9', text: '#164e63' }, // J-5: cyan clair (transition du bleu folliculaire)
+                    { color: 'url(#gradient-fertility-start)', border: '#67e8f9', text: '#164e63', isGradient: true }, // J-5: dégradé bleu → jaune
                     { color: '#fef08a', border: '#fde047', text: '#854d0e' }, // J-4: jaune clair
                     { color: '#fde047', border: '#facc15', text: '#78350f' }, // J-3: jaune moyen
                     { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }, // J-2: jaune
                     { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J-1: jaune vif
-                    { color: '#f59e0b', border: '#d97706', text: '#78350f' }, // J ovulation: le plus jaune/orangé
-                    { color: '#fde68a', border: '#fbbf24', text: '#78350f' }  // J+1: jaune clair vers rose (transition vers lutéale)
+                    { color: '#fcd34d', border: '#f59e0b', text: '#78350f' }, // J ovulation: jaune d'origine (pas trop orangé)
+                    { color: 'url(#gradient-fertility-end)', border: '#d946ef', text: '#78350f', isGradient: true }  // J+1: dégradé jaune → rose
                 ];
 
                 // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 6 pour J+1)
@@ -248,6 +248,7 @@
                     color: colorInfo.color,
                     border: colorInfo.border,
                     text: colorInfo.text,
+                    isGradient: colorInfo.isGradient,
                     description: 'Communication, collaboration, être présente'
                 };
             } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
@@ -3352,6 +3353,22 @@
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'center' }}>
                         <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
+                            {/* Définitions des gradients pour les transitions */}
+                            <defs>
+                                {/* Gradient pour le premier jour de fertilité: bleu → jaune */}
+                                <linearGradient id="gradient-fertility-start" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style={{ stopColor: '#67e8f9', stopOpacity: 1 }} />
+                                    <stop offset="50%" style={{ stopColor: '#a5f3fc', stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: '#fef9c3', stopOpacity: 1 }} />
+                                </linearGradient>
+                                {/* Gradient pour le dernier jour de fertilité: jaune → rose */}
+                                <linearGradient id="gradient-fertility-end" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style={{ stopColor: '#fde68a', stopOpacity: 1 }} />
+                                    <stop offset="50%" style={{ stopColor: '#fce7f3', stopOpacity: 1 }} />
+                                    <stop offset="100%" style={{ stopColor: '#f0abfc', stopOpacity: 1 }} />
+                                </linearGradient>
+                            </defs>
+
                             {/* Flèche fixe en haut */}
                             <polygon
                                 points={`${centerX},${centerY - outerRadius - 10} ${centerX - 12},${centerY - outerRadius - 25} ${centerX + 12},${centerY - outerRadius - 25}`}

@@ -227,12 +227,12 @@
                     description: 'Communication, collaboration, être présente'
                 };
             } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
-                return { 
+                return {
                     name: 'SPM',
                     shortName: 'SPM',
-                    color: '#f0abfc', 
-                    border: '#c026d3', 
-                    text: '#701a75',
+                    color: '#e879f9',
+                    border: '#a855f7',
+                    text: '#581c87',
                     description: 'Détails, finition, laisser passer la vague'
                 };
             } else {
@@ -1482,7 +1482,14 @@
 
         // ===== CONFIG MODAL =====
         const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
-            const [startDate, setStartDate] = useState(config.cycleStartDate.toISOString().split('T')[0]);
+            // Utiliser le temps local au lieu d'UTC pour éviter les problèmes de fuseau horaire
+            const formatLocalDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            const [startDate, setStartDate] = useState(formatLocalDate(config.cycleStartDate));
             const [cycleLength, setCycleLength] = useState(config.cycleLength);
             const [history, setHistory] = useState(cycleHistory || []);
 
@@ -1725,11 +1732,20 @@
                                 Annuler
                             </button>
                             <button
-                                onClick={() => onSave({ 
-                                    cycleStartDate: new Date(startDate), 
-                                    cycleLength,
-                                    cycleHistory: calculateCycleLengths(history.filter(h => h.startDate), startDate)
-                                })}
+                                onClick={() => {
+                                    // Créer une date locale pour éviter les problèmes de fuseau horaire
+                                    const parts = startDate.split('-');
+                                    const localDate = new Date(
+                                        parseInt(parts[0]),
+                                        parseInt(parts[1]) - 1,
+                                        parseInt(parts[2])
+                                    );
+                                    onSave({
+                                        cycleStartDate: localDate,
+                                        cycleLength,
+                                        cycleHistory: calculateCycleLengths(history.filter(h => h.startDate), startDate)
+                                    });
+                                }}
                                 style={{
                                     padding: '10px 20px',
                                     borderRadius: '8px',

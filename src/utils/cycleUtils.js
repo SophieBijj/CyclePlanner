@@ -25,7 +25,18 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       text: menstruationColors[cycleDay].text,
       description: 'Repos, introspection, détoxification'
     };
-  } else if (cycleDay >= 6 && cycleDay < ovulationDay - 5) {
+  } else if (cycleDay === 6) {
+    // Dégradé menstruation → folliculaire
+    return {
+      name: 'Folliculaire',
+      shortName: 'Transition',
+      color: 'url(#gradient-menstruation-follicular)',
+      border: '#AACBE0',
+      text: '#164e63',
+      isGradient: true,
+      description: 'Créativité, nouveaux projets, brainstorming'
+    };
+  } else if (cycleDay >= 7 && cycleDay < ovulationDay - 5) {
     return {
       name: 'Folliculaire',
       shortName: 'Jeune Fille',
@@ -34,8 +45,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       text: '#164e63',
       description: 'Créativité, nouveaux projets, brainstorming'
     };
-  } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
-    // Période de fertilité de 7 jours avec dégradés de transition
+  } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 2) {
+    // Période de fertilité de 8 jours avec dégradés de transition
     const fertilityColors = [
       { color: 'url(#gradient-fertility-start)', border: '#AACBE0', text: '#164e63', isGradient: true }, // J-5: dégradé bleu → jaune
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-4: jaune fertilité
@@ -43,10 +54,11 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-2: jaune fertilité
       { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J-1: jaune fertilité
       { color: '#f9f505', border: '#e8e404', text: '#713f12' }, // J ovulation: jaune SATURÉ (plus vif)
-      { color: 'url(#gradient-fertility-end)', border: '#CF90C1', text: '#78350f', isGradient: true } // J+1: dégradé jaune → rose
+      { color: '#fdfb93', border: '#f4f087', text: '#854d0e' }, // J+1: jaune normal
+      { color: 'url(#gradient-fertility-end)', border: '#CF90C1', text: '#78350f', isGradient: true } // J+2: dégradé jaune → rose
     ];
 
-    // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 6 pour J+1)
+    // Calculer l'index dans le tableau (0 pour J-5, 7 pour J+2)
     const colorIndex = cycleDay - (ovulationDay - 5);
     const colorInfo = fertilityColors[colorIndex];
 
@@ -70,8 +82,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       isGradient: true,
       description: 'Intuition, focus, nettoyage'
     };
-  } else if (cycleDay === cycleLength - 2) {
-    // SPM normal
+  } else if (cycleDay === cycleLength - 2 || cycleDay === cycleLength) {
+    // SPM normal (J-2 et J dernier)
     return {
       name: 'SPM',
       shortName: 'SPM',
@@ -80,8 +92,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       text: '#fff',
       description: 'Détails, finition, laisser passer la vague'
     };
-  } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
-    // Dégradé SPM → menstruation (2 derniers jours)
+  } else if (cycleDay === cycleLength - 1) {
+    // Dégradé SPM → menstruation (J-1 uniquement)
     return {
       name: 'SPM',
       shortName: 'Transition',

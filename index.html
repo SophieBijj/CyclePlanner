@@ -198,13 +198,13 @@
 
         function getPhaseInfo(cycleDay, cycleLength) {
             const ovulationDay = cycleLength - 14;
-            
+
             if (cycleDay >= 1 && cycleDay <= 5) {
-                return { 
+                return {
                     name: 'Menstruation',
                     shortName: 'Lune rouge',
-                    color: '#fca5a5', 
-                    border: '#f87171', 
+                    color: '#fca5a5',
+                    border: '#f87171',
                     text: '#7f1d1d',
                     description: 'Repos, introspection, détoxification'
                 };
@@ -217,13 +217,32 @@
                     text: '#164e63',
                     description: 'Créativité, nouveaux projets, brainstorming'
                 };
-            } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
+            } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 2) {
+                // Période de fertilité avec dégradé progressif vers le jour d'ovulation
+                const distanceFromOvulation = Math.abs(cycleDay - ovulationDay);
+
+                // Couleurs du dégradé (du plus clair au plus jaune vif)
+                const fertilityColors = [
+                    { color: '#fef3c7', border: '#fde68a', text: '#92400e' }, // J-5: très clair
+                    { color: '#fef08a', border: '#fde047', text: '#854d0e' }, // J-4: clair
+                    { color: '#fde047', border: '#facc15', text: '#78350f' }, // J-3: jaune moyen
+                    { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }, // J-2: jaune
+                    { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J-1: jaune vif
+                    { color: '#f59e0b', border: '#d97706', text: '#78350f' }, // J ovulation: le plus jaune/orangé
+                    { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J+1: jaune vif
+                    { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }  // J+2: jaune
+                ];
+
+                // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 7 pour J+2)
+                const colorIndex = cycleDay - (ovulationDay - 5);
+                const colorInfo = fertilityColors[colorIndex];
+
                 return {
                     name: 'Ovulation',
                     shortName: 'Mère',
-                    color: '#fcd34d',
-                    border: '#f59e0b',
-                    text: '#78350f',
+                    color: colorInfo.color,
+                    border: colorInfo.border,
+                    text: colorInfo.text,
                     description: 'Communication, collaboration, être présente'
                 };
             } else if (cycleDay >= cycleLength - 1 && cycleDay <= cycleLength) {
@@ -236,11 +255,11 @@
                     description: 'Détails, finition, laisser passer la vague'
                 };
             } else {
-                return { 
+                return {
                     name: 'Lutéale',
                     shortName: 'Enchanteresse',
-                    color: '#f0abfc', 
-                    border: '#d946ef', 
+                    color: '#f0abfc',
+                    border: '#d946ef',
                     text: '#701a75',
                     description: 'Intuition, focus, nettoyage'
                 };

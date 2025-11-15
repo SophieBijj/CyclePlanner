@@ -60,9 +60,6 @@ const CycleView = ({
     const getSunTimes = (date) => {
         const dateStr = date.toISOString().split('T')[0];
         const times = sunData[dateStr];
-        if (!times) {
-            console.log(`No sun data for ${dateStr}. Available dates:`, Object.keys(sunData).slice(0, 5));
-        }
         return times || { sunrise: '...', sunset: '...', sunriseDecimal: 7.5, sunsetDecimal: 17 };
     };
 

@@ -85,7 +85,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
       if (!window.tasksApiLoaded) {
         await window.gapi.client.load('tasks', 'v1');
         window.tasksApiLoaded = true;
-        console.log('Tasks API loaded successfully');
       }
     } catch (err) {
       console.error('Error loading Tasks API:', err);
@@ -137,12 +136,10 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
           const tokenData = JSON.parse(savedToken);
 
           if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
-            console.log('Restoring saved token...');
             window.gapi.client.setToken({
               access_token: tokenData.access_token
             });
           } else {
-            console.log('Saved token expired, clearing...');
             localStorage.removeItem('googleAccessToken');
           }
         } catch (e) {
@@ -153,7 +150,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
 
       const token = window.gapi.client.getToken();
       if (token !== null) {
-        console.log('Already signed in, loading calendars...');
         setIsSignedIn(true);
 
         loadTasksAPI().then(() => {
@@ -224,17 +220,14 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
           let validSaved = saved.filter(id => allCalendars.some(cal => cal.id === id));
 
           if (validSaved.length > 0 && !validSaved.includes('__TASKS__')) {
-            console.log('Migration: adding __TASKS__ to saved calendars');
             validSaved.push('__TASKS__');
             localStorage.setItem('selectedCalendars', JSON.stringify(validSaved));
           }
 
           if (validSaved.length > 0) {
-            console.log('Restoring selected calendars:', validSaved);
             setSelectedCalendars(validSaved);
 
             setTimeout(() => {
-              console.log('Auto-syncing with restored calendars...');
               handleSync(validSaved);
             }, 1000);
 
@@ -252,7 +245,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         localStorage.setItem('selectedCalendars', JSON.stringify(defaultSelection));
 
         setTimeout(() => {
-          console.log('Auto-syncing with default calendars...');
           handleSync(defaultSelection);
         }, 1000);
       }
@@ -266,7 +258,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
     const calendarIds = calendarsToSync || selectedCalendars;
 
     if (calendarIds.length === 0) {
-      console.log('Cannot sync: no calendars selected');
       return;
     }
     if (typeof window.gapi === 'undefined' || !window.gapi.client) {
@@ -276,7 +267,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
 
     const token = window.gapi.client.getToken();
     if (!token) {
-      console.log('Cannot sync: no valid token');
       return;
     }
 
@@ -294,13 +284,10 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
 
       for (const calendarId of regularCalendars) {
         const calInfo = calendarsRef.current.find(c => c.id === calendarId);
-        console.log(`Looking for calendar ${calendarId}:`, calInfo);
         if (calInfo) {
           calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';
-          console.log(`Calendar ${calendarId} color: ${calendarMap[calendarId]}`);
         } else {
           calendarMap[calendarId] = '#3b82f6';
-          console.log(`Calendar ${calendarId} not found, using default color`);
         }
 
         const response = await window.gapi.client.calendar.events.list({
@@ -385,7 +372,6 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         }
       }
 
-      console.log('CalendarMap:', calendarMap);
       onSync?.(allEvents, calendarMap);
     } catch (err) {
       console.error('Error syncing:', err);

@@ -72,10 +72,7 @@ export default function App() {
       const endDate = new Date(today);
       endDate.setDate(endDate.getDate() + 6); // API forecast : limite à 7 jours
 
-      console.log(`Fetching sun data from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
       const data = await fetchSunTimesRange(startDate, endDate);
-      console.log('Sun data received:', data);
-      console.log('Sun data keys:', Object.keys(data));
       setSunData(data);
     };
     loadSunData();
@@ -87,7 +84,6 @@ export default function App() {
   }, []);
 
   const handleSync = useCallback((events, calendarMap) => {
-    console.log('handleSync received calendarMap:', calendarMap);
     const newActivities = {};
 
     events.forEach(event => {
@@ -115,9 +111,6 @@ export default function App() {
       }
 
       const color = calendarMap[event.calendarId] || '#3b82f6';
-      if (event.summary) {
-        console.log(`Event "${event.summary}" (${event.calendarId}) -> color: ${color}`);
-      }
 
       newActivities[dateKey].push({
         id: event.id,

@@ -200,12 +200,21 @@
             const ovulationDay = cycleLength - 14;
 
             if (cycleDay >= 1 && cycleDay <= 5) {
+                // Dégradé pour les règles : J1 et J2 plus foncés
+                let menstruationColors = {
+                    1: { color: '#ef4444', border: '#dc2626', text: '#7f1d1d' }, // J1: rouge foncé
+                    2: { color: '#f87171', border: '#ef4444', text: '#7f1d1d' }, // J2: rouge moyen-foncé
+                    3: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' }, // J3-J5: rouge clair
+                    4: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' },
+                    5: { color: '#fca5a5', border: '#f87171', text: '#7f1d1d' }
+                };
+
                 return {
                     name: 'Menstruation',
                     shortName: 'Lune rouge',
-                    color: '#fca5a5',
-                    border: '#f87171',
-                    text: '#7f1d1d',
+                    color: menstruationColors[cycleDay].color,
+                    border: menstruationColors[cycleDay].border,
+                    text: menstruationColors[cycleDay].text,
                     description: 'Repos, introspection, détoxification'
                 };
             } else if (cycleDay >= 6 && cycleDay < ovulationDay - 5) {
@@ -217,23 +226,19 @@
                     text: '#164e63',
                     description: 'Créativité, nouveaux projets, brainstorming'
                 };
-            } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 2) {
-                // Période de fertilité avec dégradé progressif vers le jour d'ovulation
-                const distanceFromOvulation = Math.abs(cycleDay - ovulationDay);
-
-                // Couleurs du dégradé (du plus clair au plus jaune vif)
+            } else if (cycleDay >= ovulationDay - 5 && cycleDay <= ovulationDay + 1) {
+                // Période de fertilité de 7 jours avec dégradé bleu-cyan → jaune → rose
                 const fertilityColors = [
-                    { color: '#fef3c7', border: '#fde68a', text: '#92400e' }, // J-5: très clair
-                    { color: '#fef08a', border: '#fde047', text: '#854d0e' }, // J-4: clair
+                    { color: '#a5f3fc', border: '#67e8f9', text: '#164e63' }, // J-5: cyan clair (transition du bleu folliculaire)
+                    { color: '#fef08a', border: '#fde047', text: '#854d0e' }, // J-4: jaune clair
                     { color: '#fde047', border: '#facc15', text: '#78350f' }, // J-3: jaune moyen
                     { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }, // J-2: jaune
                     { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J-1: jaune vif
                     { color: '#f59e0b', border: '#d97706', text: '#78350f' }, // J ovulation: le plus jaune/orangé
-                    { color: '#fbbf24', border: '#f59e0b', text: '#78350f' }, // J+1: jaune vif
-                    { color: '#fcd34d', border: '#fbbf24', text: '#78350f' }  // J+2: jaune
+                    { color: '#fde68a', border: '#fbbf24', text: '#78350f' }  // J+1: jaune clair vers rose (transition vers lutéale)
                 ];
 
-                // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 7 pour J+2)
+                // Calculer l'index dans le tableau (0 pour J-5, 5 pour J ovulation, 6 pour J+1)
                 const colorIndex = cycleDay - (ovulationDay - 5);
                 const colorInfo = fertilityColors[colorIndex];
 

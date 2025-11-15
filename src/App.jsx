@@ -69,13 +69,13 @@ export default function App() {
     const loadSunData = async () => {
       const today = new Date();
       const startDate = new Date(today);
-      startDate.setHours(0, 0, 0, 0); // Aujourd'hui à minuit
       const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + 16); // API forecast : max ~16 jours dans le futur
+      endDate.setDate(endDate.getDate() + 6); // API forecast : limite à 7 jours
 
       console.log(`Fetching sun data from ${startDate.toISOString().split('T')[0]} to ${endDate.toISOString().split('T')[0]}`);
       const data = await fetchSunTimesRange(startDate, endDate);
       console.log('Sun data received:', data);
+      console.log('Sun data keys:', Object.keys(data));
       setSunData(data);
     };
     loadSunData();

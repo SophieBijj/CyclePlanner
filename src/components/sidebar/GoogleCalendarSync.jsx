@@ -11,6 +11,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
   const gapiInited = useRef(false);
   const gisInited = useRef(false);
   const tokenClient = useRef(null);
+  const calendarsRef = useRef([]); // Ref pour accès synchrone aux calendriers
 
   // Exposer handleSync au parent via callback
   useEffect(() => {
@@ -213,6 +214,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
 
       const allCalendars = [...cals, tasksCalendar];
       setCalendars(allCalendars);
+      calendarsRef.current = allCalendars; // Stocker dans ref pour accès synchrone
       onCalendarsLoaded?.(allCalendars);
 
       const savedCalendars = localStorage.getItem('selectedCalendars');
@@ -291,7 +293,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
       const includesTasks = calendarIds.includes('__TASKS__');
 
       for (const calendarId of regularCalendars) {
-        const calInfo = calendars.find(c => c.id === calendarId);
+        const calInfo = calendarsRef.current.find(c => c.id === calendarId);
         console.log(`Looking for calendar ${calendarId}:`, calInfo);
         if (calInfo) {
           calendarMap[calendarId] = calInfo.backgroundColor || '#3b82f6';

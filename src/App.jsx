@@ -12,7 +12,7 @@ import EditEventModal from './components/modals/EditEventModal';
 import EditTaskModal from './components/modals/EditTaskModal';
 import { SyncIcon, SettingsIcon } from './components/icons';
 import { getPhaseInfo, getAverageCycleLength } from './utils/cycleUtils';
-import { fetchSunTimes } from './utils/sunUtils';
+import { fetchSunTimesRange } from './utils/sunUtils';
 import { DEFAULT_CYCLE_CONFIG } from './config/constants';
 
 export default function App() {
@@ -64,17 +64,17 @@ export default function App() {
     localStorage.setItem('cycleHistory', JSON.stringify(cycleHistory));
   }, [cycleConfig, cycleHistory]);
 
-  // Charger les données du soleil
+  // Charger les données du soleil (optimisé: une seule requête pour tous les jours)
   useEffect(() => {
     const loadSunData = async () => {
       const today = new Date();
-      for (let i = -30; i <= 30; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() + i);
-        const data = await fetchSunTimes(date);
-        const dateKey = date.toISOString().split('T')[0];
-        setSunData(prev => ({ ...prev, [dateKey]: data }));
-      }
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - 30);
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 30);
+
+      const data = await fetchSunTimesRange(startDate, endDate);
+      setSunData(data);
     };
     loadSunData();
   }, []);
@@ -295,10 +295,35 @@ export default function App() {
             <CycleView
               cycleConfig={cycleConfig}
               activities={activities}
+              sunData={sunData}
+              showTasksSidebar={showTasksSidebar}
               onCreateEvent={(date) => {
                 setSelectedDate(date);
                 setShowCreateEventModal(true);
               }}
+              onEditEvent={(event) => {
+                if (event.isTask) {
+                  setSelectedTask(event);
+                  setShowEditTaskModal(true);
+                } else {
+                  setSelectedEvent(event);
+                  setShowEditEventModal(true);
+                }
+              }}
+              onTaskToggle={async (task, completed) => {
+                try {
+                  await window.gapi.client.tasks.tasks.patch({
+                    tasklist: task.taskListId,
+                    task: task.id,
+                    status: completed ? 'completed' : 'needsAction',
+                    completed: completed ? new Date().toISOString() : null
+                  });
+                  if (syncFunc) await syncFunc();
+                } catch (err) {
+                  console.error('Error toggling task:', err);
+                }
+              }}
+              showToast={showToast}
             />
           ) : (
             <div className="p-4">

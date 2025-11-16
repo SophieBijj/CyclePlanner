@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { formatTimeGoogle } from '../utils/dateUtils';
+import { getSolidColor } from '../utils/cycleUtils';
 
 export default function MonthView({
   currentMonth,
@@ -120,14 +121,16 @@ export default function MonthView({
           // 4 semaines → 5 lignes, 5 semaines → 4 lignes, 6 semaines → 3 lignes
           const maxEvents = weeksNeeded === 4 ? 5 : (weeksNeeded === 5 ? 4 : 3);
 
+          const solidColor = getSolidColor(phaseInfo);
+
           return (
             <div
               key={dateKey}
               onClick={() => onDayClick(date)}
               className="p-0.5 cursor-pointer overflow-hidden flex flex-col"
               style={{
-                backgroundColor: phaseInfo.color + (isCurrentMonth ? '30' : '15'),
-                border: isToday ? `2px solid ${phaseInfo.color}` : 'none',
+                backgroundColor: 'white',
+                border: isToday ? `2px solid ${solidColor}` : 'none',
                 borderRight: (index + 1) % 7 !== 0 ? '1px solid #e5e7eb' : 'none',
                 borderBottom: index < calendarDays.length - 7 ? '1px solid #e5e7eb' : 'none',
                 opacity: isCurrentMonth ? 1 : 0.4,
@@ -139,20 +142,25 @@ export default function MonthView({
                   {weekdayNames[index]}
                 </div>
               )}
-              <div className="flex justify-center items-center py-0.5 flex-shrink-0 relative">
+              <div
+                className="flex justify-center items-center py-0.5 flex-shrink-0 relative px-1 -mx-1 rounded-sm"
+                style={{
+                  backgroundColor: solidColor + (isCurrentMonth ? '40' : '20')
+                }}
+              >
                 <span
                   className={`text-[11.5px] ${isToday ? 'font-semibold' : 'font-medium'}`}
                   style={{
-                    color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
+                    color: isToday ? solidColor : (isCurrentMonth ? '#374151' : '#9ca3af')
                   }}
                 >
                   {date.getDate()}
                 </span>
                 <span
-                  className="text-xs font-semibold px-1 py-0.5 rounded absolute right-0"
+                  className="text-xs font-semibold px-1 py-0.5 rounded"
                   style={{
                     color: phaseInfo.text,
-                    backgroundColor: phaseInfo.color + '30',
+                    backgroundColor: solidColor + '50',
                   }}
                 >
                   J{cycleDay}

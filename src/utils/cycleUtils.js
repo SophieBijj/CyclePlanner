@@ -106,6 +106,32 @@ export function getPhaseInfo(cycleDay, cycleLength) {
 }
 
 /**
+ * Obtient la couleur solide d'une phase (sans gradient)
+ * @param {Object} phaseInfo - Informations de la phase
+ * @returns {string} Couleur solide
+ */
+export function getSolidColor(phaseInfo) {
+  if (!phaseInfo.isGradient) {
+    return phaseInfo.color;
+  }
+
+  // Mapper les gradients vers leurs couleurs solides principales
+  const gradientColorMap = {
+    'url(#gradient-menstruation-1-2)': '#882c45',
+    'url(#gradient-menstruation-2-3)': '#b3495a',
+    'url(#gradient-menstruation-3-4)': '#df6268',
+    'url(#gradient-menstruation-4-5)': '#fa8a8e',
+    'url(#gradient-menstruation-5-follicular)': '#f4abb4',
+    'url(#gradient-fertility-start)': '#DDE9EF',
+    'url(#gradient-fertility-end)': '#fdfb93',
+    'url(#gradient-luteal-spm)': '#CF90C1',
+    'url(#gradient-spm-menstruation)': '#93417A'
+  };
+
+  return gradientColorMap[phaseInfo.color] || phaseInfo.border || phaseInfo.color;
+}
+
+/**
  * Calcule la longueur moyenne d'un cycle basée sur l'historique
  * @param {Array} cycleHistory - Historique des cycles
  * @returns {number} Longueur moyenne du cycle

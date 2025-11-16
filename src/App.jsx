@@ -81,7 +81,7 @@ export default function App() {
       const today = new Date();
       const startDate = new Date(today);
       const endDate = new Date(today);
-      endDate.setDate(endDate.getDate() + 6); // API forecast : limite à 7 jours
+      endDate.setDate(endDate.getDate() + 15); // API forecast : limite à 16 jours
 
       const data = await fetchSunTimesRange(startDate, endDate);
       setSunData(data);

@@ -84,7 +84,7 @@ export default function MonthView({
     >
       {/* Calendrier */}
       <div
-        className="grid gap-px flex-1 overflow-hidden"
+        className="grid gap-px flex-1 overflow-hidden rounded-lg"
         style={{
           gridTemplateColumns: 'repeat(7, 1fr)',
           gridTemplateRows: `repeat(${weeksNeeded}, 1fr)`,

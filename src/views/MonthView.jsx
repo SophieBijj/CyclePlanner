@@ -116,7 +116,8 @@ export default function MonthView({
           const cycleDay = getCycleDayForDate ? getCycleDayForDate(date) : 1;
 
           // Calculer le nombre max d'événements selon le nombre de rows
-          const maxEvents = weeksNeeded === 6 ? 3 : (weeksNeeded === 5 ? 4 : 6);
+          // 4 semaines → 6 lignes, 5 semaines → 5 lignes, 6 semaines → 4 lignes
+          const maxEvents = weeksNeeded === 4 ? 6 : (weeksNeeded === 5 ? 5 : 4);
 
           return (
             <div
@@ -176,7 +177,7 @@ export default function MonthView({
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '14px',
                       padding: '1px 3px',
                       borderRadius: '3px',
                       overflow: 'hidden',
@@ -184,7 +185,7 @@ export default function MonthView({
                       whiteSpace: 'nowrap',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '3px',
+                      gap: '4px',
                       cursor: 'pointer',
                       transition: 'background-color 0.15s ease',
                       position: 'relative',
@@ -195,8 +196,8 @@ export default function MonthView({
                   >
                     {/* Point de couleur */}
                     <div style={{
-                      width: '8px',
-                      height: '8px',
+                      width: '10px',
+                      height: '10px',
                       borderRadius: '50%',
                       backgroundColor: activity.color,
                       flexShrink: 0

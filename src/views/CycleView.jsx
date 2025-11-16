@@ -264,7 +264,18 @@ const CycleView = ({
                             const phaseInfo = getPhaseInfo(displayDay, cycleConfig.cycleLength);
                             const sunTimes = getSunTimes(date);
                             const moonInfo = getMoonInfo(date);
-                            const dayActivities = (activities[formatDate(date)] || []).filter(act => !act.hasNoDueDate);
+                            const dayActivities = (activities[formatDate(date)] || [])
+                                .filter(act => !act.hasNoDueDate)
+                                .sort((a, b) => {
+                                    // Tri par heure de début
+                                    if (a.startTime && b.startTime) {
+                                        return a.startTime.localeCompare(b.startTime);
+                                    }
+                                    // Les événements avec heure avant ceux sans heure
+                                    if (a.startTime && !b.startTime) return -1;
+                                    if (!a.startTime && b.startTime) return 1;
+                                    return 0;
+                                });
 
                             return (
                                 <>

@@ -98,17 +98,17 @@ const CycleView = ({
                         <stop offset="50%" style={{ stopColor: '#e9cad2', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
                     </linearGradient>
-                    {/* Gradient pour le premier jour de fertilité: bleu → jaune */}
+                    {/* Gradient pour le premier jour de fertilité: jaune → bleu (inversé) */}
                     <linearGradient id="gradient-fertility-start" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
-                        <stop offset="50%" style={{ stopColor: '#e3eeb4', stopOpacity: 1 }} />
-                        <stop offset="100%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
-                    </linearGradient>
-                    {/* Gradient pour le dernier jour de fertilité: jaune → rose */}
-                    <linearGradient id="gradient-fertility-end" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
+                        <stop offset="50%" style={{ stopColor: '#e3eeb4', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
+                    </linearGradient>
+                    {/* Gradient pour le dernier jour de fertilité: rose → jaune (inversé) */}
+                    <linearGradient id="gradient-fertility-end" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style={{ stopColor: '#CF90C1', stopOpacity: 1 }} />
                         <stop offset="50%" style={{ stopColor: '#e6c5aa', stopOpacity: 1 }} />
-                        <stop offset="100%" style={{ stopColor: '#CF90C1', stopOpacity: 1 }} />
+                        <stop offset="100%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
                     </linearGradient>
                     {/* Gradient pour lutéale → SPM */}
                     <linearGradient id="gradient-luteal-spm" x1="0%" y1="0%" x2="100%" y2="0%">

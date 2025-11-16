@@ -177,7 +177,7 @@ export default function MonthView({
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     style={{
-                      fontSize: '14px',
+                      fontSize: '13px',
                       padding: '1px 3px',
                       borderRadius: '3px',
                       overflow: 'hidden',
@@ -207,13 +207,16 @@ export default function MonthView({
                     <span style={{
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      fontWeight: '400'
+                      whiteSpace: 'nowrap'
                     }}>
                       {activity.isTask ? (
-                        <>✓ {activity.title}</>
+                        <span style={{ fontWeight: '400' }}>✓ {activity.title}</span>
                       ) : (
-                        <>{formatTimeGoogle(activity.startTime)} {activity.title}</>
+                        <>
+                          <span style={{ fontWeight: '300' }}>{formatTimeGoogle(activity.startTime)}</span>
+                          {' '}
+                          <span style={{ fontWeight: '500' }}>{activity.title}</span>
+                        </>
                       )}
                     </span>
                   </div>

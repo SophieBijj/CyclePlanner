@@ -1,15 +1,17 @@
 /**
- * Formate une heure de 24h en format 12h (AM/PM)
+ * Formate une heure de 24h en format 12h (am/pm)
  * @param {string} time24 - Heure au format 24h (ex: "14:30")
- * @returns {string} Heure au format 12h (ex: "2:30 PM")
+ * @returns {string} Heure au format 12h (ex: "2:30pm" ou "2pm")
  */
 export function formatTimeGoogle(time24) {
   if (!time24) return '';
   const [hours, minutes] = time24.split(':');
   const h = parseInt(hours);
-  const period = h >= 12 ? 'PM' : 'AM';
+  const period = h >= 12 ? 'pm' : 'am';
   const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${minutes} ${period}`;
+  // Omettre :00 si minutes = 00
+  const minutesPart = minutes === '00' ? '' : `:${minutes}`;
+  return `${h12}${minutesPart}${period}`;
 }
 
 /**

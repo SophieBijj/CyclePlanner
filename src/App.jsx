@@ -17,7 +17,10 @@ import { DEFAULT_CYCLE_CONFIG } from './config/constants';
 
 export default function App() {
   // État principal
-  const [currentView, setCurrentView] = useState('cycle');
+  const [currentView, setCurrentView] = useState(() => {
+    const saved = localStorage.getItem('currentView');
+    return saved || 'cycle';
+  });
   const [cycleConfig, setCycleConfig] = useState(() => {
     const saved = localStorage.getItem('cycleConfig');
     if (saved) {
@@ -63,6 +66,11 @@ export default function App() {
     }));
     localStorage.setItem('cycleHistory', JSON.stringify(cycleHistory));
   }, [cycleConfig, cycleHistory]);
+
+  // Sauvegarder la vue actuelle
+  useEffect(() => {
+    localStorage.setItem('currentView', currentView);
+  }, [currentView]);
 
   // Charger les données du soleil (optimisé: une seule requête pour tous les jours)
   useEffect(() => {

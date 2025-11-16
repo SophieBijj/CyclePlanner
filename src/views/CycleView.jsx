@@ -149,10 +149,10 @@ const CycleView = ({
 
                 {/* Flèche fixe en haut */}
                 <polygon
-                    points={`${centerX},${centerY - outerRadius - 10} ${centerX - 12},${centerY - outerRadius - 25} ${centerX + 12},${centerY - outerRadius - 25}`}
+                    points={`${centerX},${centerY - outerRadius - 10} ${centerX - 18},${centerY - outerRadius - 32} ${centerX + 18},${centerY - outerRadius - 32}`}
                     fill="#4b5563"
                     stroke="#374151"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                     style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))' }}
                 />
 
@@ -161,7 +161,14 @@ const CycleView = ({
                 {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
                     const cycleDay = i + 1;
                     const phaseInfo = getPhaseInfo(cycleDay, cycleConfig.cycleLength);
-                    const date = getDateForCycleDay(cycleDay);
+                    let date = getDateForCycleDay(cycleDay);
+
+                    // À partir de J20, les jours avant le jour actuel sont du prochain cycle
+                    if (currentCycleDay >= 20 && cycleDay < currentCycleDay) {
+                        date = new Date(date);
+                        date.setDate(date.getDate() + cycleConfig.cycleLength);
+                    }
+
                     const isToday = cycleDay === currentCycleDay;
                     const isSelected = cycleDay === displayDay;
 
@@ -200,7 +207,14 @@ const CycleView = ({
                 {Array.from({ length: cycleConfig.cycleLength }, (_, i) => {
                     const cycleDay = i + 1;
                     const phaseInfo = getPhaseInfo(cycleDay, cycleConfig.cycleLength);
-                    const date = getDateForCycleDay(cycleDay);
+                    let date = getDateForCycleDay(cycleDay);
+
+                    // À partir de J20, les jours avant le jour actuel sont du prochain cycle
+                    if (currentCycleDay >= 20 && cycleDay < currentCycleDay) {
+                        date = new Date(date);
+                        date.setDate(date.getDate() + cycleConfig.cycleLength);
+                    }
+
                     const moonInfo = getMoonInfo(date);
 
                     const baseAngle = -Math.PI / 2 + i * anglePerDay + anglePerDay / 2;
@@ -216,7 +230,7 @@ const CycleView = ({
                                 y={textY - 14}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '14px', pointerEvents: 'none' }}
+                                style={{ fontSize: '12px', pointerEvents: 'none' }}
                             >
                                 {moonInfo.emoji}
                             </text>
@@ -225,7 +239,7 @@ const CycleView = ({
                                 y={textY + 1}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '14px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '12px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 J{cycleDay}
                             </text>
@@ -234,7 +248,7 @@ const CycleView = ({
                                 y={textY + 15}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '12px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '10px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 {date.getDate()}/{date.getMonth() + 1}
                             </text>
@@ -282,7 +296,7 @@ const CycleView = ({
                                 <>
                                     <div className="text-center mb-3 md:mb-4">
                                         <div
-                                            className="text-2xl md:text-3xl font-bold mb-1"
+                                            className="text-xl md:text-2xl font-bold mb-1"
                                             style={{ color: phaseInfo.text }}
                                         >
                                             J{displayDay} • {phaseInfo.shortName}

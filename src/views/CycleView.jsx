@@ -92,54 +92,54 @@ const CycleView = ({
             <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                 {/* Définitions des gradients pour les transitions */}
                 <defs>
-                    {/* Gradients menstruation : 75% couleur principale, 25% transition - direction radiale du centre */}
-                    <linearGradient id="gradient-menstruation-1-2" x1="50%" y1="50%" x2="50%" y2="0%">
+                    {/* Gradients menstruation : 75% couleur principale, 25% transition - direction horizontale (sens horaire) */}
+                    <linearGradient id="gradient-menstruation-1-2" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#882c45', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#882c45', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#b3495a', stopOpacity: 1 }} />
                     </linearGradient>
-                    <linearGradient id="gradient-menstruation-2-3" x1="50%" y1="50%" x2="50%" y2="0%">
+                    <linearGradient id="gradient-menstruation-2-3" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#b3495a', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#b3495a', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#df6268', stopOpacity: 1 }} />
                     </linearGradient>
-                    <linearGradient id="gradient-menstruation-3-4" x1="50%" y1="50%" x2="50%" y2="0%">
+                    <linearGradient id="gradient-menstruation-3-4" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#df6268', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#df6268', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#fa8a8e', stopOpacity: 1 }} />
                     </linearGradient>
-                    <linearGradient id="gradient-menstruation-4-5" x1="50%" y1="50%" x2="50%" y2="0%">
+                    <linearGradient id="gradient-menstruation-4-5" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#fa8a8e', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#fa8a8e', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#f4abb4', stopOpacity: 1 }} />
                     </linearGradient>
-                    <linearGradient id="gradient-menstruation-5-follicular" x1="50%" y1="50%" x2="50%" y2="0%">
+                    <linearGradient id="gradient-menstruation-5-follicular" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#f4abb4', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#f4abb4', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
                     </linearGradient>
 
-                    {/* Gradient pour le premier jour de fertilité - direction radiale du centre */}
-                    <linearGradient id="gradient-fertility-start" x1="50%" y1="50%" x2="50%" y2="0%">
+                    {/* Gradient pour le premier jour de fertilité - direction horizontale */}
+                    <linearGradient id="gradient-fertility-start" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
                         <stop offset="50%" style={{ stopColor: '#e3eeb4', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#DDE9EF', stopOpacity: 1 }} />
                     </linearGradient>
-                    {/* Gradient pour le dernier jour de fertilité - direction radiale du centre */}
-                    <linearGradient id="gradient-fertility-end" x1="50%" y1="50%" x2="50%" y2="0%">
+                    {/* Gradient pour le dernier jour de fertilité - direction horizontale */}
+                    <linearGradient id="gradient-fertility-end" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#CF90C1', stopOpacity: 1 }} />
                         <stop offset="50%" style={{ stopColor: '#e6c5aa', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#fdfb93', stopOpacity: 1 }} />
                     </linearGradient>
 
-                    {/* Gradient pour lutéale → SPM - direction radiale du centre */}
-                    <linearGradient id="gradient-luteal-spm" x1="50%" y1="50%" x2="50%" y2="0%">
+                    {/* Gradient pour lutéale → SPM - direction horizontale */}
+                    <linearGradient id="gradient-luteal-spm" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#CF90C1', stopOpacity: 1 }} />
                         <stop offset="50%" style={{ stopColor: '#b1689d', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#93417A', stopOpacity: 1 }} />
                     </linearGradient>
-                    {/* Gradient pour SPM → menstruation : 75% violet, 25% bordeaux - direction radiale du centre */}
-                    <linearGradient id="gradient-spm-menstruation" x1="50%" y1="50%" x2="50%" y2="0%">
+                    {/* Gradient pour SPM → menstruation : 75% violet, 25% bordeaux - direction horizontale */}
+                    <linearGradient id="gradient-spm-menstruation" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style={{ stopColor: '#93417A', stopOpacity: 1 }} />
                         <stop offset="75%" style={{ stopColor: '#93417A', stopOpacity: 1 }} />
                         <stop offset="100%" style={{ stopColor: '#882c45', stopOpacity: 1 }} />

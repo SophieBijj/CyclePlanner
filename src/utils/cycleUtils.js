@@ -8,13 +8,13 @@ export function getPhaseInfo(cycleDay, cycleLength) {
   const ovulationDay = cycleLength - 14;
 
   if (cycleDay >= 1 && cycleDay <= 5) {
-    // Dégradé pour les règles : J1 très foncé, progression vers rose clair
+    // Dégradé progressif pour les règles avec transitions dans le dernier quart
     const menstruationColors = {
-      1: { color: '#882c45', border: '#6b2336', text: '#fff' }, // J1: bordeaux très foncé
-      2: { color: '#b3495a', border: '#882c45', text: '#fff' }, // J2: bordeaux moyen
-      3: { color: '#df6268', border: '#b3495a', text: '#7f1d1d' }, // J3: rose-rouge
-      4: { color: '#fa8a8e', border: '#df6268', text: '#7f1d1d' }, // J4: rose moyen
-      5: { color: '#f4abb4', border: '#fa8a8e', text: '#7f1d1d' } // J5: rose clair
+      1: { color: 'url(#gradient-menstruation-1-2)', border: '#6b2336', text: '#fff', isGradient: true }, // J1: bordeaux foncé → moyen
+      2: { color: 'url(#gradient-menstruation-2-3)', border: '#882c45', text: '#fff', isGradient: true }, // J2: bordeaux moyen → rose-rouge
+      3: { color: 'url(#gradient-menstruation-3-4)', border: '#b3495a', text: '#7f1d1d', isGradient: true }, // J3: rose-rouge → rose moyen
+      4: { color: 'url(#gradient-menstruation-4-5)', border: '#df6268', text: '#7f1d1d', isGradient: true }, // J4: rose moyen → rose clair
+      5: { color: 'url(#gradient-menstruation-5-follicular)', border: '#fa8a8e', text: '#7f1d1d', isGradient: true } // J5: rose clair → bleu
     };
 
     return {
@@ -23,20 +23,10 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       color: menstruationColors[cycleDay].color,
       border: menstruationColors[cycleDay].border,
       text: menstruationColors[cycleDay].text,
+      isGradient: menstruationColors[cycleDay].isGradient,
       description: 'Repos, introspection, détoxification'
     };
-  } else if (cycleDay === 6) {
-    // Dégradé menstruation → folliculaire
-    return {
-      name: 'Folliculaire',
-      shortName: 'Transition',
-      color: 'url(#gradient-menstruation-follicular)',
-      border: '#AACBE0',
-      text: '#164e63',
-      isGradient: true,
-      description: 'Créativité, nouveaux projets, brainstorming'
-    };
-  } else if (cycleDay >= 7 && cycleDay < ovulationDay - 5) {
+  } else if (cycleDay >= 6 && cycleDay < ovulationDay - 5) {
     return {
       name: 'Folliculaire',
       shortName: 'Jeune Fille',

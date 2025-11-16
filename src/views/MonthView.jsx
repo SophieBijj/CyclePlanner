@@ -158,9 +158,78 @@ export default function MonthView({
 
               {/* Événements */}
               <div
-                className="flex flex-col gap-0.5 overflow-hidden flex-1"
+                className="flex flex-col gap-0.5"
               >
-                {dayActivities.slice(0, maxEvents).map((activity, idx) => (
+                {dayActivities.length > maxEvents ? (
+                  <>
+                    {dayActivities.slice(0, maxEvents - 1).map((activity, idx) => (
+                      <div
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onEventClick) {
+                            onEventClick(activity);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                        style={{
+                          fontSize: '11.5px',
+                          padding: '1px 3px',
+                          borderRadius: '3px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.15s ease',
+                          position: 'relative',
+                          color: '#1f2937',
+                          lineHeight: '1.2'
+                        }}
+                      >
+                        {/* Point de couleur */}
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: activity.color,
+                          flexShrink: 0
+                        }} />
+
+                        {/* Heure formatée + Titre */}
+                        <span style={{
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {activity.isTask ? (
+                            <span style={{ fontWeight: '400' }}>✓ {activity.title}</span>
+                          ) : (
+                            <>
+                              <span style={{ fontWeight: '300' }}>{formatTimeGoogle(activity.startTime)}</span>
+                              {' '}
+                              <span style={{ fontWeight: '500' }}>{activity.title}</span>
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                    <div
+                      className="text-[11px] text-gray-600 font-medium px-0.5 py-0.5 cursor-pointer hover:bg-gray-100"
+                      onClick={() => onDayClick(date)}
+                    >
+                      {dayActivities.length - maxEvents + 1} more
+                    </div>
+                  </>
+                ) : (
+                  dayActivities.map((activity, idx) => (
                   <div
                     key={idx}
                     onClick={(e) => {
@@ -218,11 +287,7 @@ export default function MonthView({
                       )}
                     </span>
                   </div>
-                ))}
-                {dayActivities.length > maxEvents && (
-                  <div className="text-[10px] text-gray-600 font-medium px-0.5 py-0.5">
-                    +{dayActivities.length - maxEvents} autres
-                  </div>
+                  ))
                 )}
               </div>
             </div>

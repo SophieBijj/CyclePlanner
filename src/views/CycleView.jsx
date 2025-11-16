@@ -275,7 +275,14 @@ const CycleView = ({
                 >
                     <div className="w-full h-full flex flex-col items-center justify-center p-4 overflow-auto">
                         {(() => {
-                            const date = getDateForCycleDay(displayDay);
+                            let date = getDateForCycleDay(displayDay);
+
+                            // À partir de J20, les jours avant le jour actuel sont du prochain cycle
+                            if (currentCycleDay >= 20 && displayDay < currentCycleDay) {
+                                date = new Date(date);
+                                date.setDate(date.getDate() + cycleConfig.cycleLength);
+                            }
+
                             const phaseInfo = getPhaseInfo(displayDay, cycleConfig.cycleLength);
                             const sunTimes = getSunTimes(date);
                             const moonInfo = getMoonInfo(date);

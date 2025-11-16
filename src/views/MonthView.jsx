@@ -127,14 +127,16 @@ export default function MonthView({
             <div
               key={dateKey}
               onClick={() => onDayClick(date)}
-              className="p-0.5 cursor-pointer overflow-hidden flex flex-col"
+              className="cursor-pointer overflow-hidden flex flex-col"
               style={{
                 backgroundColor: 'white',
                 border: isToday ? `2px solid ${solidColor}` : 'none',
                 borderRight: (index + 1) % 7 !== 0 ? '1px solid #e5e7eb' : 'none',
                 borderBottom: index < calendarDays.length - 7 ? '1px solid #e5e7eb' : 'none',
                 opacity: isCurrentMonth ? 1 : 0.4,
-                padding: showWeekdayHeader ? '3px' : '2px 3px',
+                paddingTop: showWeekdayHeader ? '3px' : '2px',
+                paddingLeft: '3px',
+                paddingRight: '3px',
               }}
             >
               {showWeekdayHeader && (
@@ -157,7 +159,7 @@ export default function MonthView({
                   {date.getDate()}
                 </span>
                 <span
-                  className="text-xs font-semibold px-1 py-0.5 rounded"
+                  className="text-xs font-semibold px-1 py-0.5 rounded absolute right-0"
                   style={{
                     color: phaseInfo.text,
                     backgroundColor: solidColor + '50',
@@ -169,7 +171,7 @@ export default function MonthView({
 
               {/* Événements */}
               <div
-                className="flex flex-col gap-0.6"
+                className="flex flex-col gap-0.8"
               >
                 {dayActivities.length > maxEvents ? (
                   <>

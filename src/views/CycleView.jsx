@@ -70,12 +70,12 @@ const CycleView = ({
     const leftSidebarWidth = isMobile ? 0 : 280;
     const rightSidebarWidth = (showTasksSidebar && !isMobile) ? 350 : 0;
     const totalSidebarWidth = leftSidebarWidth + rightSidebarWidth;
-    const availableWidth = (typeof window !== 'undefined' ? window.innerWidth : 1200) - totalSidebarWidth - 20;
-    const svgSize = Math.min(availableWidth, 1000);
+    const availableWidth = (typeof window !== 'undefined' ? window.innerWidth : 1200) - totalSidebarWidth - 10;
+    const svgSize = Math.min(availableWidth, 1200);
     const centerX = svgSize / 2;
     const centerY = svgSize / 2;
-    const outerRadius = svgSize * 0.45;
-    const innerRadius = svgSize * 0.37;
+    const outerRadius = svgSize * 0.47;
+    const innerRadius = svgSize * 0.39;
     const middleRadius = (outerRadius + innerRadius) / 2;
     const anglePerDay = (2 * Math.PI) / cycleConfig.cycleLength;
 
@@ -212,10 +212,10 @@ const CycleView = ({
                         <g key={`text-${cycleDay}`}>
                             <text
                                 x={textX}
-                                y={textY - 12}
+                                y={textY - 13}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '13px', pointerEvents: 'none' }}
+                                style={{ fontSize: '14px', pointerEvents: 'none' }}
                             >
                                 {moonInfo.emoji}
                             </text>
@@ -224,16 +224,16 @@ const CycleView = ({
                                 y={textY + 1}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '12px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '13px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 J{cycleDay}
                             </text>
                             <text
                                 x={textX}
-                                y={textY + 13}
+                                y={textY + 14}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '11px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '12px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 {date.getDate()}/{date.getMonth() + 1}
                             </text>
@@ -281,25 +281,25 @@ const CycleView = ({
                                 <>
                                     <div className="text-center mb-3 md:mb-4">
                                         <div
-                                            className="text-xl md:text-2xl font-bold mb-1"
+                                            className="text-2xl md:text-3xl font-bold mb-1"
                                             style={{ color: phaseInfo.text }}
                                         >
                                             J{displayDay} • {phaseInfo.shortName}
                                         </div>
-                                        <div className="text-[13px] md:text-[14px] text-gray-500">
+                                        <div className="text-[14px] md:text-[15px] text-gray-500">
                                             {date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                                         </div>
-                                        <div className="text-[12px] md:text-[13px] text-gray-400 mt-1">
+                                        <div className="text-[13px] md:text-[14px] text-gray-400 mt-1">
                                             {moonInfo.emoji} {moonInfo.name}
                                         </div>
-                                        <div className="text-[11px] md:text-[12px] text-gray-400 mt-0.5">
+                                        <div className="text-[12px] md:text-[13px] text-gray-400 mt-0.5">
                                             ☀️ {sunTimes.sunrise} → {sunTimes.sunset}
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={() => onCreateEvent(date)}
-                                        className="w-full py-2 md:py-3 mb-2 md:mb-4 bg-pink-500 text-white rounded-md border-0 cursor-pointer text-[13px] md:text-[14px] font-semibold flex items-center justify-center gap-1 hover:bg-pink-600 transition-colors"
+                                        className="w-full py-2 md:py-3 mb-2 md:mb-4 bg-pink-500 text-white rounded-md border-0 cursor-pointer text-[14px] md:text-[15px] font-semibold flex items-center justify-center gap-1 hover:bg-pink-600 transition-colors"
                                     >
                                         <PlusIcon />
                                         Ajouter événement
@@ -319,7 +319,7 @@ const CycleView = ({
                                                         }
                                                         onEditEvent(act);
                                                     }}
-                                                    className="p-1.5 md:p-2 rounded-md text-[12px] md:text-[13px] font-semibold mb-1 cursor-pointer flex justify-between items-center transition-opacity hover:opacity-90"
+                                                    className="p-1.5 md:p-2 rounded-md text-[13px] md:text-[14px] font-semibold mb-1 cursor-pointer flex justify-between items-center transition-opacity hover:opacity-90"
                                                     style={{
                                                         backgroundColor: act.color,
                                                         color: getTextColorForBackground(act.color),
@@ -351,13 +351,13 @@ const CycleView = ({
                                                                     }
                                                                 }}
                                                                 onClick={(e) => e.stopPropagation()}
-                                                                className="cursor-pointer w-4 h-4 m-0"
+                                                                className="cursor-pointer w-5 h-5 m-0"
                                                             />
                                                         )}
                                                         <span className="flex-1">
                                                             {act.isTask ? act.title : `${formatTimeGoogle(act.startTime)} • ${act.title}`}
                                                             {act.isTask && act.taskListTitle && (
-                                                                <span className="opacity-80 text-[11px] ml-1">
+                                                                <span className="opacity-80 text-[12px] ml-1">
                                                                     ({act.taskListTitle})
                                                                 </span>
                                                             )}

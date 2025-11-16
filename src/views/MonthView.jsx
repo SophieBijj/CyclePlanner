@@ -132,13 +132,13 @@ export default function MonthView({
               }}
             >
               {showWeekdayHeader && (
-                <div className="text-center text-[11px] font-semibold text-gray-600 mb-px">
+                <div className="text-center text-[11px] font-semibold text-gray-600 mb-px flex-shrink-0">
                   {weekdayNames[index]}
                 </div>
               )}
               <div className="flex justify-center items-center mb-0.5 flex-shrink-0 relative">
                 <span
-                  className={`text-[17px] ${isToday ? 'font-bold' : 'font-medium'}`}
+                  className={`text-[12px] ${isToday ? 'font-semibold' : 'font-medium'}`}
                   style={{
                     color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
                   }}
@@ -158,8 +158,7 @@ export default function MonthView({
 
               {/* Événements */}
               <div
-                className="flex flex-col gap-0 overflow-hidden min-h-0"
-                style={{ flex: maxEvents }}
+                className="flex flex-col gap-0.5 overflow-hidden flex-1"
               >
                 {dayActivities.slice(0, maxEvents).map((activity, idx) => (
                   <div
@@ -177,7 +176,7 @@ export default function MonthView({
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '12px',
                       padding: '1px 3px',
                       borderRadius: '3px',
                       overflow: 'hidden',
@@ -190,8 +189,7 @@ export default function MonthView({
                       transition: 'background-color 0.15s ease',
                       position: 'relative',
                       color: '#1f2937',
-                      lineHeight: '1.2',
-                      flex: 1
+                      lineHeight: '1.2'
                     }}
                   >
                     {/* Point de couleur */}

@@ -89,7 +89,7 @@ const CycleView = ({
     const rotationDegrees = rotationOffset * 180 / Math.PI;
 
     return (
-        <div className="flex flex-col items-center h-full justify-center">
+        <div className="flex flex-col items-center h-full justify-center pt-8">
             <svg width={svgSize} height={svgSize} viewBox={`0 0 ${svgSize} ${svgSize}`}>
                 {/* Définitions des gradients pour les transitions */}
                 <defs>
@@ -216,7 +216,7 @@ const CycleView = ({
                                 y={textY - 14}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '16px', pointerEvents: 'none' }}
+                                style={{ fontSize: '14px', pointerEvents: 'none' }}
                             >
                                 {moonInfo.emoji}
                             </text>
@@ -225,7 +225,7 @@ const CycleView = ({
                                 y={textY + 1}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '15px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '14px', fontWeight: '700', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 J{cycleDay}
                             </text>
@@ -234,7 +234,7 @@ const CycleView = ({
                                 y={textY + 15}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
-                                style={{ fontSize: '13px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
+                                style={{ fontSize: '12px', fontWeight: '500', fill: phaseInfo.text, pointerEvents: 'none' }}
                             >
                                 {date.getDate()}/{date.getMonth() + 1}
                             </text>
@@ -282,7 +282,7 @@ const CycleView = ({
                                 <>
                                     <div className="text-center mb-3 md:mb-4">
                                         <div
-                                            className="text-3xl md:text-4xl font-bold mb-1"
+                                            className="text-2xl md:text-3xl font-bold mb-1"
                                             style={{ color: phaseInfo.text }}
                                         >
                                             J{displayDay} • {phaseInfo.shortName}
@@ -320,7 +320,7 @@ const CycleView = ({
                                                         }
                                                         onEditEvent(act);
                                                     }}
-                                                    className="p-1.5 md:p-2 rounded-md text-[14px] md:text-[15px] font-semibold mb-1 cursor-pointer flex justify-between items-center transition-opacity hover:opacity-90"
+                                                    className="p-1.5 md:p-2 rounded-md text-[13px] md:text-[14px] font-semibold mb-1 cursor-pointer flex justify-between items-center transition-opacity hover:opacity-90"
                                                     style={{
                                                         backgroundColor: act.color,
                                                         color: getTextColorForBackground(act.color),

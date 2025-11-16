@@ -9,6 +9,7 @@ export default function MonthView({
   getCycleDayForDate,
   onDayClick,
   onEventClick,
+  onDayEventsClick,
   googleCalendars
 }) {
   const lastScrollTime = useRef(0);
@@ -223,7 +224,12 @@ export default function MonthView({
                     ))}
                     <div
                       className="text-[11px] text-gray-600 font-medium px-0.5 py-0.5 cursor-pointer hover:bg-gray-100"
-                      onClick={() => onDayClick(date)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onDayEventsClick) {
+                          onDayEventsClick(date, dayActivities);
+                        }
+                      }}
                     >
                       {dayActivities.length - maxEvents + 1} more
                     </div>

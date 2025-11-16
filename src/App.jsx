@@ -10,6 +10,7 @@ import CreateEventModal from './components/modals/CreateEventModal';
 import CreateTaskModal from './components/modals/CreateTaskModal';
 import EditEventModal from './components/modals/EditEventModal';
 import EditTaskModal from './components/modals/EditTaskModal';
+import DayEventsModal from './components/modals/DayEventsModal';
 import { SyncIcon, SettingsIcon } from './components/icons';
 import { getPhaseInfo, getAverageCycleLength } from './utils/cycleUtils';
 import { fetchSunTimesRange } from './utils/sunUtils';
@@ -52,9 +53,11 @@ export default function App() {
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
   const [showEditEventModal, setShowEditEventModal] = useState(false);
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [showDayEventsModal, setShowDayEventsModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDayForEvents, setSelectedDayForEvents] = useState(null);
   const [toast, setToast] = useState(null);
   const [syncFunc, setSyncFunc] = useState(null);
 
@@ -237,6 +240,11 @@ export default function App() {
     return getPhaseInfo(cycleDay, avgLength);
   };
 
+  const handleDayEventsClick = (date, activities) => {
+    setSelectedDayForEvents({ date, activities });
+    setShowDayEventsModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -379,6 +387,7 @@ export default function App() {
                     setShowEditEventModal(true);
                   }
                 }}
+                onDayEventsClick={handleDayEventsClick}
                 googleCalendars={googleCalendars}
               />
             </div>
@@ -456,6 +465,25 @@ export default function App() {
           task={selectedTask}
           onClose={() => setShowEditTaskModal(false)}
           onSync={() => syncFunc && syncFunc()}
+        />
+      )}
+
+      {showDayEventsModal && selectedDayForEvents && (
+        <DayEventsModal
+          date={selectedDayForEvents.date}
+          activities={selectedDayForEvents.activities}
+          phaseInfo={getPhaseForDate(selectedDayForEvents.date)}
+          cycleDay={getCycleDayForDate(selectedDayForEvents.date)}
+          onClose={() => setShowDayEventsModal(false)}
+          onEventClick={(event) => {
+            if (event.isTask) {
+              setSelectedTask(event);
+              setShowEditTaskModal(true);
+            } else {
+              setSelectedEvent(event);
+              setShowEditEventModal(true);
+            }
+          }}
         />
       )}
 

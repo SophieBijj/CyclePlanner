@@ -71,8 +71,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       isGradient: colorInfo.isGradient,
       description: 'Communication, collaboration, être présente'
     };
-  } else if (cycleDay === cycleLength - 3) {
-    // Dégradé lutéale → SPM
+  } else if (cycleDay === cycleLength - 2) {
+    // Dégradé lutéale → SPM (avant-avant-dernier jour)
     return {
       name: 'Lutéale',
       shortName: 'Transition',
@@ -82,8 +82,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       isGradient: true,
       description: 'Intuition, focus, nettoyage'
     };
-  } else if (cycleDay === cycleLength - 2 || cycleDay === cycleLength) {
-    // SPM normal (J-2 et J dernier)
+  } else if (cycleDay === cycleLength - 1) {
+    // SPM normal (avant-dernier jour)
     return {
       name: 'SPM',
       shortName: 'SPM',
@@ -92,8 +92,8 @@ export function getPhaseInfo(cycleDay, cycleLength) {
       text: '#fff',
       description: 'Détails, finition, laisser passer la vague'
     };
-  } else if (cycleDay === cycleLength - 1) {
-    // Dégradé SPM → menstruation (J-1 uniquement)
+  } else if (cycleDay === cycleLength) {
+    // Dégradé SPM → menstruation (dernier jour du cycle)
     return {
       name: 'SPM',
       shortName: 'Transition',

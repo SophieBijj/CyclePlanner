@@ -139,7 +139,7 @@ export default function MonthView({
                   {weekdayNames[index]}
                 </div>
               )}
-              <div className="flex justify-center items-center py-1.5 mb-0.5 flex-shrink-0 relative">
+              <div className="flex justify-center items-center py-0.5 flex-shrink-0 relative">
                 <span
                   className={`text-[11.5px] ${isToday ? 'font-semibold' : 'font-medium'}`}
                   style={{

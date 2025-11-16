@@ -116,8 +116,8 @@ export default function MonthView({
           const cycleDay = getCycleDayForDate ? getCycleDayForDate(date) : 1;
 
           // Calculer le nombre max d'événements selon le nombre de rows
-          // 4 semaines → 6 lignes, 5 semaines → 5 lignes, 6 semaines → 4 lignes
-          const maxEvents = weeksNeeded === 4 ? 6 : (weeksNeeded === 5 ? 5 : 4);
+          // 4 semaines → 5 lignes, 5 semaines → 4 lignes, 6 semaines → 3 lignes
+          const maxEvents = weeksNeeded === 4 ? 5 : (weeksNeeded === 5 ? 4 : 3);
 
           return (
             <div
@@ -136,9 +136,9 @@ export default function MonthView({
                   {weekdayNames[index]}
                 </div>
               )}
-              <div className="flex justify-center items-center mb-0.5 flex-shrink-0 relative">
+              <div className="flex justify-center items-center mb-0.7 flex-shrink-0 relative">
                 <span
-                  className={`text-[12px] ${isToday ? 'font-semibold' : 'font-medium'}`}
+                  className={`text-[11.5px] ${isToday ? 'font-semibold' : 'font-medium'}`}
                   style={{
                     color: isToday ? phaseInfo.color : (isCurrentMonth ? '#374151' : '#9ca3af')
                   }}
@@ -176,7 +176,7 @@ export default function MonthView({
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                     style={{
-                      fontSize: '12px',
+                      fontSize: '11.5px',
                       padding: '1px 3px',
                       borderRadius: '3px',
                       overflow: 'hidden',

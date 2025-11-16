@@ -85,7 +85,7 @@ export default function MonthView({
     >
       {/* Calendrier */}
       <div
-        className="grid gap-px flex-1 overflow-hidden rounded-lg"
+        className="grid flex-1 overflow-hidden rounded-lg"
         style={{
           gridTemplateColumns: 'repeat(7, 1fr)',
           gridTemplateRows: `repeat(${weeksNeeded}, 1fr)`,
@@ -124,10 +124,12 @@ export default function MonthView({
             <div
               key={dateKey}
               onClick={() => onDayClick(date)}
-              className="p-0.5 rounded-md cursor-pointer transition-all overflow-hidden flex flex-col hover:scale-[1.02] hover:shadow-md"
+              className="p-0.5 cursor-pointer overflow-hidden flex flex-col"
               style={{
-                backgroundColor: phaseInfo.color + (isCurrentMonth ? '15' : '08'),
-                border: isToday ? `2px solid ${phaseInfo.color}` : '1px solid #e5e7eb',
+                backgroundColor: phaseInfo.color + (isCurrentMonth ? '30' : '15'),
+                border: isToday ? `2px solid ${phaseInfo.color}` : 'none',
+                borderRight: (index + 1) % 7 !== 0 ? '1px solid #e5e7eb' : 'none',
+                borderBottom: index < calendarDays.length - 7 ? '1px solid #e5e7eb' : 'none',
                 opacity: isCurrentMonth ? 1 : 0.4,
                 padding: showWeekdayHeader ? '3px' : '2px 3px',
               }}
@@ -137,7 +139,7 @@ export default function MonthView({
                   {weekdayNames[index]}
                 </div>
               )}
-              <div className="flex justify-center items-center mb-0.7 flex-shrink-0 relative">
+              <div className="flex justify-center items-center py-1.5 mb-0.5 flex-shrink-0 relative">
                 <span
                   className={`text-[11.5px] ${isToday ? 'font-semibold' : 'font-medium'}`}
                   style={{
@@ -159,7 +161,7 @@ export default function MonthView({
 
               {/* Événements */}
               <div
-                className="flex flex-col gap-0.5"
+                className="flex flex-col gap-0.6"
               >
                 {dayActivities.length > maxEvents ? (
                   <>

@@ -367,7 +367,7 @@ export default function App() {
               showToast={showToast}
             />
           ) : (
-            <div className="pt-0 pb-2 px-4">
+            <div className="pt-0 pb-1 px-4">
               <MonthView
                 currentMonth={currentMonth}
                 onMonthChange={setCurrentMonth}

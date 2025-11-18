@@ -10,9 +10,27 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
         return `${year}-${month}-${day}`;
     };
 
-    const [startDate, setStartDate] = useState(formatLocalDate(config.cycleStartDate));
+    const initialStartDate = formatLocalDate(config.cycleStartDate);
+    const [startDate, setStartDate] = useState(initialStartDate);
     const [cycleLength, setCycleLength] = useState(config.cycleLength);
     const [history, setHistory] = useState(cycleHistory || []);
+    const [showArchiveNotification, setShowArchiveNotification] = useState(false);
+
+    // Gérer le changement de date J1 actuel
+    const handleStartDateChange = (newDate) => {
+        // Si la nouvelle date est différente de l'initiale et que l'historique ne contient pas déjà l'ancienne date
+        if (newDate !== initialStartDate && startDate !== newDate) {
+            const oldDateExists = history.some(h => h.startDate === initialStartDate);
+
+            // Archiver automatiquement l'ancien J1 s'il n'est pas déjà dans l'historique
+            if (!oldDateExists && history.length < 12) {
+                setHistory([...history, { startDate: initialStartDate }]);
+                setShowArchiveNotification(true);
+                setTimeout(() => setShowArchiveNotification(false), 3000);
+            }
+        }
+        setStartDate(newDate);
+    };
 
     const addCycleToHistory = () => {
         if (history.length < 12) {
@@ -79,15 +97,28 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
                 </div>
 
                 <div className="mb-5">
-                    <label className="block mb-2 text-sm font-medium">
-                        Premier jour des dernières règles (J1 actuel)
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium">
+                            Premier jour des dernières règles (J1 actuel)
+                        </label>
+                        <button
+                            onClick={() => handleStartDateChange(formatLocalDate(new Date()))}
+                            className="px-3 py-1 bg-pink-100 text-pink-700 border border-pink-300 rounded-md text-xs font-medium cursor-pointer hover:bg-pink-200 transition-colors"
+                        >
+                            📅 Nouveau J1 aujourd'hui
+                        </button>
+                    </div>
                     <input
                         type="date"
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
+                        onChange={(e) => handleStartDateChange(e.target.value)}
                         className="w-full p-2.5 rounded-lg border border-gray-200 text-sm"
                     />
+                    {showArchiveNotification && (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-300 rounded-md text-xs text-green-700">
+                            ✓ L'ancien J1 a été automatiquement ajouté à l'historique
+                        </div>
+                    )}
                 </div>
 
                 <div className="mb-6">

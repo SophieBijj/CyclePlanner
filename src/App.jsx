@@ -425,6 +425,14 @@ export default function App() {
           config={cycleConfig}
           cycleHistory={cycleHistory}
           onSave={(newConfig) => {
+            // Sauvegarder directement dans le localStorage avant le rechargement
+            localStorage.setItem('cycleConfig', JSON.stringify({
+              cycleLength: newConfig.cycleLength,
+              cycleStartDate: newConfig.cycleStartDate.toISOString()
+            }));
+            localStorage.setItem('cycleHistory', JSON.stringify(newConfig.cycleHistory));
+
+            // Mettre à jour le state
             setCycleConfig({
               cycleStartDate: newConfig.cycleStartDate,
               cycleLength: newConfig.cycleLength
@@ -432,10 +440,11 @@ export default function App() {
             setCycleHistory(newConfig.cycleHistory);
             setShowConfigModal(false);
             showToast('Configuration sauvegardée !', 'success');
+
             // Recharger la page pour forcer la mise à jour de l'affichage
             setTimeout(() => {
               window.location.reload();
-            }, 800);
+            }, 1000);
           }}
           onClose={() => setShowConfigModal(false)}
         />

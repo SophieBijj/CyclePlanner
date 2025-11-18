@@ -319,7 +319,7 @@ export default function App() {
       </div>
 
       {/* Main Layout */}
-      <div className="flex" style={{ height: 'calc(100vh - 120px)' }}>
+      <div className="flex" style={{ height: 'calc(100vh - 70px)' }}>
         {/* Left Sidebar */}
         <div className="w-[280px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
           <GoogleCalendarSync

@@ -71,7 +71,7 @@ const CycleView = ({
     const rightSidebarWidth = (showTasksSidebar && !isMobile) ? 350 : 0;
     const totalSidebarWidth = leftSidebarWidth + rightSidebarWidth;
     const availableWidth = (typeof window !== 'undefined' ? window.innerWidth : 1200) - totalSidebarWidth;
-    const availableHeight = (typeof window !== 'undefined' ? window.innerHeight : 800) - 120;
+    const availableHeight = (typeof window !== 'undefined' ? window.innerHeight : 800) - 70;
     const svgSize = Math.min(availableWidth, availableHeight, 1400);
     const centerX = svgSize / 2;
     const centerY = svgSize / 2;

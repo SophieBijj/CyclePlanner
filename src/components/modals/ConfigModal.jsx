@@ -97,9 +97,17 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
                 </div>
 
                 <div className="mb-5">
-                    <label className="block mb-2 text-sm font-medium">
-                        Premier jour des dernières règles (J1 actuel)
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="text-sm font-medium">
+                            Premier jour des dernières règles (J1 actuel)
+                        </label>
+                        <button
+                            onClick={() => handleStartDateChange(formatLocalDate(new Date()))}
+                            className="px-3 py-1 bg-pink-100 text-pink-700 border border-pink-300 rounded-md text-xs font-medium cursor-pointer hover:bg-pink-200 transition-colors"
+                        >
+                            🔄 Nouveau cycle
+                        </button>
+                    </div>
                     <input
                         type="date"
                         value={startDate}

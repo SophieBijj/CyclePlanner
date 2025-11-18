@@ -43,6 +43,9 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Compteur pour forcer le re-render des vues
+  const [viewVersion, setViewVersion] = useState(0);
+
   const [activities, setActivities] = useState({});
   const [googleCalendars, setGoogleCalendars] = useState([]);
   const [sunData, setSunData] = useState({});
@@ -334,7 +337,7 @@ export default function App() {
         <div className="flex-1 overflow-auto">
           {currentView === 'cycle' ? (
             <CycleView
-              key={cycleConfig.cycleStartDate?.toISOString()}
+              key={`cycle-${viewVersion}`}
               cycleConfig={cycleConfig}
               activities={activities}
               sunData={sunData}
@@ -370,7 +373,7 @@ export default function App() {
           ) : (
             <div className="pt-0 pb-1 px-4">
               <MonthView
-                key={cycleConfig.cycleStartDate?.toISOString()}
+                key={`month-${viewVersion}`}
                 currentMonth={currentMonth}
                 onMonthChange={setCurrentMonth}
                 activities={activities}
@@ -433,6 +436,8 @@ export default function App() {
               cycleLength: newConfig.cycleLength
             });
             setCycleHistory(newConfig.cycleHistory);
+            // Forcer le re-render des vues en incrémentant le compteur
+            setViewVersion(v => v + 1);
             setShowConfigModal(false);
             showToast('Configuration sauvegardée !', 'success');
           }}

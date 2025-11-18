@@ -24,17 +24,23 @@ export default function App() {
   });
   const [cycleConfig, setCycleConfig] = useState(() => {
     const saved = localStorage.getItem('cycleConfig');
+    console.log('🔍 Loading cycleConfig from localStorage:', saved);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        const loadedDate = new Date(parsed.cycleStartDate);
+        console.log('📅 Parsed date:', loadedDate, 'ISO:', parsed.cycleStartDate);
+        console.log('📅 Date details - Day:', loadedDate.getDate(), 'Month:', loadedDate.getMonth() + 1, 'Year:', loadedDate.getFullYear());
         return {
           ...parsed,
-          cycleStartDate: new Date(parsed.cycleStartDate)
+          cycleStartDate: loadedDate
         };
       } catch (e) {
+        console.error('❌ Error parsing cycleConfig:', e);
         return { ...DEFAULT_CYCLE_CONFIG, cycleStartDate: new Date() };
       }
     }
+    console.log('⚠️ No saved config, using default');
     return { ...DEFAULT_CYCLE_CONFIG, cycleStartDate: new Date() };
   });
 

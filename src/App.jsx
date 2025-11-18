@@ -334,6 +334,7 @@ export default function App() {
         <div className="flex-1 overflow-auto">
           {currentView === 'cycle' ? (
             <CycleView
+              key={cycleConfig.cycleStartDate?.toISOString()}
               cycleConfig={cycleConfig}
               activities={activities}
               sunData={sunData}
@@ -369,6 +370,7 @@ export default function App() {
           ) : (
             <div className="pt-0 pb-1 px-4">
               <MonthView
+                key={cycleConfig.cycleStartDate?.toISOString()}
                 currentMonth={currentMonth}
                 onMonthChange={setCurrentMonth}
                 activities={activities}
@@ -425,14 +427,7 @@ export default function App() {
           config={cycleConfig}
           cycleHistory={cycleHistory}
           onSave={(newConfig) => {
-            // Sauvegarder directement dans le localStorage avant le rechargement
-            localStorage.setItem('cycleConfig', JSON.stringify({
-              cycleLength: newConfig.cycleLength,
-              cycleStartDate: newConfig.cycleStartDate.toISOString()
-            }));
-            localStorage.setItem('cycleHistory', JSON.stringify(newConfig.cycleHistory));
-
-            // Mettre à jour le state
+            // Mettre à jour le state - le localStorage sera sauvegardé par le useEffect
             setCycleConfig({
               cycleStartDate: newConfig.cycleStartDate,
               cycleLength: newConfig.cycleLength
@@ -440,11 +435,6 @@ export default function App() {
             setCycleHistory(newConfig.cycleHistory);
             setShowConfigModal(false);
             showToast('Configuration sauvegardée !', 'success');
-
-            // Recharger la page pour forcer la mise à jour de l'affichage
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
           }}
           onClose={() => setShowConfigModal(false)}
         />

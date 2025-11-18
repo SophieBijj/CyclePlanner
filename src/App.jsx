@@ -432,6 +432,10 @@ export default function App() {
             setCycleHistory(newConfig.cycleHistory);
             setShowConfigModal(false);
             showToast('Configuration sauvegardée !', 'success');
+            // Recharger la page pour forcer la mise à jour de l'affichage
+            setTimeout(() => {
+              window.location.reload();
+            }, 800);
           }}
           onClose={() => setShowConfigModal(false)}
         />

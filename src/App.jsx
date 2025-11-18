@@ -425,7 +425,10 @@ export default function App() {
           config={cycleConfig}
           cycleHistory={cycleHistory}
           onSave={(newConfig) => {
-            setCycleConfig(newConfig);
+            setCycleConfig({
+              cycleStartDate: newConfig.cycleStartDate,
+              cycleLength: newConfig.cycleLength
+            });
             setCycleHistory(newConfig.cycleHistory);
             setShowConfigModal(false);
             showToast('Configuration sauvegardée !', 'success');

@@ -18,8 +18,8 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
 
     // Gérer le changement de date J1 actuel
     const handleStartDateChange = (newDate) => {
-        // Si la nouvelle date est différente de l'initiale et que l'historique ne contient pas déjà l'ancienne date
-        if (newDate !== initialStartDate && startDate !== newDate) {
+        // Si la nouvelle date est différente de l'initiale
+        if (newDate !== initialStartDate) {
             const oldDateExists = history.some(h => h.startDate === initialStartDate);
 
             // Archiver automatiquement l'ancien J1 s'il n'est pas déjà dans l'historique
@@ -97,17 +97,9 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
                 </div>
 
                 <div className="mb-5">
-                    <div className="flex justify-between items-center mb-2">
-                        <label className="text-sm font-medium">
-                            Premier jour des dernières règles (J1 actuel)
-                        </label>
-                        <button
-                            onClick={() => handleStartDateChange(formatLocalDate(new Date()))}
-                            className="px-3 py-1 bg-pink-100 text-pink-700 border border-pink-300 rounded-md text-xs font-medium cursor-pointer hover:bg-pink-200 transition-colors"
-                        >
-                            📅 Nouveau J1 aujourd'hui
-                        </button>
-                    </div>
+                    <label className="block mb-2 text-sm font-medium">
+                        Premier jour des dernières règles (J1 actuel)
+                    </label>
                     <input
                         type="date"
                         value={startDate}

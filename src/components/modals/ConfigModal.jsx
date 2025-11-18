@@ -15,6 +15,7 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
     const [cycleLength, setCycleLength] = useState(config.cycleLength);
     const [history, setHistory] = useState(cycleHistory || []);
     const [showArchiveNotification, setShowArchiveNotification] = useState(false);
+    const [showNewCyclePrompt, setShowNewCyclePrompt] = useState(false);
 
     // Gérer le changement de date J1 actuel
     const handleStartDateChange = (newDate) => {
@@ -30,6 +31,17 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
             }
         }
         setStartDate(newDate);
+        setShowNewCyclePrompt(false); // Cacher le message une fois la date changée
+    };
+
+    // Gérer le clic sur "Nouveau cycle"
+    const handleNewCycleClick = () => {
+        setShowNewCyclePrompt(true);
+        // Mettre le focus sur l'input date après un court délai
+        setTimeout(() => {
+            const dateInput = document.querySelector('input[type="date"]');
+            if (dateInput) dateInput.focus();
+        }, 100);
     };
 
     const addCycleToHistory = () => {
@@ -102,12 +114,17 @@ const ConfigModal = ({ config, cycleHistory, onSave, onClose }) => {
                             Premier jour des dernières règles (J1 actuel)
                         </label>
                         <button
-                            onClick={() => handleStartDateChange(formatLocalDate(new Date()))}
+                            onClick={handleNewCycleClick}
                             className="px-3 py-1 bg-pink-100 text-pink-700 border border-pink-300 rounded-md text-xs font-medium cursor-pointer hover:bg-pink-200 transition-colors"
                         >
                             🔄 Nouveau cycle
                         </button>
                     </div>
+                    {showNewCyclePrompt && (
+                        <div className="mb-2 p-2 bg-blue-50 border border-blue-300 rounded-md text-xs text-blue-700">
+                            📅 Sélectionnez la date du nouveau J1 ci-dessous. L'ancien cycle sera automatiquement archivé.
+                        </div>
+                    )}
                     <input
                         type="date"
                         value={startDate}

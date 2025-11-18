@@ -21,17 +21,13 @@ const CycleView = ({
     // ===== HELPER FUNCTIONS =====
 
     const getCycleDay = (date) => {
-        console.log('🔄 CycleView - cycleConfig.cycleStartDate:', cycleConfig.cycleStartDate);
-        console.log('🔄 CycleView - Date J1:', cycleConfig.cycleStartDate?.getDate(), 'Month:', cycleConfig.cycleStartDate?.getMonth() + 1);
         if (!cycleConfig.cycleStartDate || isNaN(cycleConfig.cycleStartDate.getTime())) {
-            console.log('⚠️ Invalid cycleStartDate, returning day 1');
             return 1;
         }
         const diffMs = date - cycleConfig.cycleStartDate;
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const cycleDay = ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength || cycleConfig.cycleLength;
-        console.log('📍 Today:', date, 'Cycle Day:', cycleDay, 'Diff days:', diffDays);
-        return cycleDay;
+        // Formule corrigée : ajouter +1 pour compter de 1 à cycleLength au lieu de 0 à cycleLength-1
+        return ((diffDays % cycleConfig.cycleLength) + cycleConfig.cycleLength) % cycleConfig.cycleLength + 1;
     };
 
     const getDateForCycleDay = (cycleDay) => {

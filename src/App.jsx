@@ -234,7 +234,8 @@ export default function App() {
     const avgLength = cycleHistory.length > 0 ? getAverageCycleLength(cycleHistory) : cycleConfig.cycleLength;
     const diffMs = date - cycleConfig.cycleStartDate;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return ((diffDays % avgLength) + avgLength) % avgLength || avgLength;
+    // Formule corrigée : ajouter +1 pour compter de 1 à avgLength au lieu de 0 à avgLength-1
+    return ((diffDays % avgLength) + avgLength) % avgLength + 1;
   };
 
   const getPhaseForDate = (date) => {

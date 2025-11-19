@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PlusIcon, EditIcon } from '../components/icons';
 import { getMoonInfo } from '../utils/moonUtils';
 import { getPhaseInfo } from '../utils/cycleUtils';
@@ -81,8 +81,12 @@ const CycleView = ({
     const middleRadius = (outerRadius + innerRadius) / 2;
     const anglePerDay = (2 * Math.PI) / cycleConfig.cycleLength;
 
-    const today = new Date();
-    const currentCycleDay = getCycleDay(today);
+    // Mémoriser le calcul du jour actuel pour éviter les recalculs multiples
+    const currentCycleDay = useMemo(() => {
+        const today = new Date();
+        return getCycleDay(today);
+    }, [cycleConfig.cycleStartDate, cycleConfig.cycleLength]);
+
     const displayDay = selectedCircleDay || currentCycleDay;
 
     // Rotation pour mettre le jour actuel en haut

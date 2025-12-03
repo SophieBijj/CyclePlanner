@@ -12,6 +12,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
   const gisInited = useRef(false);
   const tokenClient = useRef(null);
   const calendarsRef = useRef([]); // Ref pour accès synchrone aux calendriers
+  const tokenRefreshTimer = useRef(null); // Timer pour le renouvellement automatique
 
   // Exposer handleSync au parent via callback
   useEffect(() => {
@@ -56,6 +57,10 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
     return () => {
       clearTimeout(gapiTimeout);
       clearTimeout(gisTimeout);
+      // Nettoyer le timer de renouvellement lors du démontage
+      if (tokenRefreshTimer.current) {
+        clearTimeout(tokenRefreshTimer.current);
+      }
     };
   }, [onError]);
 
@@ -91,6 +96,32 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
     }
   };
 
+  // Fonction pour rafraîchir le token automatiquement
+  const refreshToken = () => {
+    if (!tokenClient.current) return;
+
+    console.log('🔄 Renouvellement automatique du token...');
+    tokenClient.current.requestAccessToken({ prompt: '' });
+  };
+
+  // Configure le renouvellement automatique du token
+  const scheduleTokenRefresh = (expiresIn) => {
+    // Nettoyer le timer existant
+    if (tokenRefreshTimer.current) {
+      clearTimeout(tokenRefreshTimer.current);
+    }
+
+    // Rafraîchir 5 minutes avant l'expiration (ou à la moitié du temps si < 10 min)
+    const refreshTime = expiresIn > 600 ? expiresIn - 300 : expiresIn / 2;
+    const refreshMs = refreshTime * 1000;
+
+    console.log(`⏰ Token sera rafraîchi dans ${Math.round(refreshMs / 1000 / 60)} minutes`);
+
+    tokenRefreshTimer.current = setTimeout(() => {
+      refreshToken();
+    }, refreshMs);
+  };
+
   const gisLoaded = () => {
     if (typeof window.google !== 'undefined') {
       tokenClient.current = window.google.accounts.oauth2.initTokenClient({
@@ -113,6 +144,9 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
             window.gapi.client.setToken({
               access_token: response.access_token
             });
+
+            // Planifier le renouvellement automatique
+            scheduleTokenRefresh(response.expires_in);
 
             await loadTasksAPI();
           }
@@ -139,6 +173,19 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
             window.gapi.client.setToken({
               access_token: tokenData.access_token
             });
+
+            // Calculer le temps restant avant expiration
+            const expiresInMs = tokenData.expires_at - Date.now();
+            const expiresInSec = Math.floor(expiresInMs / 1000);
+
+            // Si le token expire dans moins de 5 minutes, le rafraîchir immédiatement
+            if (expiresInSec < 300) {
+              console.log('⚠️ Token expire bientôt, renouvellement immédiat...');
+              refreshToken();
+            } else {
+              // Sinon, planifier le renouvellement
+              scheduleTokenRefresh(expiresInSec);
+            }
           } else {
             localStorage.removeItem('googleAccessToken');
           }
@@ -186,6 +233,12 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
       window.gapi.client.setToken('');
 
       localStorage.removeItem('googleAccessToken');
+
+      // Nettoyer le timer de renouvellement
+      if (tokenRefreshTimer.current) {
+        clearTimeout(tokenRefreshTimer.current);
+        tokenRefreshTimer.current = null;
+      }
 
       setIsSignedIn(false);
       setCalendars([]);

@@ -8,6 +8,7 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
   const [calendars, setCalendars] = useState([]);
   const [selectedCalendars, setSelectedCalendars] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAutoRefreshing, setIsAutoRefreshing] = useState(false);
   const gapiInited = useRef(false);
   const gisInited = useRef(false);
   const tokenClient = useRef(null);
@@ -97,10 +98,17 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
   };
 
   // Fonction pour rafraîchir le token automatiquement
-  const refreshToken = () => {
+  const refreshToken = (isExpired = false) => {
     if (!tokenClient.current) return;
 
-    console.log('🔄 Renouvellement automatique du token...');
+    if (isExpired) {
+      console.log('🔄 Token expiré, tentative de renouvellement silencieux...');
+      setIsAutoRefreshing(true);
+    } else {
+      console.log('🔄 Renouvellement automatique du token...');
+    }
+
+    // Tenter un renouvellement silencieux
     tokenClient.current.requestAccessToken({ prompt: '' });
   };
 
@@ -128,9 +136,19 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         client_id: GOOGLE_CLIENT_ID,
         scope: SCOPES,
         callback: async (response) => {
+          setIsAutoRefreshing(false);
+
           if (response.error) {
             console.error('Auth error:', response.error);
-            onError?.('Erreur d\'authentification Google');
+
+            // Si c'est une erreur de renouvellement silencieux, informer l'utilisateur
+            if (response.error === 'access_denied' || response.error === 'immediate_failed') {
+              console.log('⚠️ Renouvellement silencieux échoué, reconnexion manuelle requise');
+              localStorage.removeItem('googleAccessToken');
+              setIsSignedIn(false);
+            } else {
+              onError?.('Erreur d\'authentification Google');
+            }
             return;
           }
 
@@ -149,10 +167,10 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
             scheduleTokenRefresh(response.expires_in);
 
             await loadTasksAPI();
-          }
 
-          setIsSignedIn(true);
-          await loadCalendars();
+            setIsSignedIn(true);
+            await loadCalendars();
+          }
         },
       });
       gisInited.current = true;
@@ -168,40 +186,40 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
       if (savedToken) {
         try {
           const tokenData = JSON.parse(savedToken);
+          const now = Date.now();
 
-          if (tokenData.expires_at && Date.now() < tokenData.expires_at) {
+          if (tokenData.expires_at && now < tokenData.expires_at) {
+            // Token encore valide
             window.gapi.client.setToken({
               access_token: tokenData.access_token
             });
 
             // Calculer le temps restant avant expiration
-            const expiresInMs = tokenData.expires_at - Date.now();
+            const expiresInMs = tokenData.expires_at - now;
             const expiresInSec = Math.floor(expiresInMs / 1000);
 
             // Si le token expire dans moins de 5 minutes, le rafraîchir immédiatement
             if (expiresInSec < 300) {
               console.log('⚠️ Token expire bientôt, renouvellement immédiat...');
-              refreshToken();
+              refreshToken(false);
             } else {
               // Sinon, planifier le renouvellement
               scheduleTokenRefresh(expiresInSec);
             }
+
+            setIsSignedIn(true);
+            loadTasksAPI().then(() => {
+              loadCalendars();
+            });
           } else {
-            localStorage.removeItem('googleAccessToken');
+            // Token expiré - essayer de le rafraîchir automatiquement
+            console.log('⚠️ Token expiré, tentative de renouvellement automatique...');
+            refreshToken(true);
           }
         } catch (e) {
           console.error('Error restoring token:', e);
           localStorage.removeItem('googleAccessToken');
         }
-      }
-
-      const token = window.gapi.client.getToken();
-      if (token !== null) {
-        setIsSignedIn(true);
-
-        loadTasksAPI().then(() => {
-          loadCalendars();
-        });
       }
     }
   };
@@ -453,11 +471,11 @@ export default function GoogleCalendarSync({ onSync, onError, onCalendarsLoaded,
         {!isSignedIn ? (
           <button
             onClick={handleAuthClick}
-            disabled={isLoading}
-            className={`px-3 py-2 ${isLoading ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-md font-medium cursor-pointer border-0 flex items-center justify-center gap-1.5 text-xs w-full transition-colors`}
+            disabled={isLoading || isAutoRefreshing}
+            className={`px-3 py-2 ${isLoading || isAutoRefreshing ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'} text-white rounded-md font-medium cursor-pointer border-0 flex items-center justify-center gap-1.5 text-xs w-full transition-colors`}
           >
             <GoogleIcon />
-            {isLoading ? 'Chargement...' : 'Se connecter'}
+            {isLoading ? 'Chargement...' : isAutoRefreshing ? 'Reconnexion...' : 'Se connecter'}
           </button>
         ) : (
           <div className="flex flex-col gap-1.5">
